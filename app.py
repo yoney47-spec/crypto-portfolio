@@ -22,7 +22,7 @@ st.set_page_config(
     page_title="Crypto Portfolio Dashboard",
     page_icon="C",
     layout="wide",
-    initial_sidebar_state="expanded"
+    initial_sidebar_state="collapsed"  # Mobile-first: sidebar collapsed by default
 )
 
 # カスタムCSSの読み込み
@@ -32,6 +32,13 @@ def load_css():
         st.markdown(f"<style>{f.read()}</style>", unsafe_allow_html=True)
 
 load_css()
+
+# Mobile viewport meta tag for proper iPhone scaling
+st.markdown("""
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+""", unsafe_allow_html=True)
 
 # --- サイドバー設定 ---
 st.sidebar.markdown("### 設定")

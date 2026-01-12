@@ -521,8 +521,42 @@ def get_portfolio_history(days: int = 365) -> List[Tuple]:
         # Original SQL was ORDER BY date DESC (New -> Old)
         # Then returns reversed() -> (Old -> New)
         
-        data = [(item['date'], item['total_value_jpy']) for item in res.data]
-        return list(reversed(data))
+
+def get_latest_snapshot() -> Optional[Dict]:
+    """
+    Get latest snapshot info.
+    Returns: {date: str, total_value_jpy: float}
+    """
+    client = get_client()
+    if not client: return None
+    
+    try:
+        res = client.table("portfolio_snapshots")\
+            .select("date, total_value_jpy")\
+            .order("date", desc=True)\
+            .limit(1)\
+            .execute()
+            
+        if res.data:
+            item = res.data[0]
+            return {
+                'date': item['date'],
+                'total_value_jpy': item['total_value_jpy']
+            }
+        return None
     except Exception as e:
-        print(f"History error: {e}")
-        return []
+        print(f"Latest snapshot error: {e}")
+        return None
+
+def get_snapshot_count() -> int:
+    """Get total number of snapshots"""
+    client = get_client()
+    if not client: return 0
+    
+    try:
+        res = client.table("portfolio_snapshots").select("date", count="exact", head=True).execute()
+        return res.count if res.count is not None else 0
+    except Exception as e:
+        print(f"Snapshot count error: {e}")
+        return 0
+

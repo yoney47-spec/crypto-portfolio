@@ -808,3 +808,131 @@ hr {
         min-height: 160px;
     }
 }
+
+/* ===== iPhone-Specific Optimizations ===== */
+
+/* Safe area for iPhone notch and home indicator */
+@supports (padding: max(0px)) {
+    .stApp {
+        padding-top: max(env(safe-area-inset-top), 0px);
+        padding-bottom: max(env(safe-area-inset-bottom), 0px);
+        padding-left: max(env(safe-area-inset-left), 0px);
+        padding-right: max(env(safe-area-inset-right), 0px);
+    }
+}
+
+/* Responsive Metric Cards Grid for Mobile */
+@media (max-width: 767px) {
+    /* Force metric cards container to wrap */
+    [data-testid="stHorizontalBlock"] {
+        flex-wrap: wrap !important;
+        gap: var(--spacing-sm) !important;
+    }
+    
+    /* Each metric column takes 50% on mobile (2x3 grid) */
+    [data-testid="stHorizontalBlock"] > [data-testid="stColumn"] {
+        flex: 0 0 calc(50% - var(--spacing-sm)) !important;
+        max-width: calc(50% - var(--spacing-sm)) !important;
+        min-width: calc(50% - var(--spacing-sm)) !important;
+    }
+    
+    /* Main content padding for mobile */
+    [data-testid="stMainBlockContainer"] {
+        padding-left: var(--spacing-sm) !important;
+        padding-right: var(--spacing-sm) !important;
+    }
+    
+    /* Sidebar overlay improvements */
+    [data-testid="stSidebar"] {
+        width: 85vw !important;
+        max-width: 300px !important;
+    }
+    
+    /* Hide wide layout extra padding on mobile */
+    .main .block-container {
+        padding-left: var(--spacing-sm) !important;
+        padding-right: var(--spacing-sm) !important;
+        padding-top: var(--spacing-md) !important;
+        max-width: 100% !important;
+    }
+    
+    /* Page title smaller on mobile */
+    h1 {
+        font-size: 1.3rem !important;
+        text-align: center !important;
+    }
+    
+    /* Improve chart readability on mobile */
+    .js-plotly-plot {
+        max-width: 100% !important;
+    }
+    
+    /* Stack chart columns vertically on mobile */
+    [data-testid="stHorizontalBlock"]:has(.js-plotly-plot) {
+        flex-direction: column !important;
+    }
+    
+    [data-testid="stHorizontalBlock"]:has(.js-plotly-plot) > [data-testid="stColumn"] {
+        flex: 1 1 100% !important;
+        max-width: 100% !important;
+        min-width: 100% !important;
+    }
+}
+
+/* Touch-friendly improvements for all touch devices */
+@media (pointer: coarse) {
+    /* Larger click targets */
+    .stButton > button {
+        min-height: 48px !important;
+        padding: var(--spacing-md) var(--spacing-lg) !important;
+    }
+    
+    /* Select boxes touch friendly */
+    .stSelectbox > div > div {
+        min-height: 48px !important;
+    }
+    
+    /* Radio buttons larger */
+    .stRadio > div > div > label {
+        min-height: 48px !important;
+        padding: var(--spacing-sm) var(--spacing-md) !important;
+    }
+    
+    /* Number input touch friendly */
+    .stNumberInput input {
+        min-height: 48px !important;
+    }
+    
+    /* Expander header touch friendly */
+    .streamlit-expanderHeader {
+        min-height: 48px !important;
+        padding: var(--spacing-md) !important;
+    }
+}
+
+/* PWA-like appearance */
+html {
+    -webkit-tap-highlight-color: transparent;
+    -webkit-touch-callout: none;
+    -webkit-user-select: none;
+    user-select: none;
+}
+
+/* Allow text selection in input fields */
+input, textarea, [contenteditable="true"] {
+    -webkit-user-select: text !important;
+    user-select: text !important;
+}
+
+/* Smooth scrolling for iOS */
+.main {
+    -webkit-overflow-scrolling: touch;
+    scroll-behavior: smooth;
+}
+
+/* Prevent iOS zoom on input focus */
+@media screen and (max-width: 767px) {
+    input, select, textarea {
+        font-size: 16px !important;
+    }
+}

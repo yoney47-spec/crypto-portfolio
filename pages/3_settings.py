@@ -3,11 +3,19 @@
 """
 
 import streamlit as st
-import sqlite3
+import requests
 from pathlib import Path
-from database import DB_PATH
 from datetime import datetime
-import shutil
+import time
+
+# Import from Supabase adapter
+from database_supabase import (
+    get_portfolio_data,
+    get_all_transactions, 
+    get_latest_snapshot, 
+    get_snapshot_count,
+    save_portfolio_snapshot
+)
 
 # ページ設定
 st.set_page_config(
@@ -29,24 +37,15 @@ load_css()
 st.markdown("# ⚙️ 設定")
 st.markdown("---")
 
-# データベース情報
-with sqlite3.connect(DB_PATH) as conn:
-    cursor = conn.cursor()
-    
-    # 統計情報取得
-    cursor.execute("SELECT COUNT(*) FROM assets")
-    asset_count = cursor.fetchone()[0]
-    
-    cursor.execute("SELECT COUNT(*) FROM transactions")
-    transaction_count = cursor.fetchone()[0]
-    
-    cursor.execute("SELECT COUNT(*) FROM portfolio_snapshots")
-    snapshot_count = cursor.fetchone()[0]
+# 統計情報取得（Supabase経由）
+# get_portfolio_data returns (portfolio, asset_count, transaction_count)
+_, asset_count, transaction_count = get_portfolio_data()
+snapshot_count = get_snapshot_count()
 
 # データベース概要
-st.markdown("## 📊 データベース概要")
+st.markdown("## 📊 データベース概要 (Cloud)")
 
-col1, col2, col3, col4 = st.columns(4)
+col1, col2, col3 = st.columns(3)
 
 with col1:
     st.markdown(f"""
@@ -75,87 +74,11 @@ with col3:
     </div>
     """, unsafe_allow_html=True)
 
-with col4:
-    # DBファイルサイズ
-    db_size = Path(DB_PATH).stat().st_size / 1024  # KB
-    st.markdown(f"""
-    <div class="metric-card">
-        <div class="metric-label">DBサイズ</div>
-        <div class="metric-value">{db_size:.1f}</div>
-        <div class="metric-label">KB</div>
-    </div>
-    """, unsafe_allow_html=True)
-
 st.markdown("<br>", unsafe_allow_html=True)
 
-# バックアップ/リストアセクション
-st.markdown("## 💾 バックアップ/リストア")
-
-tab1, tab2 = st.tabs(["📥 バックアップ（ダウンロード）", "📤 リストア（復元）"])
-
-with tab1:
-    st.markdown("### データベースのバックアップ")
-    st.markdown("現在のデータベースをファイルとしてダウンロードします。定期的なバックアップを推奨します。")
-    
-    col_a, col_b = st.columns([2, 1])
-    
-    with col_a:
-        st.info("💡 バックアップファイルは安全な場所に保管してください。")
-    
-    with col_b:
-        # バックアップファイル名生成
-        timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
-        backup_filename = f"crypto_portfolio_backup_{timestamp}.db"
-        
-        # DBファイルを読み込み
-        with open(DB_PATH, "rb") as f:
-            db_data = f.read()
-        
-        st.download_button(
-            label="📥 バックアップをダウンロード",
-            data=db_data,
-            file_name=backup_filename,
-            mime="application/octet-stream",
-            width='stretch',
-            type="primary"
-        )
-
-with tab2:
-    st.markdown("### データベースの復元")
-    st.warning("⚠️ 復元すると**現在のデータは完全に上書き**されます。必ず事前にバックアップを取得してください。")
-    
-    uploaded_file = st.file_uploader(
-        "バックアップファイルを選択",
-        type=["db"],
-        help="以前ダウンロードしたバックアップファイル（.db）を選択してください"
-    )
-    
-    if uploaded_file is not None:
-        st.info(f"📁 選択されたファイル: {uploaded_file.name} ({uploaded_file.size / 1024:.1f} KB)")
-        
-        col_c, col_d = st.columns([1, 1])
-        
-        with col_c:
-            if st.button("🔄 復元を実行", type="primary", width='stretch'):
-                try:
-                    with st.spinner("復元中..."):
-                        # 現在のDBのバックアップを作成（安全のため）
-                        backup_path = DB_PATH.parent / f"backup_before_restore_{datetime.now().strftime('%Y%m%d_%H%M%S')}.db"
-                        shutil.copy2(DB_PATH, backup_path)
-                        
-                        # アップロードされたファイルで上書き
-                        with open(DB_PATH, "wb") as f:
-                            f.write(uploaded_file.getvalue())
-                        
-                        st.success(f"✅ 復元が完了しました！\n\n元のデータは `{backup_path.name}` に保存されています。")
-                        st.info("🔄 ページをリロードして変更を確認してください。")
-                        
-                except Exception as e:
-                    st.error(f"❌ 復元エラー: {str(e)}")
-        
-        with col_d:
-            if st.button("キャンセル", width='stretch'):
-                st.rerun()
+# バックアップセクション (Cloud版ではローカルダウンロード不可のため案内のみ)
+st.markdown("## ☁️ データ管理")
+st.info("データは Supabase (クラウドデータベース) に安全に保存されています。iPhoneやPCなど、どのデバイスからでも同じデータにアクセスできます。")
 
 st.markdown("---")
 
@@ -163,14 +86,12 @@ st.markdown("---")
 st.markdown("## 📸 ポートフォリオスナップショット")
 st.markdown("現在の総資産額を記録して、資産推移を追跡します。")
 
-# スナップショット管理のインポート
-from snapshot_manager import save_portfolio_snapshot, get_latest_snapshot, get_snapshot_count
-import requests
-
 # 最新のスナップショット情報を表示
 latest = get_latest_snapshot()
 if latest:
-    st.info(f"📅 最新のスナップショット: {latest['date']} (¥{latest['total_value_jpy']:,.0f})")
+    date_str = latest['date']
+    val = latest['total_value_jpy']
+    st.info(f"📅 最新のスナップショット: {date_str} (¥{val:,.0f})")
 else:
     st.info("📅 まだスナップショットがありません")
 
@@ -186,27 +107,24 @@ with col_snap2:
     if st.button("📸 スナップショットを取得", width='stretch', type="primary"):
         with st.spinner("現在の資産額を計算中..."):
             try:
-                # 現在のポートフォリオ価値を計算(JPY)
-                with sqlite3.connect(DB_PATH) as conn:
-                    cursor = conn.cursor()
-                    cursor.execute("""
-                        SELECT 
-                            a.api_id,
-                            COALESCE(SUM(CASE WHEN t.type = 'Buy' THEN t.quantity ELSE -t.quantity END), 0) as holdings
-                        FROM assets a
-                        LEFT JOIN transactions t ON a.id = t.asset_id
-                        GROUP BY a.api_id
-                        HAVING holdings > 0
-                    """)
-                    holdings_data = cursor.fetchall()
+                # 現在のポートフォリオ価値を計算 (Supabaseから取得)
+                portfolio, _, _ = get_portfolio_data() 
+                # portfolio item: (id, symbol, name, api_id, icon_url, location, holdings)
                 
-                # CoinGecko APIから現在価格を取得(JPY) - バッチ処理でレート制限回避
-                api_ids = [item[0] for item in holdings_data if item[0]]
+                # 保有資産データを作成 {api_id: holdings}
+                holdings_map = {}
+                for item in portfolio:
+                    api_id = item[3]
+                    holdings = item[6]
+                    if api_id:
+                        holdings_map[api_id] = holdings_map.get(api_id, 0) + holdings
                 
-                if api_ids:
-                    import time
+                if holdings_map:
+                    # CoinGecko APIから現在価格を取得(JPY)
+                    api_ids = list(holdings_map.keys())
+                    
                     prices = {}
-                    batch_size = 250  # 1回のAPI呼び出しで250件まで取得可能
+                    batch_size = 250
                     max_retries = 3
                     
                     for i in range(0, len(api_ids), batch_size):
@@ -214,9 +132,8 @@ with col_snap2:
                         
                         for attempt in range(max_retries):
                             try:
-                                # リクエスト間に待機時間を設ける
                                 if i > 0 or attempt > 0:
-                                    time.sleep(2)  # 2秒待機
+                                    time.sleep(2)
                                 
                                 url = "https://api.coingecko.com/api/v3/simple/price"
                                 params = {
@@ -226,8 +143,7 @@ with col_snap2:
                                 response = requests.get(url, params=params, timeout=15)
                                 
                                 if response.status_code == 429:
-                                    # レート制限: 指数バックオフで待機
-                                    wait_time = 2 ** (attempt + 1)  # 2, 4, 8秒
+                                    wait_time = 2 ** (attempt + 1)
                                     st.info(f"⏳ APIレート制限中... {wait_time}秒後に再試行します")
                                     time.sleep(wait_time)
                                     continue
@@ -235,7 +151,7 @@ with col_snap2:
                                 response.raise_for_status()
                                 batch_prices = response.json()
                                 prices.update(batch_prices)
-                                break  # 成功したらループを抜ける
+                                break
                                 
                             except requests.exceptions.RequestException as e:
                                 if attempt == max_retries - 1:
@@ -246,14 +162,15 @@ with col_snap2:
                     else:
                         # 総資産額を計算
                         total_value_jpy = 0
-                        for api_id, holdings in holdings_data:
-                            if api_id and api_id in prices:
+                        for api_id, holdings in holdings_map.items():
+                            if api_id in prices:
                                 price_jpy = prices[api_id].get("jpy", 0)
                                 total_value_jpy += holdings * price_jpy
                         
                         # スナップショットを保存
                         if save_portfolio_snapshot(total_value_jpy):
                             st.success(f"✅ スナップショットを保存しました！ (¥{total_value_jpy:,.0f})")
+                            time.sleep(1)
                             st.rerun()
                         else:
                             st.error("❌ スナップショットの保存に失敗しました")
@@ -278,10 +195,11 @@ with col_f:
     if st.button("🗑️ キャッシュをクリア", width='stretch'):
         st.cache_data.clear()
         st.success("✅ キャッシュをクリアしました")
+        time.sleep(0.5)
         st.rerun()
 
 st.markdown("<br><br>", unsafe_allow_html=True)
 
 # フッター
 st.markdown("---")
-st.caption("💡 データは安全に管理されています。定期的なバックアップをお勧めします。")
+st.caption("💡 データは Supabase Cloud に安全に保存されています。")
