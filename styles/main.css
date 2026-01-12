@@ -1,0 +1,810 @@
+/* ==========================================
+   Crypto Portfolio - Modern Dark Mode Theme
+   ========================================== */
+
+/* ===== Global Styles ===== */
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap');
+
+:root {
+    /* Colors */
+    --bg-primary: #0E1117;
+    --bg-secondary: #1E2130;
+    --bg-tertiary: #262B3D;
+    --bg-hover: #2D3348;
+
+    --accent-primary: #00D9FF;
+    --accent-success: #00FF88;
+    --accent-danger: #FF4B6E;
+    --accent-warning: #FFB800;
+
+    --text-primary: #FFFFFF;
+    --text-secondary: #B0B8C5;
+    --text-muted: #6C7383;
+
+    --border-color: #2D3348;
+    --shadow-sm: 0 2px 8px rgba(0, 0, 0, 0.3);
+    --shadow-md: 0 4px 16px rgba(0, 0, 0, 0.4);
+    --shadow-lg: 0 8px 32px rgba(0, 0, 0, 0.5);
+
+    /* Spacing - Compact for 4K */
+    --spacing-xs: 3px;
+    --spacing-sm: 6px;
+    --spacing-md: 10px;
+    --spacing-lg: 14px;
+    --spacing-xl: 20px;
+    --spacing-2xl: 28px;
+
+    /* Border Radius */
+    --radius-sm: 4px;
+    --radius-md: 8px;
+    --radius-lg: 10px;
+    --radius-xl: 16px;
+}
+
+/* ===== Base Overrides ===== */
+.stApp {
+    background-color: var(--bg-primary);
+    font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+}
+
+/* Hide Streamlit branding */
+#MainMenu {
+    visibility: hidden;
+}
+
+footer {
+    visibility: hidden;
+}
+
+header {
+    visibility: hidden;
+}
+
+/* Hide Streamlit copy buttons */
+button[data-testid="stCopyButton"],
+button[kind="copy"],
+.copy-icon-container,
+[data-testid="stMarkdownContainer"] button,
+.element-container button[title*="Copy"],
+button[aria-label*="Copy"] {
+    display: none !important;
+    visibility: hidden !important;
+    opacity: 0 !important;
+    width: 0 !important;
+    height: 0 !important;
+}
+
+/* ===== Typography - More Compact and Refined ===== */
+h1,
+h2,
+h3,
+h4,
+h5,
+h6 {
+    color: var(--text-primary) !important;
+    font-weight: 600 !important;
+}
+
+h1 {
+    font-size: 1.5rem !important;
+    margin-bottom: var(--spacing-sm) !important;
+}
+
+h2 {
+    font-size: 1.15rem !important;
+    margin-bottom: var(--spacing-sm) !important;
+}
+
+h3 {
+    font-size: 0.95rem !important;
+    margin-bottom: var(--spacing-xs) !important;
+}
+
+p,
+span,
+div {
+    color: var(--text-secondary);
+}
+
+/* ===== Cards ===== */
+.crypto-card {
+    background: linear-gradient(135deg, var(--bg-secondary) 0%, var(--bg-tertiary) 100%);
+    border: 1px solid var(--border-color);
+    border-radius: var(--radius-md);
+    padding: var(--spacing-md);
+    box-shadow: var(--shadow-sm);
+    transition: all 0.3s ease;
+    margin-bottom: var(--spacing-md);
+}
+
+.crypto-card:hover {
+    transform: translateY(-2px);
+    box-shadow: var(--shadow-md);
+    border-color: var(--accent-primary);
+}
+
+.metric-card {
+    background: var(--bg-secondary);
+    border: 1px solid var(--border-color);
+    border-radius: var(--radius-sm);
+    padding: var(--spacing-md) var(--spacing-sm);
+    text-align: center;
+    box-shadow: var(--shadow-sm);
+    transition: all 0.3s ease;
+}
+
+.metric-card:hover {
+    border-color: var(--accent-primary);
+    box-shadow: var(--shadow-md);
+}
+
+.metric-value {
+    font-size: 1.25rem;
+    font-weight: 700;
+    color: var(--accent-primary);
+    margin: var(--spacing-xs) 0;
+}
+
+.metric-label {
+    font-size: 0.65rem;
+    color: var(--text-muted);
+    text-transform: uppercase;
+    letter-spacing: 0.3px;
+}
+
+/* ===== Asset Cards - More Compact ===== */
+.asset-card {
+    background: var(--bg-secondary);
+    border: 1px solid var(--border-color);
+    border-radius: var(--radius-md);
+    padding: var(--spacing-md);
+    text-align: center;
+    box-shadow: var(--shadow-sm);
+    transition: all 0.3s ease;
+    height: 100%;
+    min-height: 220px;
+    display: flex;
+    flex-direction: column;
+    justify-content: space-between;
+}
+
+.asset-card:hover {
+    transform: translateY(-2px);
+    box-shadow: var(--shadow-md);
+    border-color: var(--accent-primary);
+}
+
+.asset-card-content {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+}
+
+.asset-icon {
+    width: 40px;
+    height: 40px;
+    border-radius: 50%;
+    margin: 0 auto var(--spacing-xs);
+    background: var(--bg-tertiary);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 1rem;
+}
+
+.asset-symbol {
+    font-size: 0.9rem;
+    font-weight: 700;
+    color: var(--text-primary);
+    margin-bottom: var(--spacing-xs);
+    text-align: center;
+}
+
+.asset-name {
+    font-size: 0.65rem;
+    color: var(--text-muted);
+    margin-bottom: var(--spacing-xs);
+    text-align: center;
+}
+
+.asset-value {
+    font-size: 1.1rem;
+    font-weight: 700;
+    color: var(--accent-primary);
+    margin-top: var(--spacing-xs);
+    text-align: center;
+}
+
+/* ===== Buttons - Compact and Refined ===== */
+.stButton>button {
+    background: linear-gradient(135deg, var(--accent-primary) 0%, #0099CC 100%);
+    color: #0E1117 !important;
+    border: none;
+    border-radius: var(--radius-sm);
+    padding: var(--spacing-xs) var(--spacing-md);
+    font-weight: 600 !important;
+    font-size: 0.75rem;
+    transition: all 0.3s ease;
+    box-shadow: var(--shadow-sm);
+    letter-spacing: 0.2px;
+}
+
+.stButton>button p {
+    color: #0E1117 !important;
+    font-weight: 600 !important;
+}
+
+.stButton>button:hover {
+    transform: translateY(-1px);
+    box-shadow: var(--shadow-md);
+    background: linear-gradient(135deg, #00E5FF 0%, #00B8E6 100%);
+}
+
+.stButton>button:active {
+    transform: translateY(0);
+}
+
+/* Success Button */
+.success-button>button {
+    background: linear-gradient(135deg, var(--accent-success) 0%, #00CC66 100%);
+}
+
+.success-button>button:hover {
+    background: linear-gradient(135deg, #00FF99 0%, #00E077 100%);
+}
+
+/* Danger Button */
+.danger-button>button {
+    background: linear-gradient(135deg, var(--accent-danger) 0%, #CC3355 100%);
+}
+
+.danger-button>button:hover {
+    background: linear-gradient(135deg, #FF5577 0%, #E63D5F 100%);
+}
+
+/* ===== Inputs - Compact ===== */
+.stTextInput>div>div>input,
+.stNumberInput>div>div>input,
+.stSelectbox>div>div>select,
+.stTextArea>div>div>textarea,
+.stDateInput>div>div>input {
+    background-color: var(--bg-secondary) !important;
+    border: 1px solid var(--border-color) !important;
+    border-radius: var(--radius-sm) !important;
+    color: var(--text-primary) !important;
+    padding: var(--spacing-sm) var(--spacing-md) !important;
+    font-size: 0.875rem !important;
+    transition: all 0.3s ease !important;
+}
+
+.stTextInput>div>div>input:focus,
+.stNumberInput>div>div>input:focus,
+.stSelectbox>div>div>select:focus,
+.stTextArea>div>div>textarea:focus,
+.stDateInput>div>div>input:focus {
+    border-color: var(--accent-primary) !important;
+    box-shadow: 0 0 0 2px rgba(0, 217, 255, 0.2) !important;
+}
+
+/* Input Labels */
+.stTextInput>label,
+.stNumberInput>label,
+.stSelectbox>label,
+.stTextArea>label,
+.stDateInput>label {
+    color: var(--text-secondary) !important;
+    font-weight: 500 !important;
+    font-size: 0.75rem !important;
+    margin-bottom: var(--spacing-xs) !important;
+}
+
+/* ===== Radio Buttons ===== */
+.stRadio>div {
+    background-color: var(--bg-secondary);
+    border-radius: var(--radius-md);
+    padding: var(--spacing-md);
+}
+
+.stRadio>div>label {
+    color: var(--text-secondary) !important;
+}
+
+.stRadio>div>div>label {
+    color: var(--text-primary) !important;
+    padding: var(--spacing-sm) var(--spacing-md);
+    border-radius: var(--radius-sm);
+    transition: all 0.3s ease;
+}
+
+.stRadio>div>div>label:hover {
+    background-color: var(--bg-tertiary);
+}
+
+/* ===== Tables - Compact ===== */
+.stDataFrame {
+    background-color: var(--bg-secondary) !important;
+    border-radius: var(--radius-md);
+    overflow: hidden;
+    box-shadow: var(--shadow-sm);
+}
+
+.stDataFrame table {
+    color: var(--text-primary) !important;
+    background-color: var(--bg-secondary) !important;
+}
+
+.stDataFrame thead tr th {
+    background-color: var(--bg-tertiary) !important;
+    color: var(--text-primary) !important;
+    font-weight: 600 !important;
+    text-transform: uppercase;
+    font-size: 0.7rem;
+    letter-spacing: 0.5px;
+    padding: var(--spacing-sm) var(--spacing-md) !important;
+    border-bottom: 2px solid var(--accent-primary) !important;
+}
+
+.stDataFrame tbody tr {
+    border-bottom: 1px solid var(--border-color) !important;
+    transition: all 0.2s ease;
+    background-color: var(--bg-secondary) !important;
+}
+
+.stDataFrame tbody tr:hover {
+    background-color: var(--bg-hover) !important;
+}
+
+.stDataFrame tbody tr td {
+    padding: var(--spacing-sm) var(--spacing-md) !important;
+    color: var(--text-secondary) !important;
+    background-color: transparent !important;
+    font-size: 0.85rem;
+}
+
+/* Selectbox & Multiselect Dropdown Dark Mode */
+.stSelectbox>div>div>div[role="listbox"],
+.stMultiSelect>div>div>div[role="listbox"] {
+    background-color: var(--bg-secondary) !important;
+    border: 1px solid var(--border-color) !important;
+}
+
+.stSelectbox div[data-baseweb="select"]>div,
+.stMultiSelect div[data-baseweb="select"]>div {
+    background-color: var(--bg-secondary) !important;
+    border-color: var(--border-color) !important;
+}
+
+.stSelectbox div[role="option"],
+.stMultiSelect div[role="option"] {
+    background-color: var(--bg-secondary) !important;
+    color: var(--text-primary) !important;
+}
+
+.stSelectbox div[role="option"]:hover,
+.stMultiSelect div[role="option"]:hover {
+    background-color: var(--bg-hover) !important;
+}
+
+.stSelectbox div[aria-selected="true"],
+.stMultiSelect div[aria-selected="true"] {
+    background-color: var(--bg-tertiary) !important;
+    color: var(--accent-primary) !important;
+}
+
+/* Stronger selector for dropdown menu */
+div[data-baseweb="popover"]>div {
+    background-color: var(--bg-secondary) !important;
+    border: 1px solid var(--border-color) !important;
+}
+
+div[data-baseweb="menu"] {
+    background-color: var(--bg-secondary) !important;
+}
+
+div[data-baseweb="menu"] li {
+    background-color: var(--bg-secondary) !important;
+    color: var(--text-primary) !important;
+}
+
+div[data-baseweb="menu"] li:hover {
+    background-color: var(--bg-hover) !important;
+}
+
+/* DataEditor (Streamlit's data table) Dark Mode */
+div[data-testid="stDataFrame"] {
+    background-color: var(--bg-secondary) !important;
+    border-radius: var(--radius-md);
+}
+
+/* ===== Sidebar ===== */
+.css-1d391kg,
+[data-testid="stSidebar"] {
+    background-color: var(--bg-secondary);
+    border-right: 1px solid var(--border-color);
+}
+
+.css-1d391kg .stRadio>div,
+[data-testid="stSidebar"] .stRadio>div {
+    background-color: var(--bg-tertiary);
+}
+
+/* Sidebar text visibility improvements */
+[data-testid="stSidebar"] * {
+    color: var(--text-primary) !important;
+}
+
+[data-testid="stSidebar"] a,
+[data-testid="stSidebar"] span,
+[data-testid="stSidebar"] p,
+[data-testid="stSidebar"] label {
+    color: var(--text-primary) !important;
+    font-weight: 500 !important;
+}
+
+[data-testid="stSidebar"] a:hover {
+    color: var(--accent-primary) !important;
+}
+
+/* Sidebar navigation links */
+[data-testid="stSidebar"] [data-testid="stSidebarNav"] a {
+    color: var(--text-primary) !important;
+    background-color: transparent;
+    transition: all 0.3s ease;
+}
+
+[data-testid="stSidebar"] [data-testid="stSidebarNav"] a:hover {
+    background-color: var(--bg-hover) !important;
+    color: var(--accent-primary) !important;
+}
+
+[data-testid="stSidebar"] [data-testid="stSidebarNav"] a[aria-current="page"] {
+    background-color: var(--bg-tertiary) !important;
+    color: var(--accent-primary) !important;
+    border-left: 3px solid var(--accent-primary);
+}
+
+/* ===== Expander ===== */
+.streamlit-expanderHeader {
+    background-color: var(--bg-secondary);
+    border: 1px solid var(--border-color);
+    border-radius: var(--radius-md);
+    color: var(--text-primary) !important;
+    font-weight: 600;
+}
+
+.streamlit-expanderHeader:hover {
+    border-color: var(--accent-primary);
+}
+
+.streamlit-expanderContent {
+    background-color: var(--bg-secondary);
+    border: 1px solid var(--border-color);
+    border-top: none;
+    border-radius: 0 0 var(--radius-md) var(--radius-md);
+}
+
+/* ===== Divider ===== */
+hr {
+    border-color: var(--border-color);
+    margin: var(--spacing-xl) 0;
+}
+
+/* ===== Success/Error Messages ===== */
+.stSuccess {
+    background-color: rgba(0, 255, 136, 0.1);
+    border-left: 4px solid var(--accent-success);
+    color: var(--accent-success);
+    border-radius: var(--radius-sm);
+}
+
+.stError {
+    background-color: rgba(255, 75, 110, 0.1);
+    border-left: 4px solid var(--accent-danger);
+    color: var(--accent-danger);
+    border-radius: var(--radius-sm);
+}
+
+.stWarning {
+    background-color: rgba(255, 184, 0, 0.1);
+    border-left: 4px solid var(--accent-warning);
+    color: var(--accent-warning);
+    border-radius: var(--radius-sm);
+}
+
+.stInfo {
+    background-color: rgba(0, 217, 255, 0.1);
+    border-left: 4px solid var(--accent-primary);
+    color: var(--accent-primary);
+    border-radius: var(--radius-sm);
+}
+
+/* ===== Custom Classes ===== */
+.quick-access-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+    gap: var(--spacing-lg);
+    margin-top: var(--spacing-xl);
+}
+
+.quick-access-card {
+    background: linear-gradient(135deg, var(--bg-secondary) 0%, var(--bg-tertiary) 100%);
+    border: 1px solid var(--border-color);
+    border-radius: var(--radius-lg);
+    padding: var(--spacing-xl);
+    text-align: center;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    box-shadow: var(--shadow-sm);
+}
+
+.quick-access-card:hover {
+    transform: translateY(-8px);
+    box-shadow: var(--shadow-lg);
+    border-color: var(--accent-primary);
+}
+
+.quick-access-icon {
+    font-size: 3rem;
+    margin-bottom: var(--spacing-md);
+}
+
+.quick-access-title {
+    font-size: 1.25rem;
+    font-weight: 600;
+    color: var(--text-primary);
+    margin-bottom: var(--spacing-sm);
+    text-align: center;
+}
+
+.quick-access-desc {
+    font-size: 0.875rem;
+    color: var(--text-muted);
+    text-align: center;
+}
+
+/* ===== Badge ===== */
+.badge {
+    display: inline-block;
+    padding: var(--spacing-xs) var(--spacing-md);
+    border-radius: var(--radius-xl);
+    font-size: 0.75rem;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+}
+
+.badge-buy {
+    background-color: rgba(0, 255, 136, 0.2);
+    color: var(--accent-success);
+    border: 1px solid var(--accent-success);
+}
+
+.badge-sell {
+    background-color: rgba(255, 75, 110, 0.2);
+    color: var(--accent-danger);
+    border: 1px solid var(--accent-danger);
+}
+
+/* ===== Loading Animation ===== */
+@keyframes pulse {
+
+    0%,
+    100% {
+        opacity: 1;
+    }
+
+    50% {
+        opacity: 0.5;
+    }
+}
+
+.loading {
+    animation: pulse 2s cubic-bezier(0.4, 0, 0.6, 1) infinite;
+}
+
+/* ===== Scrollbar ===== */
+::-webkit-scrollbar {
+    width: 8px;
+    height: 8px;
+}
+
+::-webkit-scrollbar-track {
+    background: var(--bg-primary);
+}
+
+::-webkit-scrollbar-thumb {
+    background: var(--bg-tertiary);
+    border-radius: var(--radius-sm);
+}
+
+::-webkit-scrollbar-thumb:hover {
+    background: var(--border-color);
+}
+
+/* ===== Mobile Responsive Design ===== */
+
+/* Tablet: 768px - 1024px */
+@media (min-width: 768px) and (max-width: 1024px) {
+    h1 {
+        font-size: 1.35rem !important;
+    }
+
+    h2 {
+        font-size: 1.05rem !important;
+    }
+
+    .metric-value {
+        font-size: 1.15rem;
+    }
+
+    .asset-card {
+        min-height: 200px;
+    }
+}
+
+/* Mobile: < 768px */
+@media (max-width: 767px) {
+
+    /* Headings - Smaller for mobile */
+    h1 {
+        font-size: 1.25rem !important;
+        margin-bottom: var(--spacing-xs) !important;
+    }
+
+    h2 {
+        font-size: 1rem !important;
+    }
+
+    h3 {
+        font-size: 0.85rem !important;
+    }
+
+    /* Buttons - Larger touch targets */
+    .stButton>button {
+        padding: var(--spacing-sm) var(--spacing-lg) !important;
+        font-size: 0.85rem !important;
+        min-height: 44px;
+        /* iOS recommended minimum */
+    }
+
+    /* Metric Cards - Compact for mobile */
+    .metric-card {
+        padding: var(--spacing-sm) !important;
+        margin-bottom: var(--spacing-sm);
+    }
+
+    .metric-value {
+        font-size: 1.1rem !important;
+        margin: 2px 0;
+    }
+
+    .metric-label {
+        font-size: 0.6rem !important;
+    }
+
+    /* Asset Cards - Smaller on mobile */
+    .asset-card {
+        min-height: 180px;
+        padding: var(--spacing-sm) !important;
+        margin-bottom: var(--spacing-sm);
+    }
+
+    .asset-icon {
+        width: 32px;
+        height: 32px;
+        margin: 0 auto var(--spacing-xs);
+        font-size: 0.85rem;
+    }
+
+    .asset-symbol {
+        font-size: 0.85rem;
+    }
+
+    .asset-name {
+        font-size: 0.6rem;
+    }
+
+    /* Crypto Cards - Holdings display */
+    .crypto-card {
+        padding: var(--spacing-sm) !important;
+        margin-bottom: var(--spacing-sm);
+    }
+
+    /* Tables - Horizontal scroll on mobile */
+    .stDataFrame {
+        overflow-x: auto;
+        -webkit-overflow-scrolling: touch;
+    }
+
+    .stDataFrame table {
+        min-width: 600px;
+        /* Ensure table doesn't collapse */
+    }
+
+    .stDataFrame thead tr th,
+    .stDataFrame tbody tr td {
+        padding: var(--spacing-xs) var(--spacing-sm) !important;
+        font-size: 0.75rem !important;
+    }
+
+    /* Input Fields - Touch friendly */
+    .stTextInput>div>div>input,
+    .stNumberInput>div>div>input,
+    .stSelectbox>div>div>select,
+    .stTextArea>div>div>textarea,
+    .stDateInput>div>div>input {
+        font-size: 0.85rem !important;
+        padding: var(--spacing-sm) !important;
+        min-height: 44px;
+    }
+
+    .stTextInput>label,
+    .stNumberInput>label,
+    .stSelectbox>label,
+    .stTextArea>label,
+    .stDateInput>label {
+        font-size: 0.7rem !important;
+    }
+
+    /* Radio Buttons - Touch friendly */
+    .stRadio>div>div>label {
+        padding: var(--spacing-sm) !important;
+        min-height: 44px;
+        display: flex;
+        align-items: center;
+    }
+
+    /* Sidebar - Mobile optimization */
+    [data-testid="stSidebar"] {
+        min-width: 250px;
+    }
+
+    /* Quick Access Cards */
+    .quick-access-card {
+        padding: var(--spacing-md) !important;
+    }
+
+    .quick-access-icon {
+        font-size: 2rem;
+    }
+
+    .quick-access-title {
+        font-size: 1rem;
+    }
+
+    /* Badges */
+    .badge {
+        font-size: 0.65rem;
+        padding: 2px var(--spacing-sm);
+    }
+
+    /* Reduce spacing overall */
+    hr {
+        margin: var(--spacing-md) 0;
+    }
+}
+
+/* Extra Small Mobile: < 375px */
+@media (max-width: 374px) {
+    h1 {
+        font-size: 1.1rem !important;
+    }
+
+    h2 {
+        font-size: 0.9rem !important;
+    }
+
+    .metric-value {
+        font-size: 1rem !important;
+    }
+
+    .metric-label {
+        font-size: 0.55rem !important;
+    }
+
+    .asset-card {
+        min-height: 160px;
+    }
+}
