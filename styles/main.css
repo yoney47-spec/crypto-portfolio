@@ -823,90 +823,182 @@ hr {
 
 /* Responsive Metric Cards Grid for Mobile */
 @media (max-width: 767px) {
+
     /* Force metric cards container to wrap */
     [data-testid="stHorizontalBlock"] {
         flex-wrap: wrap !important;
-        gap: var(--spacing-sm) !important;
+        gap: 4px !important;
     }
-    
+
     /* Each metric column takes 50% on mobile (2x3 grid) */
-    [data-testid="stHorizontalBlock"] > [data-testid="stColumn"] {
-        flex: 0 0 calc(50% - var(--spacing-sm)) !important;
-        max-width: calc(50% - var(--spacing-sm)) !important;
-        min-width: calc(50% - var(--spacing-sm)) !important;
+    [data-testid="stHorizontalBlock"]>[data-testid="stColumn"] {
+        flex: 0 0 calc(50% - 4px) !important;
+        max-width: calc(50% - 4px) !important;
+        min-width: calc(50% - 4px) !important;
     }
-    
-    /* Main content padding for mobile */
+
+    /* Main content padding for mobile - tighter */
     [data-testid="stMainBlockContainer"] {
-        padding-left: var(--spacing-sm) !important;
-        padding-right: var(--spacing-sm) !important;
+        padding-left: 4px !important;
+        padding-right: 4px !important;
     }
-    
+
     /* Sidebar overlay improvements */
     [data-testid="stSidebar"] {
         width: 85vw !important;
         max-width: 300px !important;
     }
-    
+
     /* Hide wide layout extra padding on mobile */
     .main .block-container {
-        padding-left: var(--spacing-sm) !important;
-        padding-right: var(--spacing-sm) !important;
-        padding-top: var(--spacing-md) !important;
+        padding-left: 4px !important;
+        padding-right: 4px !important;
+        padding-top: 8px !important;
         max-width: 100% !important;
     }
-    
-    /* Page title smaller on mobile */
+
+    /* Page title smaller and left-aligned on mobile */
     h1 {
-        font-size: 1.3rem !important;
-        text-align: center !important;
+        font-size: 1.2rem !important;
+        text-align: left !important;
+        margin-bottom: 4px !important;
     }
-    
+
+    h2 {
+        font-size: 0.95rem !important;
+        margin-bottom: 4px !important;
+    }
+
+    h3 {
+        font-size: 0.85rem !important;
+        margin-bottom: 2px !important;
+    }
+
+    /* Compact metric cards for mobile */
+    .metric-card {
+        padding: 6px 4px !important;
+        margin-bottom: 4px;
+        border-radius: 6px;
+    }
+
+    .metric-value {
+        font-size: 0.95rem !important;
+        margin: 2px 0;
+    }
+
+    .metric-label {
+        font-size: 0.5rem !important;
+        line-height: 1.2;
+    }
+
     /* Improve chart readability on mobile */
     .js-plotly-plot {
         max-width: 100% !important;
     }
-    
+
     /* Stack chart columns vertically on mobile */
     [data-testid="stHorizontalBlock"]:has(.js-plotly-plot) {
         flex-direction: column !important;
     }
-    
-    [data-testid="stHorizontalBlock"]:has(.js-plotly-plot) > [data-testid="stColumn"] {
+
+    [data-testid="stHorizontalBlock"]:has(.js-plotly-plot)>[data-testid="stColumn"] {
         flex: 1 1 100% !important;
         max-width: 100% !important;
         min-width: 100% !important;
+    }
+
+    /* Reduce spacing between sections */
+    hr {
+        margin: 8px 0 !important;
+    }
+
+    /* Tighter expander styling */
+    .streamlit-expanderHeader {
+        padding: 8px 12px !important;
+        font-size: 0.85rem !important;
+    }
+
+    /* Compact tabs */
+    .stTabs [data-baseweb="tab-list"] {
+        gap: 2px !important;
+    }
+
+    .stTabs [data-baseweb="tab"] {
+        padding: 8px 12px !important;
+        font-size: 0.8rem !important;
+    }
+
+    /* Reduce br spacing */
+    br {
+        display: none;
+    }
+
+    /* Compact form elements */
+    .stTextInput>label,
+    .stNumberInput>label,
+    .stSelectbox>label,
+    .stDateInput>label {
+        font-size: 0.7rem !important;
+        margin-bottom: 2px !important;
+    }
+
+    /* Compact radio buttons */
+    .stRadio>div {
+        padding: 6px !important;
+    }
+
+    .stRadio>div>label {
+        font-size: 0.7rem !important;
+    }
+}
+
+/* Extra compact for very small screens (iPhone SE, etc.) */
+@media (max-width: 375px) {
+    .metric-card {
+        padding: 4px 2px !important;
+    }
+
+    .metric-value {
+        font-size: 0.85rem !important;
+    }
+
+    .metric-label {
+        font-size: 0.45rem !important;
+    }
+
+    h1 {
+        font-size: 1rem !important;
     }
 }
 
 /* Touch-friendly improvements for all touch devices */
 @media (pointer: coarse) {
+
     /* Larger click targets */
-    .stButton > button {
-        min-height: 48px !important;
-        padding: var(--spacing-md) var(--spacing-lg) !important;
-    }
-    
-    /* Select boxes touch friendly */
-    .stSelectbox > div > div {
-        min-height: 48px !important;
-    }
-    
-    /* Radio buttons larger */
-    .stRadio > div > div > label {
-        min-height: 48px !important;
+    .stButton>button {
+        min-height: 44px !important;
         padding: var(--spacing-sm) var(--spacing-md) !important;
     }
-    
+
+    /* Select boxes touch friendly */
+    .stSelectbox>div>div {
+        min-height: 44px !important;
+    }
+
+    /* Radio buttons larger */
+    .stRadio>div>div>label {
+        min-height: 44px !important;
+        padding: var(--spacing-xs) var(--spacing-sm) !important;
+    }
+
     /* Number input touch friendly */
     .stNumberInput input {
-        min-height: 48px !important;
+        min-height: 44px !important;
     }
-    
+
     /* Expander header touch friendly */
     .streamlit-expanderHeader {
-        min-height: 48px !important;
-        padding: var(--spacing-md) !important;
+        min-height: 44px !important;
     }
 }
 
@@ -919,7 +1011,9 @@ html {
 }
 
 /* Allow text selection in input fields */
-input, textarea, [contenteditable="true"] {
+input,
+textarea,
+[contenteditable="true"] {
     -webkit-user-select: text !important;
     user-select: text !important;
 }
@@ -932,7 +1026,10 @@ input, textarea, [contenteditable="true"] {
 
 /* Prevent iOS zoom on input focus */
 @media screen and (max-width: 767px) {
-    input, select, textarea {
+
+    input,
+    select,
+    textarea {
         font-size: 16px !important;
     }
 }

@@ -304,9 +304,9 @@ with col1:
     val_str = f"¥{disp_total_investment:,.0f}" if currency == "JPY" else f"${disp_total_investment:,.2f}"
     st.markdown(f"""
     <div class="metric-card">
-        <div class="metric-label">投資総額 ({currency}) <span style="background: rgba(0,217,255,0.2); padding: 2px 8px; border-radius: 10px; font-size: 0.7rem; margin-left: 5px;">{period_label}</span></div>
+        <div class="metric-label">投資額 ({period_label})</div>
         <div class="metric-value">{val_str}</div>
-        <div class="metric-label">Buy Total</div>
+        <div class="metric-label">Buy</div>
     </div>
     """, unsafe_allow_html=True)
 
@@ -314,9 +314,9 @@ with col2:
     val_str = f"¥{disp_total_sales:,.0f}" if currency == "JPY" else f"${disp_total_sales:,.2f}"
     st.markdown(f"""
     <div class="metric-card">
-        <div class="metric-label">売却総額 ({currency}) <span style="background: rgba(0,217,255,0.2); padding: 2px 8px; border-radius: 10px; font-size: 0.7rem; margin-left: 5px;">{period_label}</span></div>
+        <div class="metric-label">売却額 ({period_label})</div>
         <div class="metric-value">{val_str}</div>
-        <div class="metric-label">Sell Total</div>
+        <div class="metric-label">Sell</div>
     </div>
     """, unsafe_allow_html=True)
 
@@ -325,22 +325,21 @@ with col3:
     val_str = f"¥{disp_total_pl:,.0f}" if currency == "JPY" else f"${disp_total_pl:,.2f}"
     st.markdown(f"""
     <div class="metric-card">
-        <div class="metric-label">評価損益 (Total P/L) <span style="background: rgba(0,217,255,0.2); padding: 2px 8px; border-radius: 10px; font-size: 0.7rem; margin-left: 5px;">{period_label}</span></div>
+        <div class="metric-label">損益 ({period_label})</div>
         <div class="metric-value" style="color: {pl_color};">{val_str}</div>
-        <div class="metric-label">Unrealized + Realized</div>
+        <div class="metric-label">P/L</div>
     </div>
     """, unsafe_allow_html=True)
 
 with col4:
     st.markdown(f"""
     <div class="metric-card">
-        <div class="metric-label">取引回数 <span style="background: rgba(0,217,255,0.2); padding: 2px 8px; border-radius: 10px; font-size: 0.7rem; margin-left: 5px;">{period_label}</span></div>
+        <div class="metric-label">取引数 ({period_label})</div>
         <div class="metric-value">{stats['transaction_count']}</div>
-        <div class="metric-label">Transactions</div>
+        <div class="metric-label">Txns</div>
     </div>
     """, unsafe_allow_html=True)
 
-st.markdown("<br>", unsafe_allow_html=True)
 
 # タブで機能を分ける
 tab1, tab2, tab3 = st.tabs(["取引履歴", "新規取引", "保有状況"])
