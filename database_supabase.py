@@ -415,11 +415,22 @@ def get_statistics(start_date=None, end_date=None):
     for t in all_trans:
         # t[1] is iso formatted date string or datetime
         d_val = pd.to_datetime(t[1])
+        # Remove timezone info for comparison (Supabase returns tz-aware timestamps)
+        if d_val.tzinfo is not None:
+            d_val = d_val.tz_localize(None)
         
-        if start_date and d_val < pd.to_datetime(start_date):
-            continue
-        if end_date and d_val > pd.to_datetime(end_date):
-            continue
+        if start_date:
+            start_dt = pd.to_datetime(start_date)
+            if start_dt.tzinfo is not None:
+                start_dt = start_dt.tz_localize(None)
+            if d_val < start_dt:
+                continue
+        if end_date:
+            end_dt = pd.to_datetime(end_date)
+            if end_dt.tzinfo is not None:
+                end_dt = end_dt.tz_localize(None)
+            if d_val > end_dt:
+                continue
         filtered.append(t)
         
     total_investment = 0.0
@@ -517,10 +528,19 @@ def get_portfolio_history(days: int = 365) -> List[Tuple]:
     
     try:
         res = client.table("portfolio_snapshots").select("date, total_value_jpy").order("date", desc=True).limit(days).execute()
-        # Return as list of tuples, newest first? original said reversed(results) which means Old -> New
-        # Original SQL was ORDER BY date DESC (New -> Old)
-        # Then returns reversed() -> (Old -> New)
         
+        data = []
+        if res.data:
+            for item in res.data:
+                data.append((item['date'], item['total_value_jpy']))
+            
+            # Reverse to get Oldest first for charting
+            data.reverse()
+            
+        return data
+    except Exception as e:
+        print(f"Error fetching history: {e}")
+        return []
 
 def get_latest_snapshot() -> Optional[Dict]:
     """
