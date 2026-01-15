@@ -313,19 +313,20 @@ portfolio_24h_percent = (portfolio_24h_change / total_portfolio_value * 100) if 
 top_performer = max(portfolio_display_data, key=lambda x: current_prices.get(x['api_id'], {}).get(f'{vs_currency}_24h_change', 0) or 0) if portfolio_display_data else None
 worst_performer = min(portfolio_display_data, key=lambda x: current_prices.get(x['api_id'], {}).get(f'{vs_currency}_24h_change', 0) or 0) if portfolio_display_data else None
 
-# メトリクスエリア（上部）- 6カラム（モバイルで2x3グリッド）
-col1, col2, col3, col4, col5, col6 = st.columns(6)
+# メトリクスエリア（上部）- 3カラム×2行（モバイルで自然に表示）
+# --- 1行目: 総資産、損益、24h変動 ---
+row1_col1, row1_col2, row1_col3 = st.columns(3)
 
-with col1:
+with row1_col1:
     st.markdown(f"""
     <div class="metric-card" style="border-color: var(--accent-primary); box-shadow: 0 0 15px rgba(0, 217, 255, 0.1);">
         <div class="metric-label">総資産 ({currency})</div>
         <div class="metric-value">{currency_symbol}{total_portfolio_value:,.0f}</div>
-        <div class="metric-label">Total Value</div>
+        <div class="metric-label">{len(portfolio_data)} Assets</div>
     </div>
     """, unsafe_allow_html=True)
 
-with col2:
+with row1_col2:
     pl_color = "var(--accent-success)" if total_pl_usd >= 0 else "var(--accent-danger)"
     pl_icon = "▲" if total_pl_usd >= 0 else "▼"
     st.markdown(f"""
@@ -336,7 +337,7 @@ with col2:
     </div>
     """, unsafe_allow_html=True)
 
-with col3:
+with row1_col3:
     change_color = "var(--accent-success)" if portfolio_24h_change >= 0 else "var(--accent-danger)"
     change_icon = "▲" if portfolio_24h_change >= 0 else "▼"
     st.markdown(f"""
@@ -347,7 +348,10 @@ with col3:
     </div>
     """, unsafe_allow_html=True)
 
-with col4:
+# --- 2行目: 保有銘柄、急上昇、急下落 ---
+row2_col1, row2_col2, row2_col3 = st.columns(3)
+
+with row2_col1:
     st.markdown(f"""
     <div class="metric-card">
         <div class="metric-label">保有銘柄</div>
@@ -356,7 +360,7 @@ with col4:
     </div>
     """, unsafe_allow_html=True)
 
-with col5:
+with row2_col2:
     if top_performer:
         top_change = current_prices.get(top_performer['api_id'], {}).get(f"{vs_currency}_24h_change", 0) or 0
         st.markdown(f"""
@@ -369,7 +373,7 @@ with col5:
     else:
         st.markdown("<div class='metric-card'><div class='metric-label'>-</div></div>", unsafe_allow_html=True)
 
-with col6:
+with row2_col3:
     if worst_performer:
         worst_change = current_prices.get(worst_performer['api_id'], {}).get(f"{vs_currency}_24h_change", 0) or 0
         st.markdown(f"""
@@ -381,6 +385,7 @@ with col6:
         """, unsafe_allow_html=True)
     else:
         st.markdown("<div class='metric-card'><div class='metric-label'>-</div></div>", unsafe_allow_html=True)
+
 
 
 

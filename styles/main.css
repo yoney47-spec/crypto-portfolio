@@ -821,51 +821,28 @@ hr {
     }
 }
 
-/* Responsive Metric Cards Grid for Mobile */
+/* Responsive Mobile Styles */
 @media (max-width: 767px) {
 
-    /* Reduce header height but keep sidebar toggle visible */
-    [data-testid="stHeader"] {
-        height: 40px !important;
-        min-height: 40px !important;
-    }
+    /* DO NOT modify stHeader - keeps sidebar toggle visible */
 
-    /* Reduce top padding */
-    [data-testid="stAppViewContainer"] {
-        padding-top: 0 !important;
-    }
-
-    /* Force metric cards container to wrap */
-    [data-testid="stHorizontalBlock"] {
-        flex-wrap: wrap !important;
-        gap: 4px !important;
-    }
-
-    /* Each metric column takes 50% on mobile (2x2 grid) */
-    [data-testid="stHorizontalBlock"]>[data-testid="stColumn"] {
-        flex: 0 0 calc(50% - 4px) !important;
-        max-width: calc(50% - 4px) !important;
-        min-width: calc(50% - 4px) !important;
-    }
-
-    /* Main content padding for mobile - tighter */
+    /* Reduce main content padding */
     [data-testid="stMainBlockContainer"] {
-        padding-left: 4px !important;
-        padding-right: 4px !important;
-        padding-top: 0 !important;
+        padding-left: 8px !important;
+        padding-right: 8px !important;
     }
 
-    /* Sidebar overlay improvements */
+    /* Sidebar styling when open */
     [data-testid="stSidebar"] {
-        width: 85vw !important;
-        max-width: 300px !important;
+        width: 280px !important;
+        max-width: 85vw !important;
     }
 
-    /* Hide wide layout extra padding on mobile */
+    /* Block container */
     .main .block-container {
-        padding-left: 4px !important;
-        padding-right: 4px !important;
-        padding-top: 0 !important;
+        padding-left: 8px !important;
+        padding-right: 8px !important;
+        padding-top: 1rem !important;
         max-width: 100% !important;
     }
 
