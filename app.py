@@ -499,8 +499,7 @@ if portfolio_display_data:
         
         fig_donut.update_traces(
             hoverinfo='label+value+percent', 
-            textfont_size=12,
-            marker=dict(line=dict(color='#0E1117', width=2))
+            textfont_size=12
         )
         
         st.plotly_chart(fig_donut, width='stretch')
