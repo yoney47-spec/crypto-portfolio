@@ -1070,89 +1070,54 @@ textarea,
 }
 
 /* ===== Dark Mode DataFrame/Table Styling ===== */
-/* Target Streamlit's Glide Data Grid and all table elements */
+/* Simple dark mode for tables */
 .stDataFrame,
 [data-testid="stDataFrame"],
 [data-testid="stDataFrameResizable"] {
-    background-color: var(--bg-secondary) !important;
-    border-radius: var(--radius-md) !important;
-    overflow: hidden !important;
-    border: 1px solid var(--border-color) !important;
+    background-color: #1E2130 !important;
+    border-radius: 8px !important;
+    border: 1px solid #2D3348 !important;
 }
 
-/* Glide Data Grid container */
-.dvn-scroller,
-.gdg-style {
-    background-color: var(--bg-secondary) !important;
-}
-
-/* All table elements - broad selector */
-[data-testid="stDataFrame"] table,
-[data-testid="stDataFrameResizable"] table,
-.stDataFrame table,
 table {
-    background-color: var(--bg-secondary) !important;
-    color: var(--text-primary) !important;
+    background-color: #1E2130 !important;
+    color: #FFFFFF !important;
 }
 
-/* Table headers */
-[data-testid="stDataFrame"] th,
-[data-testid="stDataFrameResizable"] th,
-.stDataFrame th,
 th {
-    background-color: var(--bg-tertiary) !important;
-    color: var(--text-primary) !important;
-    border-bottom: 1px solid var(--border-color) !important;
-    font-weight: 600 !important;
+    background-color: #262B3D !important;
+    color: #FFFFFF !important;
+    border-bottom: 1px solid #2D3348 !important;
     font-size: 0.7rem !important;
-    padding: 6px 4px !important;
-    white-space: nowrap !important;
-    text-overflow: ellipsis !important;
-    overflow: hidden !important;
+    padding: 6px 8px !important;
 }
 
-/* Table cells */
-[data-testid="stDataFrame"] td,
-[data-testid="stDataFrameResizable"] td,
-.stDataFrame td,
 td {
-    background-color: var(--bg-secondary) !important;
-    color: var(--text-primary) !important;
-    border-bottom: 1px solid var(--border-color) !important;
+    background-color: #1E2130 !important;
+    color: #FFFFFF !important;
+    border-bottom: 1px solid #2D3348 !important;
     font-size: 0.65rem !important;
-    padding: 4px 4px !important;
-    white-space: nowrap !important;
-    text-overflow: ellipsis !important;
-    overflow: hidden !important;
-    max-width: 100px !important;
+    padding: 4px 6px !important;
 }
 
-/* Hover state */
 tr:hover td {
-    background-color: var(--bg-hover) !important;
+    background-color: #2D3348 !important;
 }
 
-/* Mobile table specific adjustments */
+/* Mobile table adjustments */
 @media (max-width: 767px) {
 
     .stDataFrame,
     [data-testid="stDataFrame"],
     [data-testid="stDataFrameResizable"] {
-        overflow-x: scroll !important;
+        overflow-x: auto !important;
         -webkit-overflow-scrolling: touch;
-        max-width: 100vw !important;
     }
 
-    th {
-        font-size: 0.55rem !important;
-        padding: 4px 3px !important;
-        max-width: 70px !important;
-    }
-
+    th,
     td {
         font-size: 0.55rem !important;
-        padding: 3px 3px !important;
-        max-width: 70px !important;
+        padding: 3px 4px !important;
     }
 }
 
