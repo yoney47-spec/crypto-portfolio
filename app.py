@@ -313,15 +313,15 @@ portfolio_24h_percent = (portfolio_24h_change / total_portfolio_value * 100) if 
 top_performer = max(portfolio_display_data, key=lambda x: current_prices.get(x['api_id'], {}).get(f'{vs_currency}_24h_change', 0) or 0) if portfolio_display_data else None
 worst_performer = min(portfolio_display_data, key=lambda x: current_prices.get(x['api_id'], {}).get(f'{vs_currency}_24h_change', 0) or 0) if portfolio_display_data else None
 
-# メトリクスエリア（上部）- 4カラム（モバイルで2x2グリッド）
-col1, col2, col3, col4 = st.columns(4)
+# メトリクスエリア（上部）- 6カラム（モバイルで2x3グリッド）
+col1, col2, col3, col4, col5, col6 = st.columns(6)
 
 with col1:
     st.markdown(f"""
     <div class="metric-card" style="border-color: var(--accent-primary); box-shadow: 0 0 15px rgba(0, 217, 255, 0.1);">
         <div class="metric-label">総資産 ({currency})</div>
         <div class="metric-value">{currency_symbol}{total_portfolio_value:,.0f}</div>
-        <div class="metric-label">{len(portfolio_data)} Assets</div>
+        <div class="metric-label">Total Value</div>
     </div>
     """, unsafe_allow_html=True)
 
@@ -339,28 +339,49 @@ with col2:
 with col3:
     change_color = "var(--accent-success)" if portfolio_24h_change >= 0 else "var(--accent-danger)"
     change_icon = "▲" if portfolio_24h_change >= 0 else "▼"
-    # 最高値情報を追加
-    top_info = ""
-    if top_performer:
-        top_change = current_prices.get(top_performer['api_id'], {}).get(f"{vs_currency}_24h_change", 0) or 0
-        top_info = f"Best: {top_performer['symbol']} +{top_change:.1f}%"
     st.markdown(f"""
     <div class="metric-card">
         <div class="metric-label">24h変動</div>
         <div class="metric-value" style="color: {change_color};">{change_icon} {abs(portfolio_24h_percent):.2f}%</div>
-        <div class="metric-label" style="color: var(--accent-success);">{top_info}</div>
+        <div class="metric-label">{currency_symbol}{abs(portfolio_24h_change):,.0f}</div>
     </div>
     """, unsafe_allow_html=True)
 
 with col4:
-    # 投資額と売却額を表示
     st.markdown(f"""
     <div class="metric-card">
-        <div class="metric-label">今年 投資/売却</div>
-        <div class="metric-value" style="font-size: 0.9rem;">{currency_symbol}{total_investment_this_year * (exchange_rate if vs_currency == 'jpy' else 1):,.0f}</div>
-        <div class="metric-label">売却: {currency_symbol}{total_sales_this_year * (exchange_rate if vs_currency == 'jpy' else 1):,.0f}</div>
+        <div class="metric-label">保有銘柄</div>
+        <div class="metric-value">{len(portfolio_data)}</div>
+        <div class="metric-label">Assets</div>
     </div>
     """, unsafe_allow_html=True)
+
+with col5:
+    if top_performer:
+        top_change = current_prices.get(top_performer['api_id'], {}).get(f"{vs_currency}_24h_change", 0) or 0
+        st.markdown(f"""
+        <div class="metric-card" style="border-color: var(--accent-success);">
+            <div class="metric-label">🔥 急上昇</div>
+            <div class="metric-value" style="color: var(--accent-success);">{top_performer['symbol']}</div>
+            <div class="metric-label" style="color: var(--accent-success);">▲ {top_change:.1f}%</div>
+        </div>
+        """, unsafe_allow_html=True)
+    else:
+        st.markdown("<div class='metric-card'><div class='metric-label'>-</div></div>", unsafe_allow_html=True)
+
+with col6:
+    if worst_performer:
+        worst_change = current_prices.get(worst_performer['api_id'], {}).get(f"{vs_currency}_24h_change", 0) or 0
+        st.markdown(f"""
+        <div class="metric-card" style="border-color: var(--accent-danger);">
+            <div class="metric-label">📉 急下落</div>
+            <div class="metric-value" style="color: var(--accent-danger);">{worst_performer['symbol']}</div>
+            <div class="metric-label" style="color: var(--accent-danger);">▼ {abs(worst_change):.1f}%</div>
+        </div>
+        """, unsafe_allow_html=True)
+    else:
+        st.markdown("<div class='metric-card'><div class='metric-label'>-</div></div>", unsafe_allow_html=True)
+
 
 
 # --- チャートセクション ---
