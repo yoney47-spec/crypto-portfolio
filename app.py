@@ -904,21 +904,30 @@ if portfolio_display_data:
     """
     
     for _, row in display_df.iterrows():
-        pl_percent = row.get('pl_percent', 0) or 0
-        pl_color = "#00FF88" if pl_percent >= 0 else "#FF4B6E"
-        value_display = f"{currency_symbol}{row['value']:,.0f}" if currency == "JPY" else f"{currency_symbol}{row['value']:,.2f}"
-        price_display = f"{row['price']:,.2f}" if currency == "JPY" else f"{row['price']:,.6f}"
-        
-        html_table += f"""
-            <tr style="border-bottom: 1px solid #2D3348;">
-                <td style="padding: 6px; color: #FFFFFF;">{row['symbol']}</td>
-                <td style="padding: 6px; color: #B0B8C5; font-size: 0.65rem;">{row.get('location', '-')}</td>
-                <td style="padding: 6px; color: #FFFFFF; text-align: right;">{row['holdings']:.4f}</td>
-                <td style="padding: 6px; color: #FFFFFF; text-align: right;">{price_display}</td>
-                <td style="padding: 6px; color: #FFFFFF; text-align: right;">{value_display}</td>
-                <td style="padding: 6px; color: {pl_color}; text-align: right;">{pl_percent:+.1f}%</td>
-            </tr>
-        """
+        try:
+            pl_percent = row['pl_percent'] if 'pl_percent' in row.index and pd.notna(row['pl_percent']) else 0
+            pl_color = "#00FF88" if pl_percent >= 0 else "#FF4B6E"
+            value_val = row['value'] if 'value' in row.index else 0
+            price_val = row['price'] if 'price' in row.index else 0
+            holdings_val = row['holdings'] if 'holdings' in row.index else 0
+            location_val = row['location'] if 'location' in row.index else '-'
+            symbol_val = row['symbol'] if 'symbol' in row.index else '-'
+            
+            value_display = f"{currency_symbol}{value_val:,.0f}" if currency == "JPY" else f"{currency_symbol}{value_val:,.2f}"
+            price_display = f"{price_val:,.2f}" if currency == "JPY" else f"{price_val:,.6f}"
+            
+            html_table += f"""
+                <tr style="border-bottom: 1px solid #2D3348;">
+                    <td style="padding: 6px; color: #FFFFFF;">{symbol_val}</td>
+                    <td style="padding: 6px; color: #B0B8C5; font-size: 0.65rem;">{location_val}</td>
+                    <td style="padding: 6px; color: #FFFFFF; text-align: right;">{holdings_val:.4f}</td>
+                    <td style="padding: 6px; color: #FFFFFF; text-align: right;">{price_display}</td>
+                    <td style="padding: 6px; color: #FFFFFF; text-align: right;">{value_display}</td>
+                    <td style="padding: 6px; color: {pl_color}; text-align: right;">{pl_percent:+.1f}%</td>
+                </tr>
+            """
+        except Exception as e:
+            st.error(f"Error processing row: {e}")
     
     html_table += """
         </tbody>
