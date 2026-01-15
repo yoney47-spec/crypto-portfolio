@@ -476,7 +476,7 @@ if portfolio_display_data:
         fig_donut.update_layout(
             title=dict(
                 text="Allocation",
-                font=dict(color="#ffffff", size=14),
+                font=dict(color="#1F2937", size=14),
                 y=0.98,
                 x=0.5,
                 xanchor='center',
@@ -484,7 +484,7 @@ if portfolio_display_data:
             ),
             showlegend=True,
             legend=dict(
-                font=dict(color="#ffffff", size=10),
+                font=dict(color="#1F2937", size=10),
                 orientation="h",
                 yanchor="top",
                 y=-0.1,
@@ -531,7 +531,7 @@ if portfolio_display_data:
         fig_bar.update_layout(
             title=dict(
                 text="Top Assets by Value",
-                font=dict(color="#ffffff", size=14),
+                font=dict(color="#1F2937", size=14),
                 y=0.98,
                 x=0.5,
                 xanchor='center',
@@ -540,7 +540,7 @@ if portfolio_display_data:
             paper_bgcolor='rgba(0,0,0,0)',
             plot_bgcolor='rgba(0,0,0,0)',
             xaxis=dict(showgrid=False, showticklabels=False),
-            yaxis=dict(showgrid=False, tickfont=dict(color='#ffffff')),
+            yaxis=dict(showgrid=False, tickfont=dict(color='#1F2937')),
             margin=dict(t=40, b=10, l=10, r=10),
             height=300
         )
@@ -584,7 +584,7 @@ if portfolio_display_data:
             fig_hist.update_layout(
                 title=dict(
                     text=f"Portfolio History ({change_sign}{change_pct:.1f}%)",
-                    font=dict(color="#ffffff", size=14),
+                    font=dict(color="#1F2937", size=14),
                     y=0.98,
                     x=0.5,
                     xanchor='center',
@@ -715,7 +715,7 @@ if portfolio_display_data:
                 fig_line.update_layout(
                     title=dict(
                         text=f"{selected_symbol} - {timeframe.upper()} Chart",
-                        font=dict(color="#ffffff", size=16),
+                        font=dict(color="#1F2937", size=16),
                         y=0.98,
                         x=0.5,
                         xanchor='center',
@@ -787,7 +787,7 @@ if portfolio_display_data:
         
         fig_ex.update_layout(
             title_text="USD/JPY Exchange Rate (Last 30 Days)",
-            title_font_color="#ffffff",
+            title_font_color="#1F2937",
             paper_bgcolor='rgba(0,0,0,0)',
             plot_bgcolor='rgba(0,0,0,0)',
             xaxis=dict(
