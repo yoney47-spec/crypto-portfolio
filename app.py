@@ -886,13 +886,47 @@ if portfolio_display_data:
     # 行数に応じて高さを動的に計算（1行あたり35px + ヘッダー40px）
     table_height = max(500, len(display_df) * 35 + 40)
     
-    st.dataframe(
-        display_df[display_cols],
-        column_config=column_config,
-        use_container_width=True,
-        hide_index=True,
-        height=table_height
-    )
+    # HTMLテーブルとして表示（モバイルでも確実にダークモードが適用される）
+    html_table = """
+    <div style="overflow-x: auto; -webkit-overflow-scrolling: touch;">
+    <table style="width: 100%; border-collapse: collapse; background-color: #1E2130; font-size: 0.75rem;">
+        <thead>
+            <tr style="background-color: #262B3D;">
+                <th style="padding: 8px 6px; text-align: left; color: #B0B8C5; border-bottom: 1px solid #2D3348;">Name</th>
+                <th style="padding: 8px 6px; text-align: left; color: #B0B8C5; border-bottom: 1px solid #2D3348;">Storage</th>
+                <th style="padding: 8px 6px; text-align: right; color: #B0B8C5; border-bottom: 1px solid #2D3348;">Qty</th>
+                <th style="padding: 8px 6px; text-align: right; color: #B0B8C5; border-bottom: 1px solid #2D3348;">Price</th>
+                <th style="padding: 8px 6px; text-align: right; color: #B0B8C5; border-bottom: 1px solid #2D3348;">Value</th>
+                <th style="padding: 8px 6px; text-align: right; color: #B0B8C5; border-bottom: 1px solid #2D3348;">P/L%</th>
+            </tr>
+        </thead>
+        <tbody>
+    """
+    
+    for _, row in display_df.iterrows():
+        pl_percent = row.get('pl_percent', 0) or 0
+        pl_color = "#00FF88" if pl_percent >= 0 else "#FF4B6E"
+        value_display = f"{currency_symbol}{row['value']:,.0f}" if currency == "JPY" else f"{currency_symbol}{row['value']:,.2f}"
+        price_display = f"{row['price']:,.2f}" if currency == "JPY" else f"{row['price']:,.6f}"
+        
+        html_table += f"""
+            <tr style="border-bottom: 1px solid #2D3348;">
+                <td style="padding: 6px; color: #FFFFFF;">{row['symbol']}</td>
+                <td style="padding: 6px; color: #B0B8C5; font-size: 0.65rem;">{row.get('location', '-')}</td>
+                <td style="padding: 6px; color: #FFFFFF; text-align: right;">{row['holdings']:.4f}</td>
+                <td style="padding: 6px; color: #FFFFFF; text-align: right;">{price_display}</td>
+                <td style="padding: 6px; color: #FFFFFF; text-align: right;">{value_display}</td>
+                <td style="padding: 6px; color: {pl_color}; text-align: right;">{pl_percent:+.1f}%</td>
+            </tr>
+        """
+    
+    html_table += """
+        </tbody>
+    </table>
+    </div>
+    """
+    
+    st.markdown(html_table, unsafe_allow_html=True)
 
 else:
     st.info("保有している資産はありません。")
