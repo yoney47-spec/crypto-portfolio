@@ -824,17 +824,15 @@ hr {
 /* Responsive Metric Cards Grid for Mobile */
 @media (max-width: 767px) {
 
-    /* Remove top padding/margin completely */
-    .stApp>header {
-        display: none !important;
+    /* Reduce header height but keep sidebar toggle visible */
+    [data-testid="stHeader"] {
+        height: 40px !important;
+        min-height: 40px !important;
     }
 
+    /* Reduce top padding */
     [data-testid="stAppViewContainer"] {
         padding-top: 0 !important;
-    }
-
-    [data-testid="stHeader"] {
-        display: none !important;
     }
 
     /* Force metric cards container to wrap */
