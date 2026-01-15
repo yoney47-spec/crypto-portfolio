@@ -1070,42 +1070,65 @@ textarea,
 }
 
 /* ===== Dark Mode DataFrame/Table Styling ===== */
+/* Target Streamlit's Glide Data Grid and all table elements */
 .stDataFrame,
-[data-testid="stDataFrame"] {
+[data-testid="stDataFrame"],
+[data-testid="stDataFrameResizable"] {
     background-color: var(--bg-secondary) !important;
     border-radius: var(--radius-md) !important;
-    overflow: hidden;
+    overflow: hidden !important;
+    border: 1px solid var(--border-color) !important;
 }
 
+/* Glide Data Grid container */
+.dvn-scroller,
+.gdg-style {
+    background-color: var(--bg-secondary) !important;
+}
+
+/* All table elements - broad selector */
+[data-testid="stDataFrame"] table,
+[data-testid="stDataFrameResizable"] table,
 .stDataFrame table,
-[data-testid="stDataFrame"] table {
+table {
     background-color: var(--bg-secondary) !important;
     color: var(--text-primary) !important;
 }
 
-.stDataFrame thead th,
-[data-testid="stDataFrame"] thead th {
+/* Table headers */
+[data-testid="stDataFrame"] th,
+[data-testid="stDataFrameResizable"] th,
+.stDataFrame th,
+th {
     background-color: var(--bg-tertiary) !important;
     color: var(--text-primary) !important;
     border-bottom: 1px solid var(--border-color) !important;
     font-weight: 600 !important;
-    font-size: 0.75rem !important;
-    padding: 8px 10px !important;
+    font-size: 0.7rem !important;
+    padding: 6px 4px !important;
     white-space: nowrap !important;
+    text-overflow: ellipsis !important;
+    overflow: hidden !important;
 }
 
-.stDataFrame tbody td,
-[data-testid="stDataFrame"] tbody td {
+/* Table cells */
+[data-testid="stDataFrame"] td,
+[data-testid="stDataFrameResizable"] td,
+.stDataFrame td,
+td {
     background-color: var(--bg-secondary) !important;
     color: var(--text-primary) !important;
     border-bottom: 1px solid var(--border-color) !important;
-    font-size: 0.75rem !important;
-    padding: 6px 10px !important;
+    font-size: 0.65rem !important;
+    padding: 4px 4px !important;
     white-space: nowrap !important;
+    text-overflow: ellipsis !important;
+    overflow: hidden !important;
+    max-width: 100px !important;
 }
 
-.stDataFrame tbody tr:hover td,
-[data-testid="stDataFrame"] tbody tr:hover td {
+/* Hover state */
+tr:hover td {
     background-color: var(--bg-hover) !important;
 }
 
@@ -1113,27 +1136,23 @@ textarea,
 @media (max-width: 767px) {
 
     .stDataFrame,
-    [data-testid="stDataFrame"] {
-        overflow-x: auto !important;
+    [data-testid="stDataFrame"],
+    [data-testid="stDataFrameResizable"] {
+        overflow-x: scroll !important;
         -webkit-overflow-scrolling: touch;
+        max-width: 100vw !important;
     }
 
-    .stDataFrame table,
-    [data-testid="stDataFrame"] table {
-        min-width: 100% !important;
-        font-size: 0.65rem !important;
+    th {
+        font-size: 0.55rem !important;
+        padding: 4px 3px !important;
+        max-width: 70px !important;
     }
 
-    .stDataFrame thead th,
-    [data-testid="stDataFrame"] thead th {
-        font-size: 0.6rem !important;
-        padding: 6px 8px !important;
-    }
-
-    .stDataFrame tbody td,
-    [data-testid="stDataFrame"] tbody td {
-        font-size: 0.6rem !important;
-        padding: 5px 8px !important;
+    td {
+        font-size: 0.55rem !important;
+        padding: 3px 3px !important;
+        max-width: 70px !important;
     }
 }
 
