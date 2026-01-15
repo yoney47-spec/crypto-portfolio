@@ -314,37 +314,18 @@ top_performer = max(portfolio_display_data, key=lambda x: current_prices.get(x['
 worst_performer = min(portfolio_display_data, key=lambda x: current_prices.get(x['api_id'], {}).get(f'{vs_currency}_24h_change', 0) or 0) if portfolio_display_data else None
 
 # メトリクスエリア - CSSグリッドで2列×3行（モバイル対応）
-# 急上昇・急下落の情報を準備
-top_info_html = ""
-if top_performer:
-    top_change = current_prices.get(top_performer['api_id'], {}).get(f"{vs_currency}_24h_change", 0) or 0
-    top_info_html = f"""
-    <div class="metric-card" style="border-color: var(--accent-success);">
-        <div class="metric-label">🔥 急上昇</div>
-        <div class="metric-value" style="color: var(--accent-success);">{top_performer['symbol']}</div>
-        <div class="metric-label" style="color: var(--accent-success);">▲ {top_change:.1f}%</div>
-    </div>
-    """
-else:
-    top_info_html = "<div class='metric-card'><div class='metric-label'>-</div></div>"
-
-worst_info_html = ""
-if worst_performer:
-    worst_change = current_prices.get(worst_performer['api_id'], {}).get(f"{vs_currency}_24h_change", 0) or 0
-    worst_info_html = f"""
-    <div class="metric-card" style="border-color: var(--accent-danger);">
-        <div class="metric-label">📉 急下落</div>
-        <div class="metric-value" style="color: var(--accent-danger);">{worst_performer['symbol']}</div>
-        <div class="metric-label" style="color: var(--accent-danger);">▼ {abs(worst_change):.1f}%</div>
-    </div>
-    """
-else:
-    worst_info_html = "<div class='metric-card'><div class='metric-label'>-</div></div>"
-
 pl_color = "var(--accent-success)" if total_pl_usd >= 0 else "var(--accent-danger)"
 pl_icon = "▲" if total_pl_usd >= 0 else "▼"
 change_color = "var(--accent-success)" if portfolio_24h_change >= 0 else "var(--accent-danger)"
 change_icon = "▲" if portfolio_24h_change >= 0 else "▼"
+
+# 急上昇の情報
+top_symbol = top_performer['symbol'] if top_performer else "-"
+top_change = current_prices.get(top_performer['api_id'], {}).get(f"{vs_currency}_24h_change", 0) or 0 if top_performer else 0
+
+# 急下落の情報
+worst_symbol = worst_performer['symbol'] if worst_performer else "-"
+worst_change = current_prices.get(worst_performer['api_id'], {}).get(f"{vs_currency}_24h_change", 0) or 0 if worst_performer else 0
 
 st.markdown(f"""
 <div class="metrics-grid">
@@ -368,8 +349,16 @@ st.markdown(f"""
         <div class="metric-value">{len(portfolio_data)}</div>
         <div class="metric-label">Assets</div>
     </div>
-    {top_info_html}
-    {worst_info_html}
+    <div class="metric-card" style="border-color: var(--accent-success);">
+        <div class="metric-label">🔥 急上昇</div>
+        <div class="metric-value" style="color: var(--accent-success);">{top_symbol}</div>
+        <div class="metric-label" style="color: var(--accent-success);">▲ {top_change:.1f}%</div>
+    </div>
+    <div class="metric-card" style="border-color: var(--accent-danger);">
+        <div class="metric-label">📉 急下落</div>
+        <div class="metric-value" style="color: var(--accent-danger);">{worst_symbol}</div>
+        <div class="metric-label" style="color: var(--accent-danger);">▼ {abs(worst_change):.1f}%</div>
+    </div>
 </div>
 """, unsafe_allow_html=True)
 
