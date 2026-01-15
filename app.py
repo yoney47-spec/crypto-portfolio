@@ -272,9 +272,9 @@ def format_price(val, currency="USD"):
         else:
             return f"¥{val:,.0f}"
 
-# ヘッダー
-st.markdown("# Crypto Portfolio Dashboard")
-st.markdown("---")
+# ヘッダー（コンパクト版）
+st.markdown("# Crypto Portfolio")
+
 
 # 総損益の計算（含み益のみ、今年の取引ベース）
 # まず、現在のポートフォリオ価値をUSDで計算

@@ -824,13 +824,26 @@ hr {
 /* Responsive Metric Cards Grid for Mobile */
 @media (max-width: 767px) {
 
+    /* Remove top padding/margin completely */
+    .stApp>header {
+        display: none !important;
+    }
+
+    [data-testid="stAppViewContainer"] {
+        padding-top: 0 !important;
+    }
+
+    [data-testid="stHeader"] {
+        display: none !important;
+    }
+
     /* Force metric cards container to wrap */
     [data-testid="stHorizontalBlock"] {
         flex-wrap: wrap !important;
         gap: 4px !important;
     }
 
-    /* Each metric column takes 50% on mobile (2x3 grid) */
+    /* Each metric column takes 50% on mobile (2x2 grid) */
     [data-testid="stHorizontalBlock"]>[data-testid="stColumn"] {
         flex: 0 0 calc(50% - 4px) !important;
         max-width: calc(50% - 4px) !important;
@@ -841,6 +854,7 @@ hr {
     [data-testid="stMainBlockContainer"] {
         padding-left: 4px !important;
         padding-right: 4px !important;
+        padding-top: 0 !important;
     }
 
     /* Sidebar overlay improvements */
@@ -853,24 +867,25 @@ hr {
     .main .block-container {
         padding-left: 4px !important;
         padding-right: 4px !important;
-        padding-top: 8px !important;
+        padding-top: 0 !important;
         max-width: 100% !important;
     }
 
     /* Page title smaller and left-aligned on mobile */
     h1 {
-        font-size: 1.2rem !important;
+        font-size: 1.1rem !important;
         text-align: left !important;
         margin-bottom: 4px !important;
+        margin-top: 8px !important;
     }
 
     h2 {
-        font-size: 0.95rem !important;
+        font-size: 0.9rem !important;
         margin-bottom: 4px !important;
     }
 
     h3 {
-        font-size: 0.85rem !important;
+        font-size: 0.8rem !important;
         margin-bottom: 2px !important;
     }
 
@@ -896,6 +911,15 @@ hr {
         max-width: 100% !important;
     }
 
+    /* Hide Plotly modebar (toolbar) on mobile to prevent overlap */
+    .modebar {
+        display: none !important;
+    }
+
+    .modebar-container {
+        display: none !important;
+    }
+
     /* Stack chart columns vertically on mobile */
     [data-testid="stHorizontalBlock"]:has(.js-plotly-plot) {
         flex-direction: column !important;
@@ -909,7 +933,7 @@ hr {
 
     /* Reduce spacing between sections */
     hr {
-        margin: 8px 0 !important;
+        margin: 4px 0 !important;
     }
 
     /* Tighter expander styling */
@@ -949,6 +973,29 @@ hr {
 
     .stRadio>div>label {
         font-size: 0.7rem !important;
+    }
+
+    /* Table improvements for mobile */
+    .stDataFrame {
+        overflow-x: auto !important;
+        -webkit-overflow-scrolling: touch;
+    }
+
+    .stDataFrame table {
+        font-size: 0.7rem !important;
+        min-width: 500px !important;
+    }
+
+    .stDataFrame thead th {
+        font-size: 0.6rem !important;
+        padding: 4px 6px !important;
+        white-space: nowrap !important;
+    }
+
+    .stDataFrame tbody td {
+        font-size: 0.65rem !important;
+        padding: 4px 6px !important;
+        white-space: nowrap !important;
     }
 }
 
