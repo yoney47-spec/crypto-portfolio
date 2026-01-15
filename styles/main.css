@@ -1,30 +1,43 @@
 /* ==========================================
-   Crypto Portfolio - Modern Dark Mode Theme
+   Crypto Portfolio - Off-White Light Theme
+   目に優しいオフホワイトテーマ
    ========================================== */
 
 /* ===== Global Styles ===== */
 @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap');
 
 :root {
-    /* Colors */
-    --bg-primary: #0E1117;
-    --bg-secondary: #1E2130;
-    --bg-tertiary: #262B3D;
-    --bg-hover: #2D3348;
+    /* Colors - Off-White Light Theme */
+    --bg-primary: #F8F6F2;
+    /* オフホワイト（クリーム系） */
+    --bg-secondary: #FFFFFF;
+    /* 純白（カード背景） */
+    --bg-tertiary: #F0EDE8;
+    /* 少し暗いオフホワイト */
+    --bg-hover: #EAE7E2;
+    /* ホバー時 */
 
-    --accent-primary: #00D9FF;
-    --accent-success: #00FF88;
-    --accent-danger: #FF4B6E;
-    --accent-warning: #FFB800;
+    --accent-primary: #2563EB;
+    /* ブルー（落ち着いた色） */
+    --accent-success: #059669;
+    /* グリーン */
+    --accent-danger: #DC2626;
+    /* レッド */
+    --accent-warning: #D97706;
+    /* オレンジ */
 
-    --text-primary: #FFFFFF;
-    --text-secondary: #B0B8C5;
-    --text-muted: #6C7383;
+    --text-primary: #1F2937;
+    /* ダークグレー */
+    --text-secondary: #4B5563;
+    /* ミディアムグレー */
+    --text-muted: #9CA3AF;
+    /* ライトグレー */
 
-    --border-color: #2D3348;
-    --shadow-sm: 0 2px 8px rgba(0, 0, 0, 0.3);
-    --shadow-md: 0 4px 16px rgba(0, 0, 0, 0.4);
-    --shadow-lg: 0 8px 32px rgba(0, 0, 0, 0.5);
+    --border-color: #E5E7EB;
+    /* ボーダー */
+    --shadow-sm: 0 1px 3px rgba(0, 0, 0, 0.08);
+    --shadow-md: 0 4px 12px rgba(0, 0, 0, 0.1);
+    --shadow-lg: 0 8px 24px rgba(0, 0, 0, 0.12);
 
     /* Spacing - Compact for 4K */
     --spacing-xs: 3px;
