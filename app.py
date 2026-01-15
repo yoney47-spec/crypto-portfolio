@@ -883,79 +883,16 @@ if portfolio_display_data:
     # 表示するカラムの順序
     display_cols = ["icon_url", "symbol", "name", "location", "holdings", "price", "value", "avg_cost", "pl_percent", "unrealized_pl"]
 
-    # 行数に応じて高さを動的に計算
-    table_height = min(600, max(200, len(display_df) * 40 + 50))
+    # 行数に応じて高さを動的に計算（1行あたり35px + ヘッダー40px）
+    table_height = max(500, len(display_df) * 35 + 40)
     
-    # HTMLテーブルとして表示（st.components.v1.htmlで確実にレンダリング）
-    html_content = f"""
-    <!DOCTYPE html>
-    <html>
-    <head>
-        <style>
-            body {{ margin: 0; padding: 0; background-color: #1E2130; font-family: 'Inter', sans-serif; }}
-            .table-container {{ overflow-x: auto; -webkit-overflow-scrolling: touch; }}
-            table {{ width: 100%; border-collapse: collapse; background-color: #1E2130; font-size: 12px; }}
-            th {{ padding: 10px 8px; text-align: left; color: #B0B8C5; border-bottom: 1px solid #2D3348; background-color: #262B3D; font-weight: 600; }}
-            td {{ padding: 8px; color: #FFFFFF; border-bottom: 1px solid #2D3348; }}
-            tr:hover td {{ background-color: #2D3348; }}
-            .right {{ text-align: right; }}
-            .green {{ color: #00FF88; }}
-            .red {{ color: #FF4B6E; }}
-            .muted {{ color: #B0B8C5; font-size: 11px; }}
-        </style>
-    </head>
-    <body>
-        <div class="table-container">
-            <table>
-                <thead>
-                    <tr>
-                        <th>Symbol</th>
-                        <th>Storage</th>
-                        <th class="right">Qty</th>
-                        <th class="right">Price</th>
-                        <th class="right">Value</th>
-                        <th class="right">P/L%</th>
-                    </tr>
-                </thead>
-                <tbody>
-    """
-    
-    for _, row in display_df.iterrows():
-        try:
-            pl_percent = row['pl_percent'] if 'pl_percent' in row.index and pd.notna(row['pl_percent']) else 0
-            pl_class = "green" if pl_percent >= 0 else "red"
-            value_val = row['value'] if 'value' in row.index else 0
-            price_val = row['price'] if 'price' in row.index else 0
-            holdings_val = row['holdings'] if 'holdings' in row.index else 0
-            location_val = row['location'] if 'location' in row.index else '-'
-            symbol_val = row['symbol'] if 'symbol' in row.index else '-'
-            
-            value_display = f"{currency_symbol}{value_val:,.0f}" if currency == "JPY" else f"{currency_symbol}{value_val:,.2f}"
-            price_display = f"{price_val:,.2f}" if currency == "JPY" else f"{price_val:,.6f}"
-            
-            html_content += f"""
-                    <tr>
-                        <td>{symbol_val}</td>
-                        <td class="muted">{location_val}</td>
-                        <td class="right">{holdings_val:.4f}</td>
-                        <td class="right">{price_display}</td>
-                        <td class="right">{value_display}</td>
-                        <td class="right {pl_class}">{pl_percent:+.1f}%</td>
-                    </tr>
-            """
-        except Exception:
-            pass
-    
-    html_content += """
-                </tbody>
-            </table>
-        </div>
-    </body>
-    </html>
-    """
-    
-    import streamlit.components.v1 as components
-    components.html(html_content, height=table_height, scrolling=True)
+    st.dataframe(
+        display_df[display_cols],
+        column_config=column_config,
+        use_container_width=True,
+        hide_index=True,
+        height=table_height
+    )
 
 else:
     st.info("保有している資産はありません。")
