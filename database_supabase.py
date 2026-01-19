@@ -2,9 +2,12 @@
 import streamlit as st
 import requests
 from postgrest import SyncPostgrestClient
-from datetime import datetime, date
+from datetime import datetime, date, timezone, timedelta
 import pandas as pd
 from typing import Optional, List, Dict, Any, Tuple
+
+# Japan Standard Time (UTC+9)
+JST = timezone(timedelta(hours=9))
 
 # --- Constants copied to avoid circular imports if needed, but imported is better ---
 from constants import COST_FREE_TYPES, COST_BASED_TYPES, TRANSACTION_TYPES
@@ -187,21 +190,21 @@ def add_transaction(date_obj, trans_type, asset_id, quantity, price_per_unit, to
         is_dup, _ = check_duplicate_transactions(date_obj, asset_id, quantity)
         if is_dup:
              st.warning("⚠️ 類似した取引が存在します (重複警告)")
-             # We let it pass or return False? The original app just warned but proceeded? 
-             # Original app logic: warns but user has to decide? 
-             # Actually original 'add_transaction' in app just warns and returns True if user proceeds?
-             # No, the original check returns bool to UI, and UI decides? 
-             # Let's verify existing logic. Original `add_transaction` PRINTS warning but still INSERTS.
-             # Wait, `add_transaction` in `utils.py` prints warning but allows insert? 
-             # Actually strictly looking at `add_transaction` in `pages/2_transactions.py`:
-             # It returns True/False. If duplicate found, it `st.warning`. 
-             # But it CONTINUES to insert. The warning is just visual.
              pass
 
     try:
-        # Convert date to string if needed
-        if isinstance(date_obj, (date, datetime)):
+        # Convert date to ISO string with JST timezone
+        # Treat the input datetime as JST (user's local time)
+        if isinstance(date_obj, datetime):
+            # Add JST timezone info if naive datetime
+            if date_obj.tzinfo is None:
+                date_obj = date_obj.replace(tzinfo=JST)
             date_str = date_obj.isoformat()
+        elif isinstance(date_obj, date):
+            # Convert date to datetime at midnight JST
+            dt = datetime.combine(date_obj, datetime.min.time())
+            dt = dt.replace(tzinfo=JST)
+            date_str = dt.isoformat()
         else:
             date_str = str(date_obj)
 
@@ -225,8 +228,15 @@ def update_transaction(transaction_id, date_obj, trans_type, asset_id, quantity,
     if not client: return False
     
     try:
-        if isinstance(date_obj, (date, datetime)):
+        # Convert date to ISO string with JST timezone
+        if isinstance(date_obj, datetime):
+            if date_obj.tzinfo is None:
+                date_obj = date_obj.replace(tzinfo=JST)
             date_str = date_obj.isoformat()
+        elif isinstance(date_obj, date):
+            dt = datetime.combine(date_obj, datetime.min.time())
+            dt = dt.replace(tzinfo=JST)
+            date_str = dt.isoformat()
         else:
             date_str = str(date_obj)
             
