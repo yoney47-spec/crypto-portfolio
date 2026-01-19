@@ -825,7 +825,7 @@ if portfolio_display_data:
     # 表示用にデータを整形
     display_df = df_holdings.copy()
     
-    # カラム設定
+    # カラム設定 - widthを調整して見切れを防止
     column_config = {
         "icon_url": st.column_config.ImageColumn(
             "Icon",
@@ -842,27 +842,27 @@ if portfolio_display_data:
         ),
         "location": st.column_config.TextColumn(
             "Storage",
-            width="small" 
+            width="medium"  # smallからmediumに変更（見切れ防止）
         ),
         "holdings": st.column_config.NumberColumn(
             "Qty",
             format="%.8f",
-            width="small"
+            width="medium"  # 桁が多いためmediumに変更
         ),
         "price": st.column_config.NumberColumn(
             f"Price ({currency_symbol})",
             format="%.6f" if currency == "USD" else "%.2f",
-            width="small"
+            width="medium"  # 桁が多いためmediumに変更
         ),
         "value": st.column_config.NumberColumn(
             f"Value ({currency_symbol})",
             format="%.2f" if currency == "USD" else "%.0f",
-            width="small"
+            width="medium"  # 桁が多いためmediumに変更
         ),
         "avg_cost": st.column_config.NumberColumn(
             "Avg Cost ($)",
             format="%.6f",
-            width="small",
+            width="medium",  # 桁が多いためmediumに変更
             help="平均取得単価 (USD)"
         ),
         "pl_percent": st.column_config.NumberColumn(
@@ -874,7 +874,7 @@ if portfolio_display_data:
         "unrealized_pl": st.column_config.NumberColumn(
             "Unrealized P/L ($)",
             format="%.2f",
-            width="small",
+            width="medium",  # 桁が多いためmediumに変更
             help="未実現損益 (USD)"
         )
     }
