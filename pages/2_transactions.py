@@ -185,7 +185,7 @@ def edit_transaction_dialog(transaction_id, current_date, current_type, current_
                 )
                 edit_price = 0.0
             else:
-                edit_price = st.number_input("単価 ($)", value=float(current_price), min_value=0.0, step=0.01, format="%.2f")
+                edit_price = st.number_input("単価 ($)", value=float(current_price), min_value=0.0, step=0.00000001, format="%.8f")
         
         edit_total = edit_quantity * edit_price
         st.markdown(f"### 合計金額: **${edit_total:,.2f}**")
@@ -582,8 +582,8 @@ with tab2:
                     price_per_unit = st.number_input(
                         "取得時単価 ($) *",
                         min_value=0.0,
-                        step=0.01,
-                        format="%.2f",
+                        step=0.00000001,
+                        format="%.8f",
                         help="購入時の1通貨あたりのUSD価格"
                     )
             
@@ -644,7 +644,7 @@ with tab3:
                                 <h3 style="margin-bottom: 0.5rem;">{symbol}</h3>
                                 <p style="color: var(--text-muted); margin-bottom: 1rem;">{name}</p>
                                 <div style="font-size: 2rem; font-weight: 700; color: var(--accent-primary);">
-                                    {quantity:,.4f}
+                                    {quantity:,.8f}
                                 </div>
                             </div>
                         </div>
