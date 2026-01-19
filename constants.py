@@ -18,6 +18,13 @@ TRANSACTION_TYPES = {
         "is_cost_free": False,
         "description": "暗号資産を売却した取引"
     },
+    "Transfer": {
+        "label": "移動 (Transfer)",
+        "icon": "📤",
+        "color": "#607D8B",
+        "is_cost_free": True,
+        "description": "別ウォレット/取引所への移動（ポートフォリオから除外）"
+    },
     "Airdrop": {
         "label": "エアドロップ (Airdrop)",
         "icon": "🎁",

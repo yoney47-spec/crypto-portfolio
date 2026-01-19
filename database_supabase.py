@@ -335,7 +335,7 @@ def get_portfolio_data() -> Tuple[List[Tuple], int, int]:
         
         if t_type in ['Buy', 'Airdrop', 'Staking Reward', 'Interest', 'Gift']:
             current_qty += qty
-        elif t_type == 'Sell':
+        elif t_type in ['Sell', 'Transfer']:
             current_qty -= qty
             
         holdings_map[aid] = current_qty
@@ -462,7 +462,7 @@ def get_statistics(start_date=None, end_date=None):
         current_qty = holdings_map.get(aid, 0.0)
         if t_type in ['Buy', 'Airdrop', 'Staking Reward', 'Interest', 'Gift']:
             current_qty += qty
-        elif t_type == 'Sell':
+        elif t_type in ['Sell', 'Transfer']:
             current_qty -= qty
         holdings_map[aid] = current_qty
 
