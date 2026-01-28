@@ -60,20 +60,53 @@ vs_currency = currency.lower()
 # --- データ取得ロジック ---
 # Note: get_portfolio_data and calculate_cost_basis are now imported from database_supabase
 
-# 現在価格の取得 (USD/JPY) - キャッシュ有効化 (TTL: 60秒)
+# USD/JPY為替レートを取得（CoinGecko以外のAPIを使用）
+@st.cache_data(ttl=3600)  # 1時間キャッシュ
+def fetch_usd_jpy_rate():
+    """USD/JPY為替レートを取得（CoinGecko以外のAPI）"""
+    
+    # 方法1: exchangerate.host API (無料、APIキー不要)
+    try:
+        response = requests.get(
+            "https://api.exchangerate.host/latest",
+            params={"base": "USD", "symbols": "JPY"},
+            timeout=5
+        )
+        if response.status_code == 200:
+            data = response.json()
+            if data.get("success") and "rates" in data:
+                return data["rates"].get("JPY", 155.0)
+    except:
+        pass
+    
+    # 方法2: Open Exchange Rates API (無料プラン)
+    try:
+        response = requests.get(
+            "https://open.er-api.com/v6/latest/USD",
+            timeout=5
+        )
+        if response.status_code == 200:
+            data = response.json()
+            if "rates" in data:
+                return data["rates"].get("JPY", 155.0)
+    except:
+        pass
+    
+    # フォールバック: 固定レート
+    return 155.0
+
+# 現在価格の取得 (USDのみ) - キャッシュ有効化
 @st.cache_data(ttl=1800)  # 30分キャッシュ（APIレート制限対策）
-def fetch_current_prices(api_ids, vs_curr="usd"):
-    """CoinGecko APIから現在価格を取得"""
+def fetch_current_prices_usd(api_ids):
+    """CoinGecko APIからUSD価格のみを取得（レート制限対策）"""
     if not api_ids:
         return {}
     
-    # 常にUSDも含める（P/L計算に必要）
-    currencies = f"usd,{vs_curr}" if vs_curr != "usd" else "usd"
-        
+    # USDのみ取得（JPYはレート換算で対応）
     url = "https://api.coingecko.com/api/v3/simple/price"
     params = {
         "ids": ",".join(api_ids),
-        "vs_currencies": currencies,
+        "vs_currencies": "usd",
         "include_24hr_change": "true"
     }
     
@@ -96,6 +129,23 @@ def fetch_current_prices(api_ids, vs_curr="usd"):
                 continue
             return None
     return None
+
+def get_prices_with_jpy(api_ids, usd_jpy_rate):
+    """USD価格を取得し、JPY価格も計算して追加"""
+    prices_usd = fetch_current_prices_usd(tuple(api_ids))  # tupleに変換してキャッシュ可能に
+    if prices_usd is None:
+        return None
+    
+    # JPY価格を追加
+    result = {}
+    for api_id, data in prices_usd.items():
+        result[api_id] = {
+            "usd": data.get("usd"),
+            "jpy": data.get("usd", 0) * usd_jpy_rate if data.get("usd") else None,
+            "usd_24h_change": data.get("usd_24h_change"),
+            "jpy_24h_change": data.get("usd_24h_change"),  # 変動率はUSDと同じ
+        }
+    return result
 
 # 過去の価格チャートデータを取得 (キャッシュ無効化: エラー時のNoneキャッシュを防ぐため)
 def fetch_market_chart(api_id, vs_curr="usd", days=7):
@@ -175,24 +225,17 @@ portfolio_data, asset_count, transaction_count = get_portfolio_data()
 # API IDリスト作成
 api_ids = [item[3] for item in portfolio_data if item[3]]
 
-# 価格取得 (選択された通貨で) - スピナー表示
+# 為替レートを先に取得（CoinGecko以外のAPIを使用）
+with st.spinner('為替レートを取得中...'):
+    exchange_rate = fetch_usd_jpy_rate()
+
+# 価格取得 (USD価格のみ取得し、JPYは計算で導出) - スピナー表示
 with st.spinner('最新価格を取得中...'):
-    current_prices = fetch_current_prices(api_ids, vs_curr=vs_currency)
+    current_prices = get_prices_with_jpy(api_ids, exchange_rate)
 
 if current_prices is None:
     st.warning("APIレート制限により、最新価格が取得できませんでした。しばらく待ってから「データ更新」ボタンを押してください。")
     current_prices = {}
-
-# 為替レート取得（JPY表示時の損益計算用）
-exchange_rate = 1.0  # デフォルトはUSD
-if vs_currency == "jpy":
-    with st.spinner('為替レートを取得中...'):
-        # 最新の為替レートを取得
-        exchange_data = fetch_exchange_rate_history(days=1)
-        if exchange_data and 'prices' in exchange_data and exchange_data['prices']:
-            exchange_rate = exchange_data['prices'][-1][1]  # 最新のレート
-        else:
-            exchange_rate = 150.0  # フォールバック値
 
 
 # 総資産額の計算とチャート用データ作成

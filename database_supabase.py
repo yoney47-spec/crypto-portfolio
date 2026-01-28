@@ -520,7 +520,8 @@ def save_portfolio_snapshot(total_value_jpy: float) -> bool:
     if not client: return False
     
     try:
-        today = date.today().isoformat()
+        # Use JST (Japan Standard Time) for the date instead of system local time
+        today = datetime.now(JST).date().isoformat()
         data = {
             "date": today,
             "total_value_jpy": total_value_jpy

@@ -68,14 +68,38 @@ def process_uploaded_image(uploaded_file):
         st.error(f"画像処理エラー: {e}")
         return None
 
-# CoinGecko APIから価格を取得（バッチ処理）
+# USD/JPY為替レート取得（CoinGecko以外のAPI）
+def get_usd_jpy_rate():
+    """USD/JPY為替レートを取得"""
+    if "usd_jpy_rate" not in st.session_state:
+        # 方法1: Open Exchange Rates API (無料)
+        try:
+            response = requests.get(
+                "https://open.er-api.com/v6/latest/USD",
+                timeout=5
+            )
+            if response.status_code == 200:
+                data = response.json()
+                if "rates" in data:
+                    st.session_state.usd_jpy_rate = data["rates"].get("JPY", 155.0)
+                    return st.session_state.usd_jpy_rate
+        except:
+            pass
+        # フォールバック
+        st.session_state.usd_jpy_rate = 155.0
+    return st.session_state.usd_jpy_rate
+
+# CoinGecko APIから価格を取得（バッチ処理 - USDのみ取得してJPYは計算）
 def get_crypto_prices_batch(api_ids, force_refresh=False):
-    """複数の暗号資産の価格を一度に取得してキャッシュ(USD & JPY)"""
+    """複数の暗号資産の価格を一度に取得してキャッシュ(USDのみ取得、JPYは計算)"""
     import time
     
     # セッションステートにキャッシュがあれば使用
     if "price_cache" not in st.session_state:
         st.session_state.price_cache = {}
+    
+    # 為替レートを取得
+    usd_jpy_rate = get_usd_jpy_rate()
     
     # 強制更新の場合は全て再取得
     if force_refresh:
@@ -90,11 +114,11 @@ def get_crypto_prices_batch(api_ids, force_refresh=False):
         
         for attempt in range(max_retries):
             try:
-                # 複数のIDをカンマ区切りで一度に取得(USD & JPY)
+                # USDのみ取得（JPYはレート計算で対応）
                 url = "https://api.coingecko.com/api/v3/simple/price"
                 params = {
                     "ids": ",".join(ids_to_fetch),
-                    "vs_currencies": "usd,jpy",
+                    "vs_currencies": "usd",
                     "include_24hr_change": "true"
                 }
                 response = requests.get(url, params=params, timeout=10)
@@ -112,14 +136,16 @@ def get_crypto_prices_batch(api_ids, force_refresh=False):
                 response.raise_for_status()
                 data = response.json()
                 
-                # キャッシュに保存(USD & JPY両方)
+                # キャッシュに保存(USDを取得し、JPYは計算)
                 for api_id in ids_to_fetch:
                     if api_id in data:
+                        usd_price = data[api_id].get("usd")
+                        usd_change = data[api_id].get("usd_24h_change")
                         st.session_state.price_cache[api_id] = {
-                            "usd": data[api_id].get("usd"),
-                            "jpy": data[api_id].get("jpy"),
-                            "usd_24h_change": data[api_id].get("usd_24h_change"),
-                            "jpy_24h_change": data[api_id].get("jpy_24h_change")
+                            "usd": usd_price,
+                            "jpy": usd_price * usd_jpy_rate if usd_price else None,
+                            "usd_24h_change": usd_change,
+                            "jpy_24h_change": usd_change  # 変動率はUSDと同じ
                         }
                     else:
                         st.session_state.price_cache[api_id] = {
