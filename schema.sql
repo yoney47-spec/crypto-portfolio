@@ -41,7 +41,19 @@ create policy "Enable all for anon" on assets for all using (true) with check (t
 create policy "Enable all for anon" on transactions for all using (true) with check (true);
 create policy "Enable all for anon" on portfolio_snapshots for all using (true) with check (true);
 
--- 5. Storage Bucket (You must do this manually in Dashboard usually, but here is SQL if supported)
+-- 5. Create Price Cache Table (for API rate limit fallback)
+create table if not exists price_cache (
+  api_id text primary key,
+  price_usd numeric,
+  price_jpy numeric,
+  usd_24h_change numeric,
+  updated_at timestamp with time zone default timezone('utc'::text, now()) not null
+);
+
+alter table price_cache enable row level security;
+create policy "Enable all for anon" on price_cache for all using (true) with check (true);
+
+-- 6. Storage Bucket (You must do this manually in Dashboard usually, but here is SQL if supported)
 -- insert into storage.buckets (id, name, public) values ('images', 'images', true);
 -- create policy "Public Access" on storage.objects for select using ( bucket_id = 'images' );
 -- create policy "Anon Upload" on storage.objects for insert with check ( bucket_id = 'images' );

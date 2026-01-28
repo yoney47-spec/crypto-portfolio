@@ -591,3 +591,58 @@ def get_snapshot_count() -> int:
         print(f"Snapshot count error: {e}")
         return 0
 
+# --- Price Cache (for API rate limit fallback) ---
+
+def save_price_cache(prices_data: Dict) -> bool:
+    """
+    価格データをSupabaseにキャッシュとして保存
+    prices_data: {api_id: {usd, jpy, usd_24h_change, jpy_24h_change}}
+    """
+    client = get_client()
+    if not client or not prices_data:
+        return False
+    
+    try:
+        now = datetime.now(JST).isoformat()
+        
+        # 各通貨の価格をupsert
+        for api_id, data in prices_data.items():
+            if data.get("usd") is not None:
+                cache_data = {
+                    "api_id": api_id,
+                    "price_usd": data.get("usd"),
+                    "price_jpy": data.get("jpy"),
+                    "usd_24h_change": data.get("usd_24h_change"),
+                    "updated_at": now
+                }
+                client.table("price_cache").upsert(cache_data, on_conflict="api_id").execute()
+        
+        return True
+    except Exception as e:
+        print(f"Price cache save error: {e}")
+        return False
+
+def load_price_cache() -> Dict:
+    """
+    Supabaseから価格キャッシュを読み込み
+    Returns: {api_id: {usd, jpy, usd_24h_change, jpy_24h_change}}
+    """
+    client = get_client()
+    if not client:
+        return {}
+    
+    try:
+        res = client.table("price_cache").select("*").execute()
+        
+        result = {}
+        for item in res.data:
+            result[item["api_id"]] = {
+                "usd": item.get("price_usd"),
+                "jpy": item.get("price_jpy"),
+                "usd_24h_change": item.get("usd_24h_change"),
+                "jpy_24h_change": item.get("usd_24h_change"),  # 同じ値を使用
+            }
+        return result
+    except Exception as e:
+        print(f"Price cache load error: {e}")
+        return {}

@@ -14,7 +14,9 @@ from database_supabase import (
     get_portfolio_data, 
     calculate_cost_basis, 
     get_current_year_investment_sales,
-    get_portfolio_history
+    get_portfolio_history,
+    save_price_cache,
+    load_price_cache
 )
 
 # ページ設定
@@ -233,9 +235,18 @@ with st.spinner('為替レートを取得中...'):
 with st.spinner('最新価格を取得中...'):
     current_prices = get_prices_with_jpy(api_ids, exchange_rate)
 
-if current_prices is None:
-    st.warning("APIレート制限により、最新価格が取得できませんでした。しばらく待ってから「データ更新」ボタンを押してください。")
-    current_prices = {}
+if current_prices is None or len(current_prices) == 0:
+    # API制限時はキャッシュから読み込み
+    cached_prices = load_price_cache()
+    if cached_prices:
+        st.info("📦 キャッシュされた価格データを表示しています（API制限により最新データを取得できませんでした）")
+        current_prices = cached_prices
+    else:
+        st.warning("APIレート制限により、最新価格が取得できませんでした。しばらく待ってから「データ更新」ボタンを押してください。")
+        current_prices = {}
+else:
+    # 成功時はキャッシュを更新
+    save_price_cache(current_prices)
 
 
 # 総資産額の計算とチャート用データ作成
