@@ -625,7 +625,7 @@ def save_price_cache(prices_data: Dict) -> bool:
 def load_price_cache() -> Dict:
     """
     Supabaseから価格キャッシュを読み込み
-    Returns: {api_id: {usd, jpy, usd_24h_change, jpy_24h_change}}
+    Returns: {api_id: {usd, jpy, usd_24h_change, jpy_24h_change, updated_at}}
     """
     client = get_client()
     if not client:
@@ -641,11 +641,68 @@ def load_price_cache() -> Dict:
                 "jpy": item.get("price_jpy"),
                 "usd_24h_change": item.get("usd_24h_change"),
                 "jpy_24h_change": item.get("usd_24h_change"),  # 同じ値を使用
+                "updated_at": item.get("updated_at"),
             }
         return result
     except Exception as e:
         print(f"Price cache load error: {e}")
         return {}
+
+
+def is_cache_valid(cache_data: Dict, max_age_minutes: int = 5) -> bool:
+    """
+    キャッシュが有効期限内かチェック
+    
+    Args:
+        cache_data: キャッシュデータ（updated_atを含む）
+        max_age_minutes: キャッシュの有効期限（分）
+    
+    Returns:
+        True if cache is still valid
+    """
+    if not cache_data:
+        return False
+    
+    # 任意のエントリのupdated_atをチェック
+    for api_id, data in cache_data.items():
+        updated_at = data.get("updated_at")
+        if updated_at:
+            try:
+                # ISO形式のタイムスタンプをパース
+                if isinstance(updated_at, str):
+                    cache_time = datetime.fromisoformat(updated_at.replace('Z', '+00:00'))
+                else:
+                    cache_time = updated_at
+                
+                # タイムゾーン情報がない場合はJSTとして扱う
+                if cache_time.tzinfo is None:
+                    cache_time = cache_time.replace(tzinfo=JST)
+                
+                now = datetime.now(JST)
+                age = (now - cache_time).total_seconds() / 60  # 分単位
+                
+                return age < max_age_minutes
+            except Exception as e:
+                print(f"Cache time parse error: {e}")
+                return False
+    
+    return False
+
+
+def load_price_cache_if_valid(max_age_minutes: int = 5) -> Optional[Dict]:
+    """
+    有効期限内のキャッシュがあれば読み込む
+    
+    Args:
+        max_age_minutes: キャッシュの有効期限（分）
+    
+    Returns:
+        キャッシュデータ、または期限切れ/存在しない場合はNone
+    """
+    cache = load_price_cache()
+    if is_cache_valid(cache, max_age_minutes):
+        return cache
+    return None
 
 # --- AI Comments ---
 

@@ -17,6 +17,7 @@ from database_supabase import (
     get_portfolio_history,
     save_price_cache,
     load_price_cache,
+    load_price_cache_if_valid,
     get_latest_ai_comment,
     save_ai_comment,
     save_portfolio_snapshot
@@ -50,6 +51,7 @@ st.sidebar.markdown("### 設定")
 if st.sidebar.button("データ更新", width='stretch'):
     with st.spinner('キャッシュをクリア中...'):
         st.cache_data.clear()
+        st.session_state['force_price_refresh'] = True  # 価格を強制更新
     st.sidebar.success("データを更新しました")
     st.rerun()
 
@@ -116,23 +118,60 @@ def fetch_current_prices_usd(api_ids):
     }
     
     max_retries = 3
+    last_error = None
+    
     for attempt in range(max_retries):
         try:
-            response = requests.get(url, params=params, timeout=10)
+            response = requests.get(url, params=params, timeout=15)
             
+            # レート制限エラー
             if response.status_code == 429:
+                last_error = "rate_limit"
                 if attempt < max_retries - 1:
-                    time.sleep(2 ** attempt)  # 1s, 2s, 4s wait
+                    wait_time = 2 ** (attempt + 1)  # 2s, 4s, 8s wait
+                    print(f"[API] レート制限検出。{wait_time}秒待機中... (試行 {attempt + 1}/{max_retries})")
+                    time.sleep(wait_time)
                     continue
+                print("[API] レート制限: 最大リトライ回数に達しました")
+                return None
+            
+            # サーバーエラー
+            if response.status_code >= 500:
+                last_error = "server_error"
+                if attempt < max_retries - 1:
+                    print(f"[API] サーバーエラー ({response.status_code})。リトライ中...")
+                    time.sleep(2)
+                    continue
+                print(f"[API] サーバーエラー: {response.status_code}")
                 return None
                 
             response.raise_for_status()
             return response.json()
-        except Exception:
+            
+        except requests.exceptions.Timeout:
+            last_error = "timeout"
+            print(f"[API] タイムアウト (試行 {attempt + 1}/{max_retries})")
             if attempt < max_retries - 1:
                 time.sleep(1)
                 continue
             return None
+            
+        except requests.exceptions.ConnectionError:
+            last_error = "connection"
+            print(f"[API] 接続エラー (試行 {attempt + 1}/{max_retries})")
+            if attempt < max_retries - 1:
+                time.sleep(2)
+                continue
+            return None
+            
+        except Exception as e:
+            last_error = str(e)
+            print(f"[API] 予期しないエラー: {e}")
+            if attempt < max_retries - 1:
+                time.sleep(1)
+                continue
+            return None
+    
     return None
 
 def get_prices_with_jpy(api_ids, usd_jpy_rate):
@@ -224,8 +263,14 @@ def fetch_exchange_rate_history(days=30):
             return None
     return None
 
-# データを取得
-portfolio_data, asset_count, transaction_count = get_portfolio_data()
+# ポートフォリオデータをキャッシュ（60秒TTL）
+@st.cache_data(ttl=60)
+def get_cached_portfolio_data():
+    """キャッシュされたポートフォリオデータを取得"""
+    return get_portfolio_data()
+
+# データを取得（キャッシュから）
+portfolio_data, asset_count, transaction_count = get_cached_portfolio_data()
 
 # API IDリスト作成
 api_ids = [item[3] for item in portfolio_data if item[3]]
@@ -234,22 +279,35 @@ api_ids = [item[3] for item in portfolio_data if item[3]]
 with st.spinner('為替レートを取得中...'):
     exchange_rate = fetch_usd_jpy_rate()
 
-# 価格取得 (USD価格のみ取得し、JPYは計算で導出) - スピナー表示
-with st.spinner('最新価格を取得中...'):
-    current_prices = get_prices_with_jpy(api_ids, exchange_rate)
+# 価格取得の最適化: キャッシュが有効ならAPIを呼び出さない
+force_refresh = st.session_state.get('force_price_refresh', False)
+st.session_state['force_price_refresh'] = False  # フラグをリセット
 
-if current_prices is None or len(current_prices) == 0:
-    # API制限時はキャッシュから読み込み
-    cached_prices = load_price_cache()
-    if cached_prices:
-        st.info("📦 キャッシュされた価格データを表示しています（API制限により最新データを取得できませんでした）")
-        current_prices = cached_prices
-    else:
-        st.warning("APIレート制限により、最新価格が取得できませんでした。しばらく待ってから「データ更新」ボタンを押してください。")
-        current_prices = {}
+# まずキャッシュをチェック（5分以内なら有効）
+cached_prices = load_price_cache_if_valid(max_age_minutes=5)
+
+if cached_prices and not force_refresh:
+    # キャッシュが有効 - APIを呼び出さない
+    current_prices = cached_prices
+    # キャッシュ使用を示す小さなインジケーター（デバッグ用、本番では非表示可）
+    # st.caption("📦 キャッシュデータ使用中")
 else:
-    # 成功時はキャッシュを更新
-    save_price_cache(current_prices)
+    # キャッシュが古いか無効 - APIから取得
+    with st.spinner('最新価格を取得中...'):
+        current_prices = get_prices_with_jpy(api_ids, exchange_rate)
+    
+    if current_prices is None or len(current_prices) == 0:
+        # API制限時はキャッシュから読み込み（期限切れでも使用）
+        cached_prices = load_price_cache()
+        if cached_prices:
+            st.info("📦 キャッシュされた価格データを表示しています（API制限により最新データを取得できませんでした）")
+            current_prices = cached_prices
+        else:
+            st.warning("⚠️ 価格データを取得できませんでした。しばらく待ってから「データ更新」ボタンを押してください。")
+            current_prices = {}
+    else:
+        # 成功時はキャッシュを更新
+        save_price_cache(current_prices)
 
 
 # 総資産額の計算とチャート用データ作成
