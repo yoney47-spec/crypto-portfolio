@@ -16,7 +16,10 @@ from database_supabase import (
     get_current_year_investment_sales,
     get_portfolio_history,
     save_price_cache,
-    load_price_cache
+    load_price_cache,
+    get_latest_ai_comment,
+    save_ai_comment,
+    save_portfolio_snapshot
 )
 
 # ページ設定
@@ -30,7 +33,7 @@ st.set_page_config(
 # カスタムCSSの読み込み
 def load_css():
     css_file = Path(__file__).parent / "styles" / "main.css"
-    with open(css_file) as f:
+    with open(css_file, encoding="utf-8") as f:
         st.markdown(f"<style>{f.read()}</style>", unsafe_allow_html=True)
 
 load_css()
@@ -417,6 +420,115 @@ st.markdown(f"""
 """, unsafe_allow_html=True)
 
 
+# --- Gemini AI コメントセクション ---
+def generate_and_save_ai_comment():
+    """AIコメントを生成して保存"""
+    try:
+        from gemini_client import generate_portfolio_comment
+        from datetime import datetime, timezone, timedelta
+        
+        JST = timezone(timedelta(hours=9))
+        today = datetime.now(JST).date().isoformat()
+        
+        # ポートフォリオデータを収集
+        top_assets_data = []
+        for item in sorted(portfolio_display_data, key=lambda x: x['value'], reverse=True)[:5]:
+            api_id = item['api_id']
+            change_24h = current_prices.get(api_id, {}).get(f'{vs_currency}_24h_change', 0) or 0
+            percent = (item['value'] / total_portfolio_value * 100) if total_portfolio_value > 0 else 0
+            top_assets_data.append({
+                'symbol': item['symbol'],
+                'percent': percent,
+                'change_24h': change_24h
+            })
+        
+        portfolio_summary = {
+            'total_value': total_portfolio_value_usd,
+            'total_value_jpy': total_portfolio_value_usd * exchange_rate,
+            'change_percent': total_pl_percent,
+            'change_amount': total_pl_usd,
+            'asset_count': len(portfolio_display_data),
+            'top_assets': top_assets_data,
+            'top_performer': {
+                'symbol': top_symbol,
+                'change': top_change
+            },
+            'worst_performer': {
+                'symbol': worst_symbol,
+                'change': worst_change
+            }
+        }
+        
+        # Geminiでコメント生成
+        comment = generate_portfolio_comment(portfolio_summary)
+        
+        if comment:
+            save_ai_comment(today, comment, portfolio_summary)
+            return comment
+        return None
+    except Exception as e:
+        print(f"AI comment generation error: {e}")
+        return None
+
+# AIコメントの表示
+ai_comment_data = get_latest_ai_comment()
+
+# コメントがない場合、または古い場合は生成を試みる（1日1回）
+from datetime import timezone, timedelta
+JST = timezone(timedelta(hours=9))
+today_str = datetime.now(JST).date().isoformat()
+
+if ai_comment_data is None or ai_comment_data.get('date') != today_str:
+    # Gemini API が設定されているかチェック
+    gemini_configured = False
+    try:
+        gemini_api_key = st.secrets.get("gemini", {}).get("api_key")
+        gemini_configured = bool(gemini_api_key)
+    except:
+        pass
+    
+    if gemini_configured and portfolio_display_data:
+        with st.spinner('✨ AIコメントを生成中...'):
+            new_comment = generate_and_save_ai_comment()
+            if new_comment:
+                ai_comment_data = {'date': today_str, 'comment': new_comment}
+
+# AIコメントカードを表示
+if ai_comment_data and ai_comment_data.get('comment'):
+    comment_date = ai_comment_data.get('date', '')
+    comment_text = ai_comment_data.get('comment', '')
+    
+    st.markdown(f"""
+    <div style="
+        background: linear-gradient(135deg, rgba(103, 58, 183, 0.1), rgba(0, 217, 255, 0.1));
+        border: 1px solid rgba(103, 58, 183, 0.3);
+        border-radius: 12px;
+        padding: 1.25rem;
+        margin: 1.5rem 0;
+    ">
+        <div style="
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 0.75rem;
+        ">
+            <span style="
+                font-weight: 600;
+                color: var(--text-primary);
+                font-size: 1rem;
+            ">✨ Gemini's Daily Insight</span>
+            <span style="
+                color: var(--text-muted);
+                font-size: 0.8rem;
+            ">{comment_date}</span>
+        </div>
+        <div style="
+            color: var(--text-secondary);
+            font-size: 0.9rem;
+            line-height: 1.6;
+        ">{comment_text}</div>
+    </div>
+    """, unsafe_allow_html=True)
 
 
 

@@ -646,3 +646,109 @@ def load_price_cache() -> Dict:
     except Exception as e:
         print(f"Price cache load error: {e}")
         return {}
+
+# --- AI Comments ---
+
+def save_ai_comment(date_str: str, comment: str, portfolio_summary: Dict = None) -> bool:
+    """
+    AIコメントを保存（同日は上書き）
+    
+    Args:
+        date_str: 日付文字列 (YYYY-MM-DD)
+        comment: AIが生成したコメント
+        portfolio_summary: ポートフォリオのサマリーデータ（オプション）
+    """
+    client = get_client()
+    if not client:
+        return False
+    
+    try:
+        import json
+        data = {
+            "date": date_str,
+            "comment": comment,
+            "portfolio_summary": json.dumps(portfolio_summary) if portfolio_summary else None
+        }
+        client.table("ai_comments").upsert(data, on_conflict="date").execute()
+        return True
+    except Exception as e:
+        print(f"AI comment save error: {e}")
+        return False
+
+
+def get_latest_ai_comment() -> Optional[Dict]:
+    """
+    最新のAIコメントを取得
+    
+    Returns:
+        {'date': str, 'comment': str, 'portfolio_summary': dict} or None
+    """
+    client = get_client()
+    if not client:
+        return None
+    
+    try:
+        res = client.table("ai_comments")\
+            .select("date, comment, portfolio_summary, created_at")\
+            .order("date", desc=True)\
+            .limit(1)\
+            .execute()
+        
+        if res.data:
+            item = res.data[0]
+            import json
+            summary = None
+            if item.get('portfolio_summary'):
+                try:
+                    summary = json.loads(item['portfolio_summary'])
+                except:
+                    summary = item['portfolio_summary']
+            
+            return {
+                'date': item['date'],
+                'comment': item['comment'],
+                'portfolio_summary': summary,
+                'created_at': item.get('created_at')
+            }
+        return None
+    except Exception as e:
+        print(f"AI comment load error: {e}")
+        return None
+
+
+def get_today_ai_comment() -> Optional[Dict]:
+    """
+    今日のAIコメントを取得（存在しない場合はNone）
+    """
+    today = datetime.now(JST).date().isoformat()
+    
+    client = get_client()
+    if not client:
+        return None
+    
+    try:
+        res = client.table("ai_comments")\
+            .select("date, comment, portfolio_summary")\
+            .eq("date", today)\
+            .execute()
+        
+        if res.data:
+            item = res.data[0]
+            import json
+            summary = None
+            if item.get('portfolio_summary'):
+                try:
+                    summary = json.loads(item['portfolio_summary'])
+                except:
+                    summary = item['portfolio_summary']
+            
+            return {
+                'date': item['date'],
+                'comment': item['comment'],
+                'portfolio_summary': summary
+            }
+        return None
+    except Exception as e:
+        print(f"Today AI comment load error: {e}")
+        return None
+
