@@ -315,36 +315,56 @@ def get_portfolio_data() -> Tuple[List[Tuple], int, int]:
     if not client: return [], 0, 0
     
     assets = get_all_assets()
-    all_trans = get_all_transactions("すべて")
     
-    # Calculate holdings in Python
-    # trans item: (id, date, type, symbol, name, quantity, price_per_unit, total_amount, notes, asset_id)
-    # asset item: (id, name, symbol, api_id, icon_url, location, created_at)
+    # Try fetching from balances table first (Performance Optimization)
+    balances_map = {}
+    used_balances_table = False
     
-    holdings_map = {} # asset_id -> quantity
-    
-    for t in all_trans:
-        # unpack t
-        # (id, date, type, symbol, name, quantity, price, total, notes, asset_id) = t
-        # Index 2 is type, 5 is quantity, 9 is asset_id
-        t_type = t[2]
-        qty = t[5]
-        aid = t[9]
+    try:
+        # Attempt to fetch from balances table
+        # If table doesn't exist, this will raise an exception and we fall back to calculation
+        res = client.table("balances").select("*").execute()
+        for item in res.data:
+            balances_map[item['asset_id']] = float(item['amount'])
+        used_balances_table = True
+    except Exception:
+        # Fallback to transaction calculation
+        used_balances_table = False
         
-        current_qty = holdings_map.get(aid, 0.0)
+    transaction_count = 0
+    
+    if not used_balances_table:
+        all_trans = get_all_transactions("すべて")
+        transaction_count = len(all_trans)
         
-        if t_type in ['Buy', 'Airdrop', 'Staking Reward', 'Interest', 'Gift']:
-            current_qty += qty
-        elif t_type in ['Sell', 'Transfer']:
-            current_qty -= qty
+        # Calculate holdings in Python
+        for t in all_trans:
+            # (id, date, type, symbol, name, quantity, price, total, notes, asset_id)
+            t_type = t[2]
+            qty = t[5]
+            aid = t[9]
             
-        holdings_map[aid] = current_qty
+            current_qty = balances_map.get(aid, 0.0)
+            
+            if t_type in ['Buy', 'Airdrop', 'Staking Reward', 'Interest', 'Gift']:
+                current_qty += qty
+            elif t_type in ['Sell', 'Transfer']:
+                current_qty -= qty
+                
+            balances_map[aid] = current_qty
+    else:
+        # If using balances table, efficiently get transaction count
+        try:
+            res = client.table("transactions").select("id", count="exact", head=True).execute()
+            transaction_count = res.count if res.count is not None else 0
+        except:
+            transaction_count = 0
         
     # Build result
     portfolio = []
     for a in assets:
         aid = a[0]
-        qty = holdings_map.get(aid, 0.0)
+        qty = balances_map.get(aid, 0.0)
         if qty > 0.00000001: # Filter zero balance
             # (id, symbol, name, api_id, icon_url, location, holdings)
             # asset tuple: (0:id, 1:name, 2:symbol, 3:api_id, 4:icon, 5:loc, 6:created)
@@ -358,11 +378,10 @@ def get_portfolio_data() -> Tuple[List[Tuple], int, int]:
                 qty   # holdings
             ))
             
-    # Sort by holdings descending? The original SQL did logic, typically value matters but logic was DESC holdings
-    # SQL: ORDER BY holdings DESC
+    # Sort by holdings descending (roughly proxies value importance if not checking price here)
     portfolio.sort(key=lambda x: x[6], reverse=True)
     
-    return portfolio, len(assets), len(all_trans)
+    return portfolio, len(assets), transaction_count
 
 def calculate_cost_basis() -> Dict:
     """
