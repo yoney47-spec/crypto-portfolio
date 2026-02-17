@@ -420,6 +420,23 @@ portfolio_24h_percent = (portfolio_24h_change / total_portfolio_value * 100) if 
 top_performer = max(portfolio_display_data, key=lambda x: current_prices.get(x['api_id'], {}).get(f'{vs_currency}_24h_change', 0) or 0) if portfolio_display_data else None
 worst_performer = min(portfolio_display_data, key=lambda x: current_prices.get(x['api_id'], {}).get(f'{vs_currency}_24h_change', 0) or 0) if portfolio_display_data else None
 
+top_change = 0
+worst_change = 0
+top_symbol = "-"
+worst_symbol = "-"
+
+if top_performer:
+    api_id = top_performer['api_id']
+    change_key = f"{vs_currency}_24h_change"
+    top_change = current_prices.get(api_id, {}).get(change_key, 0) or 0
+    top_symbol = top_performer['symbol']
+
+if worst_performer:
+    api_id = worst_performer['api_id']
+    change_key = f"{vs_currency}_24h_change"
+    worst_change = current_prices.get(api_id, {}).get(change_key, 0) or 0
+    worst_symbol = worst_performer['symbol']
+
 # メトリクスエリア（コンポーネント使用）
 render_metrics(
     total_portfolio_value, 
