@@ -527,6 +527,24 @@ if ai_comment_data is None or ai_comment_data.get('date') != today_str:
             if new_comment:
                 ai_comment_data = {'date': today_str, 'comment': new_comment}
 
+# 手動更新ボタン（Gemini APIが設定されている場合のみ）
+gemini_configured = False
+try:
+    gemini_api_key = st.secrets.get("gemini", {}).get("api_key")
+    gemini_configured = bool(gemini_api_key)
+except:
+    pass
+
+if gemini_configured and portfolio_display_data:
+    if st.button("✨ インサイトを更新", help="Geminiデイリーインサイトを最新のデータで再生成します"):
+        with st.spinner('✨ AIコメントを生成中...'):
+            new_comment = generate_and_save_ai_comment()
+            if new_comment:
+                ai_comment_data = {'date': today_str, 'comment': new_comment}
+                st.success("インサイトを更新しました！")
+                time.sleep(1)
+                st.rerun()
+
 # AIコメントカードを表示
 if ai_comment_data and ai_comment_data.get('comment'):
     comment_date = ai_comment_data.get('date', '')
