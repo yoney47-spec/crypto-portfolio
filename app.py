@@ -462,8 +462,8 @@ def generate_and_save_ai_comment():
         portfolio_summary = {
             'total_value': total_portfolio_value_usd,
             'total_value_jpy': total_portfolio_value_usd * exchange_rate,
-            'change_percent': total_pl_percent,
-            'change_amount': total_pl_usd,
+            'change_percent': portfolio_24h_percent,
+            'change_amount': portfolio_24h_change,
             'asset_count': len(portfolio_display_data),
             'top_assets': top_assets_data,
             'top_performer': {
