@@ -139,9 +139,9 @@ def render_charts(portfolio_display_data, get_portfolio_history_func):
             margin=dict(t=40, b=50, l=20, r=20),
             height=300,
             annotations=[dict(
-                text=f"${total_value:,.0f}",
+                text=f"<b>${total_value:,.0f}</b>",
                 x=0.5, y=0.5,
-                font=dict(size=16, color='#e8edf5', family='Monaco, monospace'),
+                font=dict(size=18, color='#00d9ff', family='Monaco, monospace'),
                 showarrow=False
             )]
         )
