@@ -545,40 +545,18 @@ if gemini_configured and portfolio_display_data:
                 time.sleep(1)
                 st.rerun()
 
-# AIコメントカードを表示
+# AIコメントカードを表示（Premium Glassmorphism）
 if ai_comment_data and ai_comment_data.get('comment'):
     comment_date = ai_comment_data.get('date', '')
     comment_text = ai_comment_data.get('comment', '')
     
     st.markdown(f"""
-    <div style="
-        background: linear-gradient(135deg, rgba(103, 58, 183, 0.1), rgba(0, 217, 255, 0.1));
-        border: 1px solid rgba(103, 58, 183, 0.3);
-        border-radius: 12px;
-        padding: 1.25rem;
-        margin: 1.5rem 0;
-    ">
-        <div style="
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            margin-bottom: 0.75rem;
-        ">
-            <span style="
-                font-weight: 600;
-                color: var(--text-primary);
-                font-size: 1rem;
-            ">✨ Gemini's Daily Insight</span>
-            <span style="
-                color: var(--text-muted);
-                font-size: 0.8rem;
-            ">{comment_date}</span>
+    <div class="ai-insight-card">
+        <div class="ai-insight-header">
+            <span class="ai-insight-title">✨ Gemini Daily Insight</span>
+            <span class="ai-insight-date">{comment_date}</span>
         </div>
-        <div style="
-            color: var(--text-secondary);
-            font-size: 0.9rem;
-            line-height: 1.6;
-        ">{comment_text}</div>
+        <div class="ai-insight-body">{comment_text}</div>
     </div>
     """, unsafe_allow_html=True)
 
@@ -601,7 +579,8 @@ render_price_analysis_chart(
 
 # 保有資産リスト
 if portfolio_display_data:
-    st.markdown("### 保有資産リスト")
+    st.markdown("""<div style="margin-top: 2rem;"></div>""", unsafe_allow_html=True)
+    st.markdown("### 💎 Holdings")
 
     # データフレームの作成
     df_holdings = pd.DataFrame(portfolio_display_data)
@@ -612,10 +591,57 @@ if portfolio_display_data:
     # 表示用にデータを整形
     display_df = df_holdings.copy()
     
-    # カラム設定 - widthを調整して見切れを防止
+    # Location をスタイリッシュなバッジ表記に変換
+    def format_location(loc):
+        if not loc:
+            return "📦 Unknown"
+        loc_lower = str(loc).lower()
+        if 'main' in loc_lower or 'メイン' in loc_lower:
+            return f"🔐 {loc}"
+        elif 'ledger' in loc_lower or 'cold' in loc_lower:
+            return f"🛡️ {loc}"
+        elif 'exchange' in loc_lower or 'binance' in loc_lower or 'bybit' in loc_lower or 'coincheck' in loc_lower or 'bitbank' in loc_lower:
+            return f"🏦 {loc}"
+        elif 'staking' in loc_lower or 'stake' in loc_lower:
+            return f"⚡ {loc}"
+        elif 'defi' in loc_lower or 'pool' in loc_lower:
+            return f"🌊 {loc}"
+        else:
+            return f"📦 {loc}"
+    
+    display_df['location'] = display_df['location'].apply(format_location)
+    
+    # P/L表示用カラム（色付きインジケータ）
+    def format_pl_display(row):
+        pl = row['pl_percent']
+        if pl > 0:
+            return f"▲ +{pl:.1f}%"
+        elif pl < 0:
+            return f"▼ {pl:.1f}%"
+        else:
+            return f"— 0.0%"
+    
+    display_df['pl_display'] = display_df.apply(format_pl_display, axis=1)
+    
+    # Unrealized P/L 表示用
+    def format_upl_display(row):
+        upl = row['unrealized_pl']
+        if upl > 0:
+            return f"+${upl:,.2f}"
+        elif upl < 0:
+            return f"-${abs(upl):,.2f}"
+        else:
+            return "$0.00"
+    
+    display_df['upl_display'] = display_df.apply(format_upl_display, axis=1)
+
+    # 最大評価額を取得（ProgressColumn用）
+    max_value = display_df['value'].max() if len(display_df) > 0 else 1
+
+    # カラム設定 - DeFiスタイル
     column_config = {
         "icon_url": st.column_config.ImageColumn(
-            "Icon",
+            "🪙",
             help="Asset Icon",
             width="small"
         ),
@@ -624,50 +650,52 @@ if portfolio_display_data:
             width="small"
         ),
         "name": st.column_config.TextColumn(
-            "Name",
+            "Asset",
             width="medium"
         ),
         "location": st.column_config.TextColumn(
-            "Storage",
-            width="medium"  # smallからmediumに変更（見切れ防止）
+            "Location",
+            width="medium",
+            help="保管場所"
         ),
         "holdings": st.column_config.NumberColumn(
             "Qty",
-            format="%.8f",
-            width="medium"  # 桁が多いためmediumに変更
+            format="%.6f",
+            width="medium"
         ),
         "price": st.column_config.NumberColumn(
             f"Price ({currency_symbol})",
-            format="%.6f" if currency == "USD" else "%.2f",
-            width="medium"  # 桁が多いためmediumに変更
+            format="%.4f" if currency == "USD" else "%.2f",
+            width="medium"
         ),
-        "value": st.column_config.NumberColumn(
+        "value": st.column_config.ProgressColumn(
             f"Value ({currency_symbol})",
-            format="%.2f" if currency == "USD" else "%.0f",
-            width="medium"  # 桁が多いためmediumに変更
+            format=f"{currency_symbol}%.0f",
+            min_value=0,
+            max_value=float(max_value * 1.1),
+            width="medium",
+            help="評価額（バーはポートフォリオ内の相対比率）"
         ),
         "avg_cost": st.column_config.NumberColumn(
             "Avg Cost ($)",
-            format="%.6f",
-            width="medium",  # 桁が多いためmediumに変更
+            format="%.4f",
+            width="medium",
             help="平均取得単価 (USD)"
         ),
-        "pl_percent": st.column_config.NumberColumn(
+        "pl_display": st.column_config.TextColumn(
             "P/L %",
-            format="%.1f%%",
             width="small",
             help="損益率（現在価格 vs 平均取得単価）"
         ),
-        "unrealized_pl": st.column_config.NumberColumn(
-            "Unrealized P/L ($)",
-            format="%.2f",
-            width="medium",  # 桁が多いためmediumに変更
+        "upl_display": st.column_config.TextColumn(
+            "Unrealized P/L",
+            width="medium",
             help="未実現損益 (USD)"
         )
     }
 
     # 表示するカラムの順序
-    display_cols = ["icon_url", "symbol", "name", "location", "holdings", "price", "value", "avg_cost", "pl_percent", "unrealized_pl"]
+    display_cols = ["icon_url", "symbol", "name", "location", "holdings", "price", "value", "avg_cost", "pl_display", "upl_display"]
 
     # 行数に応じて高さを動的に計算（1行あたり35px + ヘッダー40px）
     table_height = max(500, len(display_df) * 35 + 40)
@@ -683,44 +711,39 @@ if portfolio_display_data:
 else:
     st.info("保有している資産はありません。")
 
-st.markdown("<br><br>", unsafe_allow_html=True)
+st.markdown("""<div style="margin-top: 2.5rem;"></div>""", unsafe_allow_html=True)
 
 # クイックアクセスセクション
-st.markdown("### Quick Access")
-st.markdown("<br>", unsafe_allow_html=True)
+st.markdown("### ⚡ Quick Access")
 
-qa_col1, qa_col2 = st.columns(2)
+qa_col1, qa_col2 = st.columns(2, gap="medium")
 
 with qa_col1:
     st.markdown("""
-    <div class="crypto-card" style="padding: 20px;">
-        <div style="text-align: center;">
-            <div style="font-size: 2rem; margin-bottom: 0.5rem;">Assets</div>
-            <h3 style="margin-bottom: 0.5rem; font-size: 1.2rem;">資産管理</h3>
-            <p style="color: var(--text-muted); font-size: 0.8rem;">登録・編集・削除</p>
-        </div>
+    <div class="qa-card">
+        <div class="qa-card-icon">📊</div>
+        <div class="qa-card-title">Asset Management</div>
+        <div class="qa-card-desc">登録 ・ 編集 ・ 削除</div>
     </div>
     """, unsafe_allow_html=True)
-    if st.button("資産管理ページへ", key="goto_assets", width='stretch'):
+    if st.button("資産管理ページへ →", key="goto_assets", use_container_width=True):
         st.switch_page("pages/1_assets.py")
 
 with qa_col2:
     st.markdown("""
-    <div class="crypto-card" style="padding: 20px;">
-        <div style="text-align: center;">
-            <div style="font-size: 2rem; margin-bottom: 0.5rem;">Transactions</div>
-            <h3 style="margin-bottom: 0.5rem; font-size: 1.2rem;">取引記録</h3>
-            <p style="color: var(--text-muted); font-size: 0.8rem;">売買履歴の確認</p>
-        </div>
+    <div class="qa-card">
+        <div class="qa-card-icon">📋</div>
+        <div class="qa-card-title">Transactions</div>
+        <div class="qa-card-desc">売買履歴の確認</div>
     </div>
     """, unsafe_allow_html=True)
-    if st.button("取引記録ページへ", key="goto_transactions", width='stretch'):
+    if st.button("取引記録ページへ →", key="goto_transactions", use_container_width=True):
         st.switch_page("pages/2_transactions.py")
 
 # フッター
-st.markdown("---")
+st.markdown('<div class="section-divider"></div>', unsafe_allow_html=True)
 st.markdown("""
-<div style="text-align: center; color: var(--text-muted); font-size: 0.8rem;">
-    <p>Powered by CoinGecko API</p>
+<div class="footer-text">
+    Powered by CoinGecko API  ·  Built with Streamlit
 </div>
 """, unsafe_allow_html=True)

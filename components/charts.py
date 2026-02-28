@@ -119,7 +119,7 @@ def render_charts(portfolio_display_data, get_portfolio_history_func):
         fig_donut.update_layout(
             title=dict(
                 text="Allocation",
-                font=dict(color="#1F2937", size=14),
+                font=dict(color="#e8edf5", size=14),
                 y=0.98,
                 x=0.5,
                 xanchor='center',
@@ -127,7 +127,7 @@ def render_charts(portfolio_display_data, get_portfolio_history_func):
             ),
             showlegend=True,
             legend=dict(
-                font=dict(color="#1F2937", size=10),
+                font=dict(color="#94a3b8", size=10),
                 orientation="h",
                 yanchor="top",
                 y=-0.1,
@@ -173,7 +173,7 @@ def render_charts(portfolio_display_data, get_portfolio_history_func):
         fig_bar.update_layout(
             title=dict(
                 text="Top Assets by Value",
-                font=dict(color="#1F2937", size=14),
+                font=dict(color="#e8edf5", size=14),
                 y=0.98,
                 x=0.5,
                 xanchor='center',
@@ -182,7 +182,7 @@ def render_charts(portfolio_display_data, get_portfolio_history_func):
             paper_bgcolor='rgba(0,0,0,0)',
             plot_bgcolor='rgba(0,0,0,0)',
             xaxis=dict(showgrid=False, showticklabels=False),
-            yaxis=dict(showgrid=False, tickfont=dict(color='#1F2937')),
+            yaxis=dict(showgrid=False, tickfont=dict(color='#94a3b8')),
             margin=dict(t=40, b=10, l=10, r=10),
             height=300
         )
@@ -224,7 +224,7 @@ def render_charts(portfolio_display_data, get_portfolio_history_func):
             fig_hist.update_layout(
                 title=dict(
                     text=f"History ({years_ago_label(len(hist_values))})",
-                    font=dict(color="#1F2937", size=14),
+                    font=dict(color="#e8edf5", size=14),
                     y=0.98,
                     x=0.5,
                     xanchor='center',
@@ -234,13 +234,13 @@ def render_charts(portfolio_display_data, get_portfolio_history_func):
                 plot_bgcolor='rgba(0,0,0,0)',
                 xaxis=dict(
                     showgrid=False, 
-                    tickfont=dict(color='#1F2937', size=10),
+                    tickfont=dict(color='#94a3b8', size=10),
                     tickformat='%m/%d'
                 ),
                 yaxis=dict(
                     showgrid=True, 
-                    gridcolor='rgba(0,0,0,0.05)',
-                    tickfont=dict(color='#1F2937', size=10),
+                    gridcolor='rgba(59, 130, 246, 0.08)',
+                    tickfont=dict(color='#94a3b8', size=10),
                     tickformat='s'
                 ),
                 margin=dict(t=40, b=20, l=30, r=10),
@@ -266,15 +266,10 @@ def render_price_analysis_chart(portfolio_display_data, fetch_market_chart_func,
     """
     Renders the Price Trend and Exchange Rate charts.
     """
-    st.markdown("<br>", unsafe_allow_html=True)
+    st.markdown("""<div style="margin-top: 2rem;"></div>""", unsafe_allow_html=True)
     
     # 3. 価格推移チャート（フルワイド版 - Price Trend）
-    st.markdown(f"""
-    <div style="margin-bottom: 10px;">
-        <span style="font-size: 1.2rem; font-weight: bold;">Asset Price Trend</span>
-        <span style="font-size: 0.9rem; color: var(--text-muted); margin-left: 10px;">Historical price movement</span>
-    </div>
-    """, unsafe_allow_html=True)
+    st.markdown("### 📈 Asset Price Trend")
     
     # データを価値順にソート
     sorted_data = sorted(portfolio_display_data, key=lambda x: x['value'], reverse=True)
@@ -376,7 +371,7 @@ def render_price_analysis_chart(portfolio_display_data, fetch_market_chart_func,
                 fig_line.update_layout(
                     title=dict(
                         text=f"{selected_symbol} - {timeframe.upper()} Chart",
-                        font=dict(color="#1F2937", size=16),
+                        font=dict(color="#e8edf5", size=16),
                         y=0.98,
                         x=0.5,
                         xanchor='center',
@@ -409,7 +404,7 @@ def render_price_analysis_chart(portfolio_display_data, fetch_market_chart_func,
     else:
         st.info("Select an asset above to view price trend.")
 
-    st.markdown("<br>", unsafe_allow_html=True)
+    st.markdown("""<div style="margin-top: 2rem;"></div>""", unsafe_allow_html=True)
     
     # 4. 為替レートチャート (USD/JPY Analysis)
     
@@ -426,13 +421,7 @@ def render_price_analysis_chart(portfolio_display_data, fetch_market_chart_func,
         diff_color = "#00ff9d" if rate_diff >= 0 else "#ff4b4b"
         diff_sign = "+" if rate_diff >= 0 else ""
         
-        st.markdown(f"""
-        <div style="margin-bottom: 10px;">
-            <span style="font-size: 1.2rem; font-weight: bold;">USD/JPY Analysis</span>
-            <span style="font-size: 1rem; color: var(--text-muted); margin-left: 10px;">1 USD ≒ {latest_rate:,.2f} JPY</span>
-            <span style="color: {diff_color}; font-size: 0.9rem; margin-left: 5px;">({diff_sign}{rate_diff:.2f} / 30days)</span>
-        </div>
-        """, unsafe_allow_html=True)
+        st.markdown(f"### 💱 USD/JPY &nbsp;&nbsp; `¥{latest_rate:,.2f}`")
         
         fig_ex = go.Figure()
         
@@ -448,7 +437,7 @@ def render_price_analysis_chart(portfolio_display_data, fetch_market_chart_func,
         
         fig_ex.update_layout(
             title_text="USD/JPY Exchange Rate (Last 30 Days)",
-            title_font_color="#1F2937",
+            title_font_color="#e8edf5",
             paper_bgcolor='rgba(0,0,0,0)',
             plot_bgcolor='rgba(0,0,0,0)',
             xaxis=dict(
@@ -458,8 +447,8 @@ def render_price_analysis_chart(portfolio_display_data, fetch_market_chart_func,
             ),
             yaxis=dict(
                 showgrid=True, 
-                gridcolor='#333', 
-                tickfont=dict(color='#888'),
+                gridcolor='rgba(59, 130, 246, 0.08)', 
+                tickfont=dict(color='#94a3b8'),
                 tickprefix="¥",
                 range=[min(ex_values) * 0.99, max(ex_values) * 1.01]  # Y軸の範囲を動的に設定
             ),
@@ -470,4 +459,4 @@ def render_price_analysis_chart(portfolio_display_data, fetch_market_chart_func,
         
         st.plotly_chart(fig_ex, width='stretch')
 
-    st.markdown("<br>", unsafe_allow_html=True)
+    st.markdown("""<div style="margin-top: 1rem;"></div>""", unsafe_allow_html=True)
