@@ -104,7 +104,7 @@ with col_snap1:
     """)
 
 with col_snap2:
-    if st.button("📸 スナップショットを取得", width='stretch', type="primary"):
+    if st.button("📸 スナップショットを取得", use_container_width=True, type="primary"):
         with st.spinner("現在の資産額を計算中..."):
             try:
                 # 現在のポートフォリオ価値を計算 (Supabaseから取得)
@@ -192,7 +192,7 @@ with col_e:
     st.markdown("API価格データのキャッシュをクリアして、最新データを強制的に取得します。")
 
 with col_f:
-    if st.button("🗑️ キャッシュをクリア", width='stretch'):
+    if st.button("🗑️ キャッシュをクリア", use_container_width=True):
         st.cache_data.clear()
         st.success("✅ キャッシュをクリアしました")
         time.sleep(0.5)

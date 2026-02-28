@@ -137,7 +137,13 @@ def render_charts(portfolio_display_data, get_portfolio_history_func):
             paper_bgcolor='rgba(0,0,0,0)',
             plot_bgcolor='rgba(0,0,0,0)',
             margin=dict(t=40, b=50, l=20, r=20),
-            height=300
+            height=300,
+            annotations=[dict(
+                text=f"${total_value:,.0f}",
+                x=0.5, y=0.5,
+                font=dict(size=16, color='#e8edf5', family='Monaco, monospace'),
+                showarrow=False
+            )]
         )
         
         fig_donut.update_traces(
@@ -145,7 +151,7 @@ def render_charts(portfolio_display_data, get_portfolio_history_func):
             textfont_size=12
         )
         
-        st.plotly_chart(fig_donut, width='stretch')
+        st.plotly_chart(fig_donut, use_container_width=True)
 
     # 2. トップ保有資産比較 (棒グラフ)
     with chart_col2:
@@ -187,7 +193,7 @@ def render_charts(portfolio_display_data, get_portfolio_history_func):
             height=300
         )
         
-        st.plotly_chart(fig_bar, width='stretch')
+        st.plotly_chart(fig_bar, use_container_width=True)
 
     # 3. ポートフォリオ履歴チャート（簡略版）
     with chart_col3:
@@ -248,7 +254,7 @@ def render_charts(portfolio_display_data, get_portfolio_history_func):
                 showlegend=False
             )
             
-            st.plotly_chart(fig_hist, width='stretch')
+            st.plotly_chart(fig_hist, use_container_width=True)
         else:
             st.info("No history data available.")
 
@@ -457,6 +463,6 @@ def render_price_analysis_chart(portfolio_display_data, fetch_market_chart_func,
             showlegend=False
         )
         
-        st.plotly_chart(fig_ex, width='stretch')
+        st.plotly_chart(fig_ex, use_container_width=True)
 
     st.markdown("""<div style="margin-top: 1rem;"></div>""", unsafe_allow_html=True)

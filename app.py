@@ -8,7 +8,7 @@ import time
 from pathlib import Path
 import plotly.graph_objects as go
 import pandas as pd
-from datetime import datetime, timedelta
+from datetime import datetime, timedelta, timezone
 # Import from new Supabase adapter
 from database_supabase import (
     get_portfolio_data, 
@@ -55,6 +55,25 @@ from components.charts import render_charts, render_price_analysis_chart
 currency = render_sidebar()
 currency_symbol = "$" if currency == "USD" else "¥"
 vs_currency = currency.lower()
+
+# --- Fear & Greed Index ---
+@st.cache_data(ttl=3600)
+def fetch_fear_greed():
+    """Fear & Greed Index を取得"""
+    try:
+        resp = requests.get("https://api.alternative.me/fng/?limit=1", timeout=5)
+        if resp.status_code == 200:
+            data = resp.json()
+            if data.get('data'):
+                entry = data['data'][0]
+                return {
+                    'value': int(entry['value']),
+                    'label': entry['value_classification'],
+                    'timestamp': entry.get('timestamp', '')
+                }
+    except:
+        pass
+    return None
 
 # --- データ取得ロジック ---
 # Note: get_portfolio_data and calculate_cost_basis are now imported from database_supabase
@@ -379,8 +398,26 @@ def format_price(val, currency="USD"):
         else:
             return f"¥{val:,.0f}"
 
-# ヘッダー（コンパクト版）
-st.markdown("# Crypto Portfolio")
+# ヘッダー（動的グリーティング付き）
+JST_tz = timezone(timedelta(hours=9))
+now_jst = datetime.now(JST_tz)
+hour = now_jst.hour
+if 5 <= hour < 12:
+    greeting_icon, greeting_text = "☀️", "Good Morning"
+elif 12 <= hour < 17:
+    greeting_icon, greeting_text = "🌤️", "Good Afternoon"
+elif 17 <= hour < 21:
+    greeting_icon, greeting_text = "🌆", "Good Evening"
+else:
+    greeting_icon, greeting_text = "🌙", "Good Night"
+
+st.markdown(f"""
+<div class="dashboard-header">
+    <div class="header-greeting">{greeting_icon} {greeting_text}</div>
+    <h1 class="header-title">Crypto Portfolio</h1>
+    <div class="header-timestamp">Last updated: {now_jst.strftime('%Y-%m-%d %H:%M')} JST</div>
+</div>
+""", unsafe_allow_html=True)
 
 
 # 総損益の計算（含み益のみ、今年の取引ベース）
@@ -452,6 +489,68 @@ render_metrics(
     worst_change, 
     vs_currency
 )
+
+# Fear & Greed Index ウィジェット
+fng_data = fetch_fear_greed()
+if fng_data:
+    fng_val = fng_data['value']
+    fng_label = fng_data['label']
+    # カラー設定
+    if fng_val <= 25:
+        fng_color = '#ff3b5c'
+        fng_emoji = '😱'
+    elif fng_val <= 45:
+        fng_color = '#ff8c00'
+        fng_emoji = '😟'
+    elif fng_val <= 55:
+        fng_color = '#ffd700'
+        fng_emoji = '😐'
+    elif fng_val <= 75:
+        fng_color = '#90ee90'
+        fng_emoji = '😊'
+    else:
+        fng_color = '#39ff14'
+        fng_emoji = '🤑'
+    
+    st.markdown(f"""
+    <div class="fng-widget">
+        <div class="fng-gauge">
+            <div class="fng-value" style="color: {fng_color};">{fng_val}</div>
+            <div class="fng-bar-track">
+                <div class="fng-bar-fill" style="width: {fng_val}%; background: {fng_color};"></div>
+            </div>
+        </div>
+        <div class="fng-info">
+            <span class="fng-label">{fng_emoji} {fng_label}</span>
+            <span class="fng-title">Fear & Greed Index</span>
+        </div>
+    </div>
+    """, unsafe_allow_html=True)
+
+# 🔔 価格変動アラートバナー
+alert_assets = []
+for item in portfolio_display_data:
+    api_id = item['api_id']
+    change_key = f"{vs_currency}_24h_change"
+    change = current_prices.get(api_id, {}).get(change_key, 0) or 0
+    if abs(change) >= 10:
+        alert_assets.append({'symbol': item['symbol'], 'change': change})
+
+if alert_assets:
+    alert_html_items = ''
+    for a in sorted(alert_assets, key=lambda x: abs(x['change']), reverse=True):
+        if a['change'] > 0:
+            alert_html_items += f'<span class="alert-item alert-up">🚀 {a["symbol"]} +{a["change"]:.1f}%</span>'
+        else:
+            alert_html_items += f'<span class="alert-item alert-down">🔻 {a["symbol"]} {a["change"]:.1f}%</span>'
+    
+    st.markdown(f"""
+    <div class="alert-banner">
+        <span class="alert-icon">🔔</span>
+        <span class="alert-text">大幅変動検知:</span>
+        {alert_html_items}
+    </div>
+    """, unsafe_allow_html=True)
 
 
 # --- Gemini AI コメントセクション ---
@@ -611,34 +710,56 @@ if portfolio_display_data:
     
     display_df['location'] = display_df['location'].apply(format_location)
     
-    # P/L表示用カラム（色付きインジケータ）
-    def format_pl_display(row):
+    # P/L表示用カラム（統合: %と金額を1列に）
+    def format_pl_combined(row):
         pl = row['pl_percent']
-        if pl > 0:
-            return f"▲ +{pl:.1f}%"
-        elif pl < 0:
-            return f"▼ {pl:.1f}%"
-        else:
-            return f"— 0.0%"
-    
-    display_df['pl_display'] = display_df.apply(format_pl_display, axis=1)
-    
-    # Unrealized P/L 表示用
-    def format_upl_display(row):
         upl = row['unrealized_pl']
-        if upl > 0:
-            return f"+${upl:,.2f}"
-        elif upl < 0:
-            return f"-${abs(upl):,.2f}"
+        if pl > 0:
+            return f"▲ +{pl:.1f}% (+${upl:,.0f})"
+        elif pl < 0:
+            return f"▼ {pl:.1f}% (-${abs(upl):,.0f})"
         else:
-            return "$0.00"
+            return f"— 0.0% ($0)"
     
-    display_df['upl_display'] = display_df.apply(format_upl_display, axis=1)
+    display_df['pl_combined'] = display_df.apply(format_pl_combined, axis=1)
+    
+    # Sparkline データ取得（7日間の価格推移）
+    @st.cache_data(ttl=3600, show_spinner=False)
+    def get_sparkline_data(api_ids_list):
+        """複数資産の7日スパークラインデータを一括取得"""
+        sparklines = {}
+        for api_id in api_ids_list:
+            try:
+                resp = requests.get(
+                    f"https://api.coingecko.com/api/v3/coins/{api_id}/market_chart",
+                    params={'vs_currency': 'usd', 'days': 7},
+                    timeout=10
+                )
+                if resp.status_code == 200:
+                    prices = resp.json().get('prices', [])
+                    # 24ポイントに間引き
+                    step = max(1, len(prices) // 24)
+                    sparklines[api_id] = [p[1] for p in prices[::step]]
+                else:
+                    sparklines[api_id] = None
+            except:
+                sparklines[api_id] = None
+            time.sleep(0.15)  # Rate limit対策
+        return sparklines
+    
+    # スパークラインデータ取得
+    api_ids_for_spark = [row['api_id'] for _, row in display_df.iterrows() if row.get('api_id')]
+    spark_data = get_sparkline_data(tuple(api_ids_for_spark))
+    
+    # DataFrameにスパークライン列追加
+    display_df['sparkline'] = display_df['api_id'].apply(
+        lambda x: spark_data.get(x) if spark_data.get(x) else None
+    )
 
     # 最大評価額を取得（ProgressColumn用）
     max_value = display_df['value'].max() if len(display_df) > 0 else 1
 
-    # カラム設定 - DeFiスタイル
+    # カラム設定 - DeFiスタイル（最適化: avg_costを削除、P/Lを統合、sparkline追加）
     column_config = {
         "icon_url": st.column_config.ImageColumn(
             "🪙",
@@ -651,51 +772,45 @@ if portfolio_display_data:
         ),
         "name": st.column_config.TextColumn(
             "Asset",
-            width="medium"
+            width="small"
         ),
         "location": st.column_config.TextColumn(
             "Location",
-            width="medium",
+            width="small",
             help="保管場所"
         ),
         "holdings": st.column_config.NumberColumn(
             "Qty",
-            format="%.6f",
-            width="medium"
+            format="%.4f",
+            width="small"
         ),
         "price": st.column_config.NumberColumn(
             f"Price ({currency_symbol})",
-            format="%.4f" if currency == "USD" else "%.2f",
-            width="medium"
+            format="%.4f" if currency == "USD" else "%.0f",
+            width="small"
         ),
         "value": st.column_config.ProgressColumn(
             f"Value ({currency_symbol})",
             format=f"{currency_symbol}%.0f",
             min_value=0,
             max_value=float(max_value * 1.1),
-            width="medium",
+            width="small",
             help="評価額（バーはポートフォリオ内の相対比率）"
         ),
-        "avg_cost": st.column_config.NumberColumn(
-            "Avg Cost ($)",
-            format="%.4f",
-            width="medium",
-            help="平均取得単価 (USD)"
-        ),
-        "pl_display": st.column_config.TextColumn(
-            "P/L %",
+        "sparkline": st.column_config.LineChartColumn(
+            "7d Trend",
             width="small",
-            help="損益率（現在価格 vs 平均取得単価）"
+            help="過去7日間の価格推移"
         ),
-        "upl_display": st.column_config.TextColumn(
-            "Unrealized P/L",
+        "pl_combined": st.column_config.TextColumn(
+            "P/L",
             width="medium",
-            help="未実現損益 (USD)"
+            help="損益率 & 未実現損益"
         )
     }
 
-    # 表示するカラムの順序
-    display_cols = ["icon_url", "symbol", "name", "location", "holdings", "price", "value", "avg_cost", "pl_display", "upl_display"]
+    # 表示するカラムの順序（avg_cost削除、sparkline追加、P/L統合）
+    display_cols = ["icon_url", "symbol", "name", "location", "holdings", "price", "value", "sparkline", "pl_combined"]
 
     # 行数に応じて高さを動的に計算（1行あたり35px + ヘッダー40px）
     table_height = max(500, len(display_df) * 35 + 40)
