@@ -557,7 +557,11 @@ def get_portfolio_history(days: int = 365) -> List[Tuple]:
     if not client: return []
     
     try:
-        res = client.table("portfolio_snapshots").select("date, total_value_jpy").order("date", desc=True).limit(days).execute()
+        query = client.table("portfolio_snapshots").select("date, total_value_jpy").order("date", desc=True)
+        # ALL期間 (days >= 9999) の場合はlimitを適用しない
+        if days < 9999:
+            query = query.limit(days)
+        res = query.execute()
         
         data = []
         if res.data:

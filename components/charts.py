@@ -195,9 +195,31 @@ def render_charts(portfolio_display_data, get_portfolio_history_func):
         
         st.plotly_chart(fig_bar, use_container_width=True)
 
-    # 3. ポートフォリオ履歴チャート（簡略版）
+    # 3. ポートフォリオ履歴チャート（期間セレクター付き）
     with chart_col3:
-        snapshot_data = get_portfolio_history_func(days=365)
+        # 期間セレクター設定
+        PERIOD_CONFIG = {
+            '1W':  {'days': 7,    'label': '1 Week',    'tickformat': '%m/%d', 'marker_size': 6},
+            '1M':  {'days': 30,   'label': '1 Month',   'tickformat': '%m/%d', 'marker_size': 5},
+            '3M':  {'days': 90,   'label': '3 Months',  'tickformat': '%m/%d', 'marker_size': 4},
+            '6M':  {'days': 180,  'label': '6 Months',  'tickformat': '%Y/%m', 'marker_size': 3},
+            '1Y':  {'days': 365,  'label': '1 Year',    'tickformat': '%Y/%m', 'marker_size': 3},
+            'ALL': {'days': 9999, 'label': 'All Time',  'tickformat': '%Y/%m', 'marker_size': 2},
+        }
+        
+        # 期間セレクター（横並びラジオボタン）
+        selected_period = st.radio(
+            "期間",
+            options=list(PERIOD_CONFIG.keys()),
+            index=1,  # デフォルト: 1M
+            horizontal=True,
+            key="history_period_selector",
+            label_visibility="collapsed"
+        )
+        
+        config = PERIOD_CONFIG[selected_period]
+        snapshot_data = get_portfolio_history_func(days=config['days'])
+        
         if snapshot_data:
             hist_dates = [datetime.fromisoformat(s[0]) for s in snapshot_data]
             hist_values = [s[1] for s in snapshot_data]
@@ -207,12 +229,27 @@ def render_charts(portfolio_display_data, get_portfolio_history_func):
                 first_val = hist_values[0]
                 last_val = hist_values[-1]
                 change_pct = ((last_val - first_val) / first_val) * 100 if first_val > 0 else 0
+                change_amount = last_val - first_val
                 change_color = "#00ff9d" if change_pct >= 0 else "#ff4b4b"
                 change_sign = "+" if change_pct >= 0 else ""
+                change_icon = "▲" if change_pct >= 0 else "▼"
             else:
                 change_pct = 0
+                change_amount = 0
                 change_color = "#888"
                 change_sign = ""
+                change_icon = "—"
+            
+            # タイトルと変化率をチャート外に表示
+            st.markdown(
+                f"<div style='text-align:center;'>"
+                f"<span style='color:#e8edf5;font-size:14px;font-weight:bold;'>History ({config['label']})</span>"
+                f"<br><span style='font-size:12px;color:{change_color}'>"
+                f"{change_icon} {change_sign}{change_pct:.1f}%"
+                f" ({change_sign}¥{abs(change_amount):,.0f})</span>"
+                f"</div>",
+                unsafe_allow_html=True
+            )
             
             fig_hist = go.Figure()
             
@@ -222,26 +259,19 @@ def render_charts(portfolio_display_data, get_portfolio_history_func):
                 mode='lines+markers',
                 name='Portfolio Value',
                 line=dict(color='#3b82f6', width=2),
-                marker=dict(size=4, color='#3b82f6'),
+                marker=dict(size=config['marker_size'], color='#3b82f6'),
                 fill='tozeroy',
-                fillcolor='rgba(59, 130, 246, 0.1)'
+                fillcolor='rgba(59, 130, 246, 0.1)',
+                hovertemplate='%{x|%Y-%m-%d}<br>¥%{y:,.0f}<extra></extra>'
             ))
             
             fig_hist.update_layout(
-                title=dict(
-                    text=f"History ({years_ago_label(len(hist_values))})",
-                    font=dict(color="#e8edf5", size=14),
-                    y=0.98,
-                    x=0.5,
-                    xanchor='center',
-                    yanchor='top'
-                ),
                 paper_bgcolor='rgba(0,0,0,0)',
                 plot_bgcolor='rgba(0,0,0,0)',
                 xaxis=dict(
                     showgrid=False, 
                     tickfont=dict(color='#94a3b8', size=10),
-                    tickformat='%m/%d'
+                    tickformat=config['tickformat']
                 ),
                 yaxis=dict(
                     showgrid=True, 
@@ -249,24 +279,14 @@ def render_charts(portfolio_display_data, get_portfolio_history_func):
                     tickfont=dict(color='#94a3b8', size=10),
                     tickformat='s'
                 ),
-                margin=dict(t=40, b=20, l=30, r=10),
-                height=300,
+                margin=dict(t=10, b=20, l=30, r=10),
+                height=280,
                 showlegend=False
             )
             
             st.plotly_chart(fig_hist, use_container_width=True)
         else:
             st.info("No history data available.")
-
-def years_ago_label(count):
-    if count > 300:
-        return "1 Year"
-    elif count > 90:
-        return "3 Months"
-    elif count > 30:
-        return "1 Month"
-    else:
-        return "Last 30 Days"
 
 def render_price_analysis_chart(portfolio_display_data, fetch_market_chart_func, fetch_exchange_rate_history_func, currency_symbol, vs_currency):
     """
