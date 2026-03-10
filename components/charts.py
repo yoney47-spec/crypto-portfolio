@@ -251,6 +251,14 @@ def render_charts(portfolio_display_data, get_portfolio_history_func):
                 unsafe_allow_html=True
             )
             
+            # Y軸の範囲を動的に設定（変動を見やすくする）
+            min_val = min(hist_values)
+            max_val = max(hist_values)
+            val_range = max_val - min_val
+            padding = val_range * 0.15 if val_range > 0 else max_val * 0.05
+            y_min = max(0, min_val - padding)
+            y_max = max_val + padding
+            
             fig_hist = go.Figure()
             
             fig_hist.add_trace(go.Scatter(
@@ -277,7 +285,8 @@ def render_charts(portfolio_display_data, get_portfolio_history_func):
                     showgrid=True, 
                     gridcolor='rgba(59, 130, 246, 0.08)',
                     tickfont=dict(color='#94a3b8', size=10),
-                    tickformat='s'
+                    tickformat='s',
+                    range=[y_min, y_max]
                 ),
                 margin=dict(t=10, b=20, l=30, r=10),
                 height=280,
