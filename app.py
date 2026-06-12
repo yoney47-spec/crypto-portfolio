@@ -202,9 +202,14 @@ def get_prices_with_jpy(api_ids, usd_jpy_rate):
         }
     return result
 
-# 過去の価格チャートデータを取得 (キャッシュ無効化: エラー時のNoneキャッシュを防ぐため)
-def fetch_market_chart(api_id, vs_curr="usd", days=7):
-    """CoinGecko APIから過去の価格データを取得"""
+class CoinGeckoAPIError(Exception):
+    """CoinGecko APIエラー用カスタム例外"""
+    pass
+
+# 過去の価格チャートデータを取得 - キャッシュ有効化 (TTL: 30分)
+@st.cache_data(ttl=1800)
+def fetch_market_chart_cached(api_id, vs_curr="usd", days=7):
+    """CoinGecko APIから過去の価格データを取得（キャッシュ対応）"""
     if not api_id:
         return None
 
@@ -226,25 +231,47 @@ def fetch_market_chart(api_id, vs_curr="usd", days=7):
                 if attempt < max_retries - 1:
                     time.sleep(2 ** attempt + 1)
                     continue
-                return None
+                raise CoinGeckoAPIError("API rate limit reached (429) for market chart")
+            
             response.raise_for_status()
-            return response.json()
+            data = response.json()
+            if not data or 'prices' not in data or len(data['prices']) == 0:
+                raise CoinGeckoAPIError("Invalid or empty data received for market chart")
+            return data
+            
         except requests.exceptions.RequestException as e:
             if attempt < max_retries - 1:
                 time.sleep(1)
                 continue
-            print(f"[ERROR] API呼び出し失敗 (fetch_market_chart): {str(e)}")
-            return None
+            raise CoinGeckoAPIError(f"API request failed: {str(e)}")
         except Exception as e:
-            print(f"[ERROR] 予期しないエラー (fetch_market_chart): {str(e)}")
-            return None
-    return None
+            raise CoinGeckoAPIError(f"Unexpected error: {str(e)}")
+            
+    raise CoinGeckoAPIError("Failed to fetch market chart after retries")
+
+
+def fetch_market_chart(api_id, vs_curr="usd", days=7):
+    """キャッシュ対応のCoinGecko API呼び出しのラッパー。エラー時はセッションステートに保存された過去データを返す"""
+    state_key = f"last_market_chart_{api_id}_{vs_curr}_{days}"
+    if "market_chart_history" not in st.session_state:
+        st.session_state["market_chart_history"] = {}
+        
+    try:
+        data = fetch_market_chart_cached(api_id, vs_curr, days)
+        st.session_state["market_chart_history"][state_key] = data
+        return data
+    except CoinGeckoAPIError as e:
+        print(f"[CACHE INFO] {e}. Trying session fallback...")
+        fallback_data = st.session_state["market_chart_history"].get(state_key)
+        if fallback_data:
+            return fallback_data
+        return None
 
 
 # 為替レート(USDT/JPY)の履歴を取得 - キャッシュ有効化 (TTL: 1時間)
 @st.cache_data(ttl=3600)
-def fetch_exchange_rate_history(days=30):
-    """CoinGecko APIからUSDT/JPYの履歴を取得してドル円レートの代用とする"""
+def fetch_exchange_rate_history_cached(days=30):
+    """CoinGecko APIからUSDT/JPYの履歴を取得してドル円レートの代用とする（キャッシュ対応）"""
     url = "https://api.coingecko.com/api/v3/coins/tether/market_chart"
     params = {
         "vs_currency": "jpy",
@@ -260,19 +287,38 @@ def fetch_exchange_rate_history(days=30):
                 if attempt < max_retries - 1:
                     time.sleep(2 ** attempt)
                     continue
-                return None
+                raise CoinGeckoAPIError("API rate limit reached (429) for exchange rate")
             response.raise_for_status()
-            return response.json()
+            data = response.json()
+            if not data or 'prices' not in data or len(data['prices']) == 0:
+                raise CoinGeckoAPIError("Invalid or empty data received for exchange rate")
+            return data
         except requests.exceptions.RequestException as e:
             if attempt < max_retries - 1:
                 time.sleep(1)
                 continue
-            print(f"[ERROR] 為替レート取得失敗: {str(e)}")
-            return None
+            raise CoinGeckoAPIError(f"API request failed for exchange rate: {str(e)}")
         except Exception as e:
-            print(f"[ERROR] 予期しないエラー (exchange_rate): {str(e)}")
-            return None
-    return None
+            raise CoinGeckoAPIError(f"Unexpected error for exchange rate: {str(e)}")
+    raise CoinGeckoAPIError("Failed to fetch exchange rate history after retries")
+
+
+def fetch_exchange_rate_history(days=30):
+    """キャッシュ対応の為替レート履歴取得のラッパー。エラー時はセッションステートに保存された過去データを返す"""
+    state_key = f"last_exchange_rate_history_{days}"
+    if "exchange_rate_history" not in st.session_state:
+        st.session_state["exchange_rate_history"] = {}
+        
+    try:
+        data = fetch_exchange_rate_history_cached(days)
+        st.session_state["exchange_rate_history"][state_key] = data
+        return data
+    except CoinGeckoAPIError as e:
+        print(f"[CACHE INFO] {e}. Trying session fallback...")
+        fallback_data = st.session_state["exchange_rate_history"].get(state_key)
+        if fallback_data:
+            return fallback_data
+        return None
 
 # ポートフォリオデータをキャッシュ（60秒TTL）
 @st.cache_data(ttl=60)
@@ -723,28 +769,68 @@ if portfolio_display_data:
     
     display_df['pl_combined'] = display_df.apply(format_pl_combined, axis=1)
     
-    # Sparkline データ取得（7日間の価格推移）
+    # Sparkline データ取得（7日間の価格推移） - /coins/markets APIで一括取得
     @st.cache_data(ttl=3600, show_spinner=False)
     def get_sparkline_data(api_ids_list):
-        """複数資産の7日スパークラインデータを一括取得"""
+        """複数資産の7日スパークラインデータを一括取得（/coins/markets API使用）"""
         sparklines = {}
-        for api_id in api_ids_list:
+        
+        # /coins/markets エンドポイントで一括取得（sparkline=true）
+        # 1リクエストで最大250件まで取得可能
+        ids_str = ",".join(api_ids_list)
+        max_retries = 3
+        
+        for attempt in range(max_retries):
             try:
                 resp = requests.get(
-                    f"https://api.coingecko.com/api/v3/coins/{api_id}/market_chart",
-                    params={'vs_currency': 'usd', 'days': 7},
-                    timeout=10
+                    "https://api.coingecko.com/api/v3/coins/markets",
+                    params={
+                        'vs_currency': 'usd',
+                        'ids': ids_str,
+                        'sparkline': 'true',
+                        'price_change_percentage': '7d',
+                        'per_page': 250,
+                        'page': 1
+                    },
+                    timeout=15
                 )
+                
+                if resp.status_code == 429:
+                    # レート制限 - リトライ
+                    if attempt < max_retries - 1:
+                        time.sleep(2 ** (attempt + 1))
+                        continue
+                    break
+                    
                 if resp.status_code == 200:
-                    prices = resp.json().get('prices', [])
-                    # 24ポイントに間引き
-                    step = max(1, len(prices) // 24)
-                    sparklines[api_id] = [p[1] for p in prices[::step]]
+                    data = resp.json()
+                    for coin in data:
+                        coin_id = coin.get('id')
+                        spark_in_7d = coin.get('sparkline_in_7d', {})
+                        price_list = spark_in_7d.get('price', [])
+                        if price_list and len(price_list) > 0:
+                            # 24ポイントに間引き
+                            step = max(1, len(price_list) // 24)
+                            sparklines[coin_id] = price_list[::step]
+                        else:
+                            sparklines[coin_id] = None
+                    break
                 else:
-                    sparklines[api_id] = None
-            except:
+                    if attempt < max_retries - 1:
+                        time.sleep(1)
+                        continue
+                    break
+            except Exception:
+                if attempt < max_retries - 1:
+                    time.sleep(1)
+                    continue
+                break
+        
+        # 取得できなかったIDにはNoneを設定
+        for api_id in api_ids_list:
+            if api_id not in sparklines:
                 sparklines[api_id] = None
-            time.sleep(0.15)  # Rate limit対策
+        
         return sparklines
     
     # スパークラインデータ取得
@@ -799,7 +885,7 @@ if portfolio_display_data:
         ),
         "sparkline": st.column_config.LineChartColumn(
             "7d Trend",
-            width="small",
+            width="medium",
             help="過去7日間の価格推移"
         ),
         "pl_combined": st.column_config.TextColumn(

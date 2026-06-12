@@ -38,6 +38,7 @@ def init_supabase() -> Optional[CustomSupabaseClient]:
         return None
 
 # Global client check (can be used inside functions)
+@st.cache_resource
 def get_client():
     return init_supabase()
 
