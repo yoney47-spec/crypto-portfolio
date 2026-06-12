@@ -808,10 +808,27 @@ if portfolio_display_data:
                         coin_id = coin.get('id')
                         spark_in_7d = coin.get('sparkline_in_7d', {})
                         price_list = spark_in_7d.get('price', [])
+                        
                         if price_list and len(price_list) > 0:
-                            # 24ポイントに間引き
-                            step = max(1, len(price_list) // 24)
-                            sparklines[coin_id] = price_list[::step]
+                            # 完全に24点にリサンプリングして長さを揃える
+                            n_points = 24
+                            if len(price_list) >= n_points:
+                                indices = [int(i * (len(price_list) - 1) / (n_points - 1)) for i in range(n_points)]
+                                resampled_prices = [price_list[idx] for idx in indices]
+                            else:
+                                resampled_prices = price_list + [price_list[-1]] * (n_points - len(price_list))
+                            
+                            # None/NaNの排除とfloatキャスト
+                            cleaned_prices = []
+                            last_valid = price_list[0] if price_list[0] is not None else 0.0
+                            for p in resampled_prices:
+                                if p is None or not isinstance(p, (int, float)):
+                                    cleaned_prices.append(float(last_valid))
+                                else:
+                                    cleaned_prices.append(float(p))
+                                    last_valid = p
+                                    
+                            sparklines[coin_id] = cleaned_prices
                         else:
                             sparklines[coin_id] = None
                     break
@@ -900,7 +917,6 @@ if portfolio_display_data:
 
     # 行数に応じて高さを動的に計算（1行あたり35px + ヘッダー40px）
     table_height = max(500, len(display_df) * 35 + 40)
-    
     st.dataframe(
         display_df[display_cols],
         column_config=column_config,
