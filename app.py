@@ -52,7 +52,7 @@ from components.sidebar import render_sidebar
 from components.metrics import render_metrics
 from components.charts import render_charts, render_price_analysis_chart
 
-currency = render_sidebar()
+currency, layout_mode = render_sidebar()
 currency_symbol = "$" if currency == "USD" else "¥"
 vs_currency = currency.lower()
 
@@ -320,6 +320,30 @@ def fetch_exchange_rate_history(days=30):
             return fallback_data
         return None
 
+
+def handle_auto_snapshot(total_value, vs_currency, exchange_rate):
+    """今日（JST）のスナップショットがまだなければ自動的に保存"""
+    if st.session_state.get('auto_snapshot_checked', False):
+        return
+        
+    try:
+        val_jpy = total_value if vs_currency == "jpy" else total_value * exchange_rate
+        
+        latest = get_latest_snapshot()
+        JST_tz = timezone(timedelta(hours=9))
+        today = datetime.now(JST_tz).date().isoformat()
+        
+        if not latest or latest['date'] != today:
+            if save_portfolio_snapshot(val_jpy):
+                print(f"[AUTO SNAPSHOT] Created snapshot for {today}: JPY {val_jpy:,.0f}")
+                st.cache_data.clear()
+            else:
+                print("[AUTO SNAPSHOT] Failed to save snapshot")
+        
+        st.session_state['auto_snapshot_checked'] = True
+    except Exception as e:
+        print(f"[AUTO SNAPSHOT ERROR] {e}")
+
 # ポートフォリオデータをキャッシュ（60秒TTL）
 @st.cache_data(ttl=60)
 def get_cached_portfolio_data():
@@ -415,6 +439,10 @@ for item in portfolio_data:
         "pl_percent": pl_percent,
         "unrealized_pl": unrealized_pl
     })
+
+# 自動スナップショット処理を実行
+if portfolio_display_data:
+    handle_auto_snapshot(total_portfolio_value, vs_currency, exchange_rate)
 
 # 今年の取引のみの投資額と売却額を計算（含み益計算用）
 from datetime import datetime
@@ -912,8 +940,11 @@ if portfolio_display_data:
         )
     }
 
-    # 表示するカラムの順序（avg_cost削除、sparkline追加、P/L統合）
-    display_cols = ["icon_url", "symbol", "name", "location", "holdings", "price", "value", "sparkline", "pl_combined"]
+    # 表示するカラムの順序（詳細表示と簡易表示で切り替え）
+    if layout_mode == "簡易 (Mobile)":
+        display_cols = ["icon_url", "symbol", "holdings", "value", "pl_combined"]
+    else:
+        display_cols = ["icon_url", "symbol", "name", "location", "holdings", "price", "value", "sparkline", "pl_combined"]
 
     # 行数に応じて高さを動的に計算（1行あたり35px + ヘッダー40px）
     table_height = max(500, len(display_df) * 35 + 40)

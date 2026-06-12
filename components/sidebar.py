@@ -33,4 +33,14 @@ def render_sidebar():
         index=0
     )
     
-    return currency
+    st.sidebar.markdown("---")
+    
+    # Layout mode selector
+    layout_mode = st.sidebar.radio(
+        "テーブル表示",
+        ["詳細 (Desktop)", "簡易 (Mobile)"],
+        key="layout_mode_selector",
+        index=0
+    )
+    
+    return currency, layout_mode
