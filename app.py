@@ -472,24 +472,20 @@ def format_price(val, currency="USD"):
         else:
             return f"¥{val:,.0f}"
 
-# ヘッダー（動的グリーティング付き）
+# ヘッダー（クリーンなインラインヘッダー）
 JST_tz = timezone(timedelta(hours=9))
 now_jst = datetime.now(JST_tz)
-hour = now_jst.hour
-if 5 <= hour < 12:
-    greeting_icon, greeting_text = "☀️", "Good Morning"
-elif 12 <= hour < 17:
-    greeting_icon, greeting_text = "🌤️", "Good Afternoon"
-elif 17 <= hour < 21:
-    greeting_icon, greeting_text = "🌆", "Good Evening"
-else:
-    greeting_icon, greeting_text = "🌙", "Good Night"
 
 st.markdown(f"""
-<div class="dashboard-header">
-    <div class="header-greeting">{greeting_icon} {greeting_text}</div>
-    <h1 class="header-title">Crypto Portfolio</h1>
-    <div class="header-timestamp">Last updated: {now_jst.strftime('%Y-%m-%d %H:%M')} JST</div>
+<div class="app-header">
+    <div class="app-brand">
+        <span class="app-brand-icon">💎</span>
+        <span class="app-brand-title">Crypto Portfolio</span>
+    </div>
+    <div class="app-header-meta">
+        <span class="rate-badge">1 USD = ¥{exchange_rate:.2f}</span>
+        <span>Updated: {now_jst.strftime('%H:%M')} JST</span>
+    </div>
 </div>
 """, unsafe_allow_html=True)
 
@@ -569,34 +565,37 @@ fng_data = fetch_fear_greed()
 if fng_data:
     fng_val = fng_data['value']
     fng_label = fng_data['label']
-    # カラー設定
+    # 洗練されたFintechカラー
     if fng_val <= 25:
-        fng_color = '#ff3b5c'
+        fng_color = '#f43f5e'
         fng_emoji = '😱'
     elif fng_val <= 45:
-        fng_color = '#ff8c00'
+        fng_color = '#fb923c'
         fng_emoji = '😟'
     elif fng_val <= 55:
-        fng_color = '#ffd700'
+        fng_color = '#facc15'
         fng_emoji = '😐'
     elif fng_val <= 75:
-        fng_color = '#90ee90'
+        fng_color = '#34d399'
         fng_emoji = '😊'
     else:
-        fng_color = '#39ff14'
+        fng_color = '#10b981'
         fng_emoji = '🤑'
     
     st.markdown(f"""
-    <div class="fng-widget">
-        <div class="fng-gauge">
-            <div class="fng-value" style="color: {fng_color};">{fng_val}</div>
-            <div class="fng-bar-track">
-                <div class="fng-bar-fill" style="width: {fng_val}%; background: {fng_color};"></div>
+    <div style="display:flex; align-items:center; justify-content:space-between; background:var(--bg-secondary); border:1px solid var(--border-subtle); border-radius:var(--radius-md); padding:10px 16px; margin-bottom:var(--spacing-md);">
+        <div style="display:flex; align-items:center; gap:12px;">
+            <span style="font-size:1.1rem;">{fng_emoji}</span>
+            <div>
+                <span style="font-size:0.75rem; color:var(--text-muted); text-transform:uppercase; font-weight:600; letter-spacing:0.05em;">Market Sentiment: </span>
+                <span style="font-size:0.85rem; font-weight:600; color:{fng_color};">{fng_label}</span>
             </div>
         </div>
-        <div class="fng-info">
-            <span class="fng-label">{fng_emoji} {fng_label}</span>
-            <span class="fng-title">Fear & Greed Index</span>
+        <div style="display:flex; align-items:center; gap:10px;">
+            <div style="width:100px; height:4px; background:rgba(255,255,255,0.06); border-radius:2px; overflow:hidden;">
+                <div style="width:{fng_val}%; height:100%; background:{fng_color}; border-radius:2px;"></div>
+            </div>
+            <span style="font-family:'JetBrains Mono', monospace; font-weight:700; font-size:0.95rem; color:{fng_color};">{fng_val}</span>
         </div>
     </div>
     """, unsafe_allow_html=True)
@@ -788,12 +787,21 @@ if portfolio_display_data:
     def format_pl_combined(row):
         pl = row['pl_percent']
         upl = row['unrealized_pl']
-        if pl > 0:
-            return f"▲ +{pl:.1f}% (+${upl:,.0f})"
-        elif pl < 0:
-            return f"▼ {pl:.1f}% (-${abs(upl):,.0f})"
+        if vs_currency == "jpy":
+            upl_disp = upl * exchange_rate
+            sym = "¥"
+            amt_str = f"{abs(upl_disp):,.0f}"
         else:
-            return f"— 0.0% ($0)"
+            upl_disp = upl
+            sym = "$"
+            amt_str = f"{abs(upl_disp):,.2f}"
+            
+        if pl > 0:
+            return f"+{pl:.1f}% (+{sym}{amt_str})"
+        elif pl < 0:
+            return f"{pl:.1f}% (-{sym}{amt_str})"
+        else:
+            return f"0.0% ({sym}0)"
     
     display_df['pl_combined'] = display_df.apply(format_pl_combined, axis=1)
     

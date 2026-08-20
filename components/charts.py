@@ -108,18 +108,18 @@ def render_charts(portfolio_display_data, get_portfolio_history_func):
         fig_donut = go.Figure(data=[go.Pie(
             labels=labels, 
             values=values, 
-            hole=.6,
+            hole=.7,
             textinfo='none',
-            sort=False, # 既にソート済みなので自動ソート無効化
+            sort=False,
             direction='clockwise',
-            rotation=0, # 12時方向 (Plotlyの0度は12時)
-            marker=dict(colors=colors)
+            rotation=0,
+            marker=dict(colors=colors, line=dict(color='#0b0f17', width=1.5))
         )])
         
         fig_donut.update_layout(
             title=dict(
                 text="Allocation",
-                font=dict(color="#e8edf5", size=14),
+                font=dict(color="#94a3b8", size=12, family="Inter"),
                 y=0.98,
                 x=0.5,
                 xanchor='center',
@@ -127,42 +127,41 @@ def render_charts(portfolio_display_data, get_portfolio_history_func):
             ),
             showlegend=True,
             legend=dict(
-                font=dict(color="#94a3b8", size=10),
+                font=dict(color="#64748b", size=10, family="Inter"),
                 orientation="h",
                 yanchor="top",
-                y=-0.1,
+                y=-0.08,
                 xanchor="center",
                 x=0.5
             ),
             paper_bgcolor='rgba(0,0,0,0)',
             plot_bgcolor='rgba(0,0,0,0)',
-            margin=dict(t=40, b=50, l=20, r=20),
-            height=300,
+            margin=dict(t=35, b=45, l=15, r=15),
+            height=280,
             annotations=[dict(
                 text=f"<b>${total_value:,.0f}</b>",
                 x=0.5, y=0.5,
-                font=dict(size=18, color='#00d9ff', family='Monaco, monospace'),
+                font=dict(size=16, color='#f8fafc', family='JetBrains Mono, monospace'),
                 showarrow=False
             )]
         )
         
         fig_donut.update_traces(
             hoverinfo='label+value+percent', 
-            textfont_size=12
+            textfont_size=11
         )
         
         st.plotly_chart(fig_donut, use_container_width=True)
 
     # 2. トップ保有資産比較 (棒グラフ)
     with chart_col2:
-        # 保有資産数に応じて表示数を動的調整（最大10件、最小3件）
         total_assets = len(sorted_data)
-        display_count = min(10, max(3, total_assets))  # 3-10の範囲で調整
+        display_count = min(10, max(3, total_assets))
         
         top_n = sorted_data[:display_count]
-        top_symbols = [item['symbol'] for item in top_n][::-1] # 逆順にして上から多い順に
+        top_symbols = [item['symbol'] for item in top_n][::-1]
         top_values = [item['value'] for item in top_n][::-1]
-        top_colors = [color_map.get(s, '#666666') for s in top_symbols]  # 「その他」対応
+        top_colors = [color_map.get(s, '#666666') for s in top_symbols]
         
         fig_bar = go.Figure(go.Bar(
             x=top_values,
@@ -170,7 +169,8 @@ def render_charts(portfolio_display_data, get_portfolio_history_func):
             orientation='h',
             marker=dict(
                 color=top_colors,
-                showscale=False
+                showscale=False,
+                line=dict(width=0)
             ),
             hoverinfo='x+y',
             textposition='none' 
@@ -179,7 +179,7 @@ def render_charts(portfolio_display_data, get_portfolio_history_func):
         fig_bar.update_layout(
             title=dict(
                 text="Top Assets by Value",
-                font=dict(color="#e8edf5", size=14),
+                font=dict(color="#94a3b8", size=12, family="Inter"),
                 y=0.98,
                 x=0.5,
                 xanchor='center',
@@ -188,30 +188,28 @@ def render_charts(portfolio_display_data, get_portfolio_history_func):
             paper_bgcolor='rgba(0,0,0,0)',
             plot_bgcolor='rgba(0,0,0,0)',
             xaxis=dict(showgrid=False, showticklabels=False),
-            yaxis=dict(showgrid=False, tickfont=dict(color='#94a3b8')),
-            margin=dict(t=40, b=10, l=10, r=10),
-            height=300
+            yaxis=dict(showgrid=False, tickfont=dict(color='#94a3b8', size=11, family="Inter")),
+            margin=dict(t=35, b=10, l=10, r=10),
+            height=280
         )
         
         st.plotly_chart(fig_bar, use_container_width=True)
 
     # 3. ポートフォリオ履歴チャート（期間セレクター付き）
     with chart_col3:
-        # 期間セレクター設定
         PERIOD_CONFIG = {
-            '1W':  {'days': 7,    'label': '1 Week',    'tickformat': '%m/%d', 'marker_size': 6},
-            '1M':  {'days': 30,   'label': '1 Month',   'tickformat': '%m/%d', 'marker_size': 5},
-            '3M':  {'days': 90,   'label': '3 Months',  'tickformat': '%m/%d', 'marker_size': 4},
-            '6M':  {'days': 180,  'label': '6 Months',  'tickformat': '%Y/%m', 'marker_size': 3},
-            '1Y':  {'days': 365,  'label': '1 Year',    'tickformat': '%Y/%m', 'marker_size': 3},
-            'ALL': {'days': 9999, 'label': 'All Time',  'tickformat': '%Y/%m', 'marker_size': 2},
+            '1W':  {'days': 7,    'label': '1 Week',    'tickformat': '%m/%d', 'marker_size': 4},
+            '1M':  {'days': 30,   'label': '1 Month',   'tickformat': '%m/%d', 'marker_size': 3},
+            '3M':  {'days': 90,   'label': '3 Months',  'tickformat': '%m/%d', 'marker_size': 2},
+            '6M':  {'days': 180,  'label': '6 Months',  'tickformat': '%Y/%m', 'marker_size': 2},
+            '1Y':  {'days': 365,  'label': '1 Year',    'tickformat': '%Y/%m', 'marker_size': 2},
+            'ALL': {'days': 9999, 'label': 'All Time',  'tickformat': '%Y/%m', 'marker_size': 1},
         }
         
-        # 期間セレクター（横並びラジオボタン）
         selected_period = st.radio(
             "期間",
             options=list(PERIOD_CONFIG.keys()),
-            index=1,  # デフォルト: 1M
+            index=1,
             horizontal=True,
             key="history_period_selector",
             label_visibility="collapsed"
@@ -224,38 +222,35 @@ def render_charts(portfolio_display_data, get_portfolio_history_func):
             hist_dates = [datetime.fromisoformat(s[0]) for s in snapshot_data]
             hist_values = [s[1] for s in snapshot_data]
             
-            # 変化率の計算
             if len(hist_values) >= 2:
                 first_val = hist_values[0]
                 last_val = hist_values[-1]
                 change_pct = ((last_val - first_val) / first_val) * 100 if first_val > 0 else 0
                 change_amount = last_val - first_val
-                change_color = "#00ff9d" if change_pct >= 0 else "#ff4b4b"
+                change_color = "#10b981" if change_pct >= 0 else "#f43f5e"
                 change_sign = "+" if change_pct >= 0 else ""
                 change_icon = "▲" if change_pct >= 0 else "▼"
             else:
                 change_pct = 0
                 change_amount = 0
-                change_color = "#888"
+                change_color = "#64748b"
                 change_sign = ""
                 change_icon = "—"
             
-            # タイトルと変化率をチャート外に表示
             st.markdown(
-                f"<div style='text-align:center;'>"
-                f"<span style='color:#e8edf5;font-size:14px;font-weight:bold;'>History ({config['label']})</span>"
-                f"<br><span style='font-size:12px;color:{change_color}'>"
+                f"<div style='text-align:center; margin-bottom:4px;'>"
+                f"<span style='color:#94a3b8;font-size:12px;font-weight:600;'>History ({config['label']})</span>"
+                f" &nbsp;<span style='font-size:11px;font-family:JetBrains Mono, monospace;color:{change_color};font-weight:600;'>"
                 f"{change_icon} {change_sign}{change_pct:.1f}%"
                 f" ({change_sign}¥{abs(change_amount):,.0f})</span>"
                 f"</div>",
                 unsafe_allow_html=True
             )
             
-            # Y軸の範囲を動的に設定（変動を見やすくする）
             min_val = min(hist_values)
             max_val = max(hist_values)
             val_range = max_val - min_val
-            padding = val_range * 0.15 if val_range > 0 else max_val * 0.05
+            padding = val_range * 0.12 if val_range > 0 else max_val * 0.05
             y_min = max(0, min_val - padding)
             y_max = max_val + padding
             
@@ -264,13 +259,12 @@ def render_charts(portfolio_display_data, get_portfolio_history_func):
             fig_hist.add_trace(go.Scatter(
                 x=hist_dates, 
                 y=hist_values,
-                mode='lines+markers',
-                name='Portfolio Value',
-                line=dict(color='#3b82f6', width=2),
-                marker=dict(size=config['marker_size'], color='#3b82f6'),
+                mode='lines',
+                name='Net Worth',
+                line=dict(color='#3b82f6', width=1.8),
                 fill='tozeroy',
-                fillcolor='rgba(59, 130, 246, 0.1)',
-                hovertemplate='%{x|%Y-%m-%d}<br>¥%{y:,.0f}<extra></extra>'
+                fillcolor='rgba(59, 130, 246, 0.04)',
+                hovertemplate='%{x|%Y-%m-%d}  ¥%{y:,.0f}<extra></extra>'
             ))
             
             fig_hist.update_layout(
@@ -278,18 +272,18 @@ def render_charts(portfolio_display_data, get_portfolio_history_func):
                 plot_bgcolor='rgba(0,0,0,0)',
                 xaxis=dict(
                     showgrid=False, 
-                    tickfont=dict(color='#94a3b8', size=10),
+                    tickfont=dict(color='#64748b', size=9, family="JetBrains Mono"),
                     tickformat=config['tickformat']
                 ),
                 yaxis=dict(
                     showgrid=True, 
-                    gridcolor='rgba(59, 130, 246, 0.08)',
-                    tickfont=dict(color='#94a3b8', size=10),
+                    gridcolor='rgba(255, 255, 255, 0.03)',
+                    tickfont=dict(color='#64748b', size=9, family="JetBrains Mono"),
                     tickformat='s',
                     range=[y_min, y_max]
                 ),
-                margin=dict(t=10, b=20, l=30, r=10),
-                height=280,
+                margin=dict(t=5, b=15, l=25, r=5),
+                height=250,
                 showlegend=False
             )
             
@@ -390,23 +384,32 @@ def render_price_analysis_chart(portfolio_display_data, fetch_market_chart_func,
                     y_max = None
                 
                 # チャート色 (選択された資産の色を使用)
-                line_color = color_map.get(selected_symbol, '#00ff9d')
+                line_color = color_map.get(selected_symbol, '#3b82f6')
                 
+                # HEX -> RGB
+                try:
+                    r = int(line_color[1:3], 16)
+                    g = int(line_color[3:5], 16)
+                    b = int(line_color[5:7], 16)
+                except Exception:
+                    r, g, b = 59, 130, 246
+
                 fig_line = go.Figure()
                 fig_line.add_trace(go.Scatter(
                     x=dates, 
                     y=price_values,
                     mode='lines',
                     name=selected_symbol,
-                    line=dict(color=line_color, width=2.5),
+                    line=dict(color=line_color, width=1.8),
                     fill='tozeroy',
-                    fillcolor=f'rgba({int(line_color[1:3], 16)}, {int(line_color[3:5], 16)}, {int(line_color[5:7], 16)}, 0.1)'
+                    fillcolor=f'rgba({r}, {g}, {b}, 0.04)',
+                    hovertemplate='%{x|%Y-%m-%d %H:%M}  ' + currency_symbol + '%{y:,.4f}<extra></extra>'
                 ))
                 
                 fig_line.update_layout(
                     title=dict(
-                        text=f"{selected_symbol} - {timeframe.upper()} Chart",
-                        font=dict(color="#e8edf5", size=16),
+                        text=f"{selected_symbol} Price ({timeframe.upper()})",
+                        font=dict(color="#94a3b8", size=13, family="Inter"),
                         y=0.98,
                         x=0.5,
                         xanchor='center',
@@ -416,18 +419,18 @@ def render_price_analysis_chart(portfolio_display_data, fetch_market_chart_func,
                     plot_bgcolor='rgba(0,0,0,0)',
                     xaxis=dict(
                         showgrid=False, 
-                        tickfont=dict(color='#888'),
-                        linecolor='#333'
+                        tickfont=dict(color='#64748b', size=9, family="JetBrains Mono"),
+                        linecolor='rgba(255, 255, 255, 0.08)'
                     ),
                     yaxis=dict(
                         showgrid=True, 
-                        gridcolor='#333', 
-                        tickfont=dict(color='#888'),
+                        gridcolor='rgba(255, 255, 255, 0.03)', 
+                        tickfont=dict(color='#64748b', size=9, family="JetBrains Mono"),
                         tickprefix=currency_symbol,
                         range=[y_min, y_max]
                     ),
-                    margin=dict(t=40, b=0, l=0, r=0),
-                    height=350,
+                    margin=dict(t=35, b=10, l=10, r=10),
+                    height=320,
                     showlegend=False
                 )
                 
@@ -439,10 +442,9 @@ def render_price_analysis_chart(portfolio_display_data, fetch_market_chart_func,
     else:
         st.info("Select an asset above to view price trend.")
 
-    st.markdown("""<div style="margin-top: 2rem;"></div>""", unsafe_allow_html=True)
+    st.markdown("""<div style="margin-top: 1.5rem;"></div>""", unsafe_allow_html=True)
     
     # 4. 為替レートチャート (USD/JPY Analysis)
-    
     exchange_data = fetch_exchange_rate_history_func(days=30)
     
     if exchange_data and 'prices' in exchange_data:
@@ -453,10 +455,10 @@ def render_price_analysis_chart(portfolio_display_data, fetch_market_chart_func,
         # 直近のレートを表示
         latest_rate = ex_values[-1] if ex_values else 0
         rate_diff = ex_values[-1] - ex_values[0] if len(ex_values) > 1 else 0
-        diff_color = "#00ff9d" if rate_diff >= 0 else "#ff4b4b"
+        diff_color = "#10b981" if rate_diff >= 0 else "#f43f5e"
         diff_sign = "+" if rate_diff >= 0 else ""
         
-        st.markdown(f"### 💱 USD/JPY &nbsp;&nbsp; `¥{latest_rate:,.2f}`")
+        st.markdown(f"### 💱 USD/JPY &nbsp;&nbsp; <span style='font-family:JetBrains Mono; color:#f8fafc; font-size:1.1rem;'>¥{latest_rate:,.2f}</span>", unsafe_allow_html=True)
         
         fig_ex = go.Figure()
         
@@ -465,30 +467,37 @@ def render_price_analysis_chart(portfolio_display_data, fetch_market_chart_func,
             y=ex_values,
             mode='lines',
             name='USD/JPY',
-            line=dict(color='#FFD700', width=2), # Gold
+            line=dict(color='#f59e0b', width=1.8),
             fill='tozeroy',
-            fillcolor='rgba(255, 215, 0, 0.1)'
+            fillcolor='rgba(245, 158, 11, 0.04)',
+            hovertemplate='%{x|%Y-%m-%d}  ¥%{y:,.2f}<extra></extra>'
         ))
         
         fig_ex.update_layout(
-            title_text="USD/JPY Exchange Rate (Last 30 Days)",
-            title_font_color="#e8edf5",
+            title=dict(
+                text="USD/JPY Exchange Rate (Last 30 Days)",
+                font=dict(color="#94a3b8", size=13, family="Inter"),
+                y=0.98,
+                x=0.5,
+                xanchor='center',
+                yanchor='top'
+            ),
             paper_bgcolor='rgba(0,0,0,0)',
             plot_bgcolor='rgba(0,0,0,0)',
             xaxis=dict(
                 showgrid=False, 
-                tickfont=dict(color='#888'),
-                linecolor='#333'
+                tickfont=dict(color='#64748b', size=9, family="JetBrains Mono"),
+                linecolor='rgba(255, 255, 255, 0.08)'
             ),
             yaxis=dict(
                 showgrid=True, 
-                gridcolor='rgba(59, 130, 246, 0.08)', 
-                tickfont=dict(color='#94a3b8'),
+                gridcolor='rgba(255, 255, 255, 0.03)', 
+                tickfont=dict(color='#64748b', size=9, family="JetBrains Mono"),
                 tickprefix="¥",
-                range=[min(ex_values) * 0.99, max(ex_values) * 1.01]  # Y軸の範囲を動的に設定
+                range=[min(ex_values) * 0.99, max(ex_values) * 1.01]
             ),
-            margin=dict(t=40, b=0, l=0, r=0),
-            height=300,
+            margin=dict(t=35, b=10, l=10, r=10),
+            height=280,
             showlegend=False
         )
         
