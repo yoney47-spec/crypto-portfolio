@@ -59,10 +59,10 @@ def render_charts(portfolio_display_data, get_portfolio_history_func):
     Renders the charts section (Allocation, Top Assets, History).
     """
     if not portfolio_display_data:
-        st.info("No data available for charts.")
+        st.info("チャートに表示できるデータがありません。")
         return
 
-    st.markdown("### Portfolio Analysis")
+    st.markdown("### ポートフォリオ分析")
     
     chart_col1, chart_col2, chart_col3 = st.columns(3)
     
@@ -118,7 +118,7 @@ def render_charts(portfolio_display_data, get_portfolio_history_func):
         
         fig_donut.update_layout(
             title=dict(
-                text="Allocation",
+                text="資産構成",
                 font=dict(color="#94a3b8", size=12, family="Inter"),
                 y=0.98,
                 x=0.5,
@@ -178,7 +178,7 @@ def render_charts(portfolio_display_data, get_portfolio_history_func):
         
         fig_bar.update_layout(
             title=dict(
-                text="Top Assets by Value",
+                text="評価額上位",
                 font=dict(color="#94a3b8", size=12, family="Inter"),
                 y=0.98,
                 x=0.5,
@@ -198,12 +198,12 @@ def render_charts(portfolio_display_data, get_portfolio_history_func):
     # 3. ポートフォリオ履歴チャート（期間セレクター付き）
     with chart_col3:
         PERIOD_CONFIG = {
-            '1W':  {'days': 7,    'label': '1 Week',    'tickformat': '%m/%d', 'marker_size': 4},
-            '1M':  {'days': 30,   'label': '1 Month',   'tickformat': '%m/%d', 'marker_size': 3},
-            '3M':  {'days': 90,   'label': '3 Months',  'tickformat': '%m/%d', 'marker_size': 2},
-            '6M':  {'days': 180,  'label': '6 Months',  'tickformat': '%Y/%m', 'marker_size': 2},
-            '1Y':  {'days': 365,  'label': '1 Year',    'tickformat': '%Y/%m', 'marker_size': 2},
-            'ALL': {'days': 9999, 'label': 'All Time',  'tickformat': '%Y/%m', 'marker_size': 1},
+            '1W':  {'days': 7,    'label': '1週間',   'tickformat': '%m/%d', 'marker_size': 4},
+            '1M':  {'days': 30,   'label': '1か月',   'tickformat': '%m/%d', 'marker_size': 3},
+            '3M':  {'days': 90,   'label': '3か月',   'tickformat': '%m/%d', 'marker_size': 2},
+            '6M':  {'days': 180,  'label': '6か月',   'tickformat': '%Y/%m', 'marker_size': 2},
+            '1Y':  {'days': 365,  'label': '1年間',   'tickformat': '%Y/%m', 'marker_size': 2},
+            'ALL': {'days': 9999, 'label': '全期間',   'tickformat': '%Y/%m', 'marker_size': 1},
         }
         
         selected_period = st.radio(
@@ -239,7 +239,7 @@ def render_charts(portfolio_display_data, get_portfolio_history_func):
             
             st.markdown(
                 f"<div style='text-align:center; margin-bottom:4px;'>"
-                f"<span style='color:#94a3b8;font-size:12px;font-weight:600;'>History ({config['label']})</span>"
+                f"<span style='color:#94a3b8;font-size:12px;font-weight:600;'>評価額履歴（{config['label']}）</span>"
                 f" &nbsp;<span style='font-size:11px;font-family:JetBrains Mono, monospace;color:{change_color};font-weight:600;'>"
                 f"{change_icon} {change_sign}{change_pct:.1f}%"
                 f" ({change_sign}¥{abs(change_amount):,.0f})</span>"
@@ -289,7 +289,7 @@ def render_charts(portfolio_display_data, get_portfolio_history_func):
             
             st.plotly_chart(fig_hist, use_container_width=True)
         else:
-            st.info("No history data available.")
+            st.info("評価額の履歴データがありません。")
 
 def render_price_analysis_chart(portfolio_display_data, fetch_market_chart_func, fetch_exchange_rate_history_func, currency_symbol, vs_currency):
     """
@@ -298,7 +298,7 @@ def render_price_analysis_chart(portfolio_display_data, fetch_market_chart_func,
     st.markdown("""<div style="margin-top: 2rem;"></div>""", unsafe_allow_html=True)
     
     # 3. 価格推移チャート（フルワイド版 - Price Trend）
-    st.markdown("### 📈 Asset Price Trend")
+    st.markdown("### 資産価格の推移")
     
     # データを価値順にソート
     sorted_data = sorted(portfolio_display_data, key=lambda x: x['value'], reverse=True)
@@ -318,7 +318,7 @@ def render_price_analysis_chart(portfolio_display_data, fetch_market_chart_func,
         asset_options = {item['symbol']: item['api_id'] for item in sorted_data}
         default_selection = list(asset_options.keys())[0] if asset_options else None
         selected_symbol = st.selectbox(
-            "Select Asset", 
+            "銘柄",
             options=list(asset_options.keys()), 
             index=0 if asset_options else None,
             key="price_trend_asset"
@@ -327,7 +327,7 @@ def render_price_analysis_chart(portfolio_display_data, fetch_market_chart_func,
     with select_col2:
         # 期間選択
         timeframe = st.select_slider(
-            "Timeframe", 
+            "期間",
             options=["1h", "4h", "1d", "7d", "1m", "3m", "1y"], 
             value="1m",
             key="price_trend_timeframe"
@@ -347,7 +347,7 @@ def render_price_analysis_chart(portfolio_display_data, fetch_market_chart_func,
         selected_api_id = asset_options[selected_symbol]
         
         if selected_api_id:
-            with st.spinner(f'Loading {selected_symbol} price data...'):
+            with st.spinner(f'{selected_symbol} の価格データを読み込んでいます...'):
                 market_data = fetch_market_chart_func(selected_api_id, vs_curr=vs_currency, days=days_param)
             
             if market_data and 'prices' in market_data:
@@ -408,7 +408,7 @@ def render_price_analysis_chart(portfolio_display_data, fetch_market_chart_func,
                 
                 fig_line.update_layout(
                     title=dict(
-                        text=f"{selected_symbol} Price ({timeframe.upper()})",
+                        text=f"{selected_symbol} 価格推移（{timeframe.upper()}）",
                         font=dict(color="#94a3b8", size=13, family="Inter"),
                         y=0.98,
                         x=0.5,
@@ -436,11 +436,11 @@ def render_price_analysis_chart(portfolio_display_data, fetch_market_chart_func,
                 
                 st.plotly_chart(fig_line, use_container_width=True)
             else:
-                st.warning(f"Price data for {selected_symbol} is currently unavailable. Please try again later.")
+                st.warning(f"{selected_symbol} の価格データを取得できませんでした。時間をおいて再度お試しください。")
         else:
-            st.info("No API ID available for selected asset.")
+            st.info("選択した銘柄のAPI IDがありません。")
     else:
-        st.info("Select an asset above to view price trend.")
+        st.info("銘柄を選択すると価格推移を表示します。")
 
     st.markdown("""<div style="margin-top: 1.5rem;"></div>""", unsafe_allow_html=True)
     
@@ -458,7 +458,7 @@ def render_price_analysis_chart(portfolio_display_data, fetch_market_chart_func,
         diff_color = "#10b981" if rate_diff >= 0 else "#f43f5e"
         diff_sign = "+" if rate_diff >= 0 else ""
         
-        st.markdown(f"### 💱 USD/JPY &nbsp;&nbsp; <span style='font-family:JetBrains Mono; color:#f8fafc; font-size:1.1rem;'>¥{latest_rate:,.2f}</span>", unsafe_allow_html=True)
+        st.markdown(f"### 為替レート &nbsp;&nbsp; <span style='font-family:JetBrains Mono; color:#f8fafc; font-size:1.1rem;'>USD/JPY ¥{latest_rate:,.2f}</span>", unsafe_allow_html=True)
         
         fig_ex = go.Figure()
         
@@ -475,7 +475,7 @@ def render_price_analysis_chart(portfolio_display_data, fetch_market_chart_func,
         
         fig_ex.update_layout(
             title=dict(
-                text="USD/JPY Exchange Rate (Last 30 Days)",
+                text="USD/JPY（過去30日）",
                 font=dict(color="#94a3b8", size=13, family="Inter"),
                 y=0.98,
                 x=0.5,

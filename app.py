@@ -26,10 +26,10 @@ from database_supabase import (
 
 # ページ設定
 st.set_page_config(
-    page_title="Crypto Portfolio Dashboard",
-    page_icon="C",
+    page_title="ポートフォリオ | CryptoFolio",
+    page_icon="💎",
     layout="wide",
-    initial_sidebar_state="collapsed"  # Mobile-first: sidebar collapsed by default
+    initial_sidebar_state="expanded"
 )
 
 # カスタムCSSの読み込み
@@ -477,19 +477,24 @@ def format_price(val, currency="USD"):
         else:
             return f"¥{val:,.0f}"
 
-# ヘッダー（クリーンなインラインヘッダー）
+# ヘッダー
 JST_tz = timezone(timedelta(hours=9))
 now_jst = datetime.now(JST_tz)
+public_chip = '<span class="public-chip">公開・閲覧専用</span>' if is_public_read_only() else ''
 
 st.markdown(f"""
 <div class="app-header">
     <div class="app-brand">
-        <span class="app-brand-icon">💎</span>
-        <span class="app-brand-title">Crypto Portfolio</span>
+        <span class="app-brand-icon">◆</span>
+        <span class="app-brand-copy">
+            <span class="app-brand-title">CryptoFolio</span>
+            <span class="app-brand-subtitle">ポートフォリオ・ダッシュボード</span>
+        </span>
     </div>
     <div class="app-header-meta">
         <span class="rate-badge">1 USD = ¥{exchange_rate:.2f}</span>
-        <span>Updated: {now_jst.strftime('%H:%M')} JST</span>
+        <span>表示更新 {now_jst.strftime('%H:%M')} JST</span>
+        {public_chip}
     </div>
 </div>
 """, unsafe_allow_html=True)
@@ -570,6 +575,13 @@ fng_data = fetch_fear_greed()
 if fng_data:
     fng_val = fng_data['value']
     fng_label = fng_data['label']
+    fng_label_ja = {
+        'Extreme Fear': '極度の恐怖',
+        'Fear': '恐怖',
+        'Neutral': '中立',
+        'Greed': '強欲',
+        'Extreme Greed': '極度の強欲',
+    }.get(fng_label, fng_label)
     # 洗練されたFintechカラー
     if fng_val <= 25:
         fng_color = '#f43f5e'
@@ -592,8 +604,8 @@ if fng_data:
         <div style="display:flex; align-items:center; gap:12px;">
             <span style="font-size:1.1rem;">{fng_emoji}</span>
             <div>
-                <span style="font-size:0.75rem; color:var(--text-muted); text-transform:uppercase; font-weight:600; letter-spacing:0.05em;">Market Sentiment: </span>
-                <span style="font-size:0.85rem; font-weight:600; color:{fng_color};">{fng_label}</span>
+                <span style="font-size:0.75rem; color:var(--text-muted); font-weight:600; letter-spacing:0.02em;">市場心理 </span>
+                <span style="font-size:0.85rem; font-weight:600; color:{fng_color};">{fng_label_ja}</span>
             </div>
         </div>
         <div style="display:flex; align-items:center; gap:10px;">
@@ -625,7 +637,7 @@ if alert_assets:
     st.markdown(f"""
     <div class="alert-banner">
         <span class="alert-icon">🔔</span>
-        <span class="alert-text">大幅変動検知:</span>
+        <span class="alert-text">24時間の大幅変動</span>
         {alert_html_items}
     </div>
     """, unsafe_allow_html=True)
@@ -733,7 +745,7 @@ if ai_comment_data and ai_comment_data.get('comment'):
     st.markdown(f"""
     <div class="ai-insight-card">
         <div class="ai-insight-header">
-            <span class="ai-insight-title">✨ Gemini Daily Insight</span>
+            <span class="ai-insight-title">✨ AIポートフォリオメモ</span>
             <span class="ai-insight-date">{comment_date}</span>
         </div>
         <div class="ai-insight-body">{comment_text}</div>
@@ -760,7 +772,14 @@ render_price_analysis_chart(
 # 保有資産リスト
 if portfolio_display_data:
     st.markdown("""<div style="margin-top: 2rem;"></div>""", unsafe_allow_html=True)
-    st.markdown("### 💎 Holdings")
+    if is_public_read_only():
+        st.markdown(
+            "<div class='section-header'><div class='section-title'>主な保有資産</div>"
+            "<div class='section-caption'>評価額上位5銘柄</div></div>",
+            unsafe_allow_html=True,
+        )
+    else:
+        st.markdown("### 保有資産一覧")
 
     # データフレームの作成
     df_holdings = pd.DataFrame(portfolio_display_data)
@@ -910,34 +929,34 @@ if portfolio_display_data:
     column_config = {
         "icon_url": st.column_config.ImageColumn(
             "🪙",
-            help="Asset Icon",
+            help="銘柄アイコン",
             width="small"
         ),
         "symbol": st.column_config.TextColumn(
-            "Symbol",
+            "銘柄",
             width="small"
         ),
         "name": st.column_config.TextColumn(
-            "Asset",
+            "資産名",
             width="small"
         ),
         "location": st.column_config.TextColumn(
-            "Location",
+            "保管場所",
             width="small",
             help="保管場所"
         ),
         "holdings": st.column_config.NumberColumn(
-            "Qty",
+            "保有数量",
             format="%.4f",
             width="small"
         ),
         "price": st.column_config.NumberColumn(
-            f"Price ({currency_symbol})",
+            f"現在価格 ({currency_symbol})",
             format="%.4f" if currency == "USD" else "%.0f",
             width="small"
         ),
         "value": st.column_config.ProgressColumn(
-            f"Value ({currency_symbol})",
+            f"評価額 ({currency_symbol})",
             format=f"{currency_symbol}%.0f",
             min_value=0,
             max_value=float(max_value * 1.1),
@@ -945,29 +964,32 @@ if portfolio_display_data:
             help="評価額（バーはポートフォリオ内の相対比率）"
         ),
         "sparkline": st.column_config.LineChartColumn(
-            "7d Trend",
+            "7日推移",
             width="medium",
             help="過去7日間の価格推移"
         ),
         "pl_combined": st.column_config.TextColumn(
-            "P/L",
+            "損益",
             width="medium",
             help="損益率 & 未実現損益"
         )
     }
 
     # 表示するカラムの順序（詳細表示と簡易表示で切り替え）
-    if layout_mode == "簡易 (Mobile)":
+    if layout_mode == "コンパクト":
         display_cols = ["icon_url", "symbol", "holdings", "value", "pl_combined"]
     elif is_public_read_only():
         display_cols = ["icon_url", "symbol", "name", "holdings", "price", "value", "sparkline", "pl_combined"]
     else:
         display_cols = ["icon_url", "symbol", "name", "location", "holdings", "price", "value", "sparkline", "pl_combined"]
 
+    table_df = display_df.head(5) if is_public_read_only() else display_df
+
     # 行数に応じて高さを動的に計算（1行あたり35px + ヘッダー40px）
-    table_height = max(500, len(display_df) * 35 + 40)
+    minimum_table_height = 260 if is_public_read_only() else 500
+    table_height = max(minimum_table_height, len(table_df) * 35 + 48)
     st.dataframe(
-        display_df[display_cols],
+        table_df[display_cols],
         column_config=column_config,
         use_container_width=True,
         hide_index=True,
@@ -980,14 +1002,14 @@ else:
 st.markdown("""<div style="margin-top: 2.5rem;"></div>""", unsafe_allow_html=True)
 
 # クイックアクセスセクション
-st.markdown("### ⚡ Quick Access")
+st.markdown("### 次のページ")
 
 if is_public_read_only():
     st.markdown("""
     <div class="qa-card">
-        <div class="qa-card-icon">💼</div>
-        <div class="qa-card-title">Holdings Overview</div>
-        <div class="qa-card-desc">保有資産の概要と現在価格</div>
+        <div class="qa-card-icon">↗</div>
+        <div class="qa-card-title">保有資産の詳細</div>
+        <div class="qa-card-desc">数量・現在価格・評価額を一覧で確認</div>
     </div>
     """, unsafe_allow_html=True)
     if st.button("保有資産ページへ →", key="goto_assets", use_container_width=True):
@@ -999,7 +1021,7 @@ else:
         st.markdown("""
         <div class="qa-card">
             <div class="qa-card-icon">📊</div>
-            <div class="qa-card-title">Asset Management</div>
+        <div class="qa-card-title">資産管理</div>
             <div class="qa-card-desc">登録 ・ 編集 ・ 削除</div>
         </div>
         """, unsafe_allow_html=True)
@@ -1010,7 +1032,7 @@ else:
         st.markdown("""
         <div class="qa-card">
             <div class="qa-card-icon">📋</div>
-            <div class="qa-card-title">Transactions</div>
+        <div class="qa-card-title">取引記録</div>
             <div class="qa-card-desc">売買履歴の確認</div>
         </div>
         """, unsafe_allow_html=True)
@@ -1021,6 +1043,6 @@ else:
 st.markdown('<div class="section-divider"></div>', unsafe_allow_html=True)
 st.markdown("""
 <div class="footer-text">
-    Powered by CoinGecko API  ·  Built with Streamlit
+    価格データ: CoinGecko API  ·  閲覧専用ポートフォリオ
 </div>
 """, unsafe_allow_html=True)

@@ -4,6 +4,7 @@
 
 import streamlit as st
 import requests
+import pandas as pd
 from pathlib import Path
 import base64
 from io import BytesIO
@@ -18,11 +19,12 @@ from database_supabase import (
     get_portfolio_data,
 )
 from access_control import is_public_read_only
+from components.sidebar import render_sidebar
 
 # ページ設定
 st.set_page_config(
-    page_title="資産管理 - Crypto Portfolio",
-    page_icon="A",
+    page_title="保有資産 | CryptoFolio",
+    page_icon="💼",
     layout="wide",
     initial_sidebar_state="expanded"
 )
@@ -36,16 +38,7 @@ def load_css():
 load_css()
 
 # --- サイドバー設定 ---
-st.sidebar.page_link("app.py", label="ダッシュボード", icon="📊")
-st.sidebar.page_link("pages/1_assets.py", label="保有資産", icon="💼")
-st.sidebar.markdown("---")
-st.sidebar.markdown("### 設定")
-currency = st.sidebar.radio(
-    "表示通貨",
-    ["USD", "JPY"],
-    key="currency_selector",
-    index=0
-)
+currency, _ = render_sidebar()
 currency_symbol = "$" if currency == "USD" else "¥"
 vs_currency = currency.lower()
 
@@ -216,11 +209,18 @@ LOCATION_OPTIONS = [
 
 def render_public_holdings() -> None:
     """Render the curated holdings summary without management controls."""
-    st.markdown("# 保有資産")
-    st.caption("現在の保有数量・価格・評価額を閲覧できます。取引情報と保管場所は公開されません。")
-    st.markdown("---")
+    st.markdown(
+        "<div class='page-intro'>"
+        "<div><div class='page-kicker'>PUBLIC HOLDINGS</div>"
+        "<div class='page-title'>保有資産</div>"
+        "<div class='page-description'>現在の保有数量・価格・評価額を一覧で確認できます。"
+        "個別取引や保管場所などの非公開情報は含まれません。</div></div>"
+        "<span class='public-chip'>公開・閲覧専用</span>"
+        "</div>",
+        unsafe_allow_html=True,
+    )
 
-    portfolio, asset_count, _ = get_portfolio_data()
+    portfolio, _, _ = get_portfolio_data()
     if not portfolio:
         st.info("公開できる保有資産データがありません。")
         return
@@ -230,6 +230,7 @@ def render_public_holdings() -> None:
 
     rows = []
     total_value = 0.0
+    change_amount_24h = 0.0
     for _, symbol, name, api_id, _, _, holdings in portfolio:
         prices = get_crypto_price(api_id)
         price = prices.get(vs_currency)
@@ -237,6 +238,7 @@ def render_public_holdings() -> None:
         value = holdings * price if price is not None else None
         if value is not None:
             total_value += value
+            change_amount_24h += value * ((change or 0) / 100)
 
         if price is None:
             price_text = "-"
@@ -252,19 +254,76 @@ def render_public_holdings() -> None:
         quantity_text = f"{holdings:,.8f}".rstrip("0").rstrip(".")
 
         rows.append({
-            "Symbol": symbol,
-            "Asset": name,
-            "Quantity": quantity_text,
-            f"Price ({currency})": price_text,
-            f"Value ({currency})": value_text,
-            "24h": change_text,
+            "銘柄": symbol,
+            "資産名": name,
+            "保有数量": quantity_text,
+            f"現在価格 ({currency})": price_text,
+            f"評価額 ({currency})": value_text,
+            "24時間": change_text,
+            "_評価額数値": value if value is not None else -1,
         })
 
     total_text = f"${total_value:,.2f}" if currency == "USD" else f"¥{total_value:,.0f}"
-    col1, col2 = st.columns(2)
-    col1.metric("Tracked Assets", asset_count)
-    col2.metric(f"Portfolio Value ({currency})", total_text)
-    st.dataframe(rows, use_container_width=True, hide_index=True)
+    change_percent_24h = (change_amount_24h / total_value * 100) if total_value else 0.0
+    change_symbol = "$" if currency == "USD" else "¥"
+    change_amount_text = (
+        f"{change_symbol}{abs(change_amount_24h):,.2f}"
+        if currency == "USD"
+        else f"{change_symbol}{abs(change_amount_24h):,.0f}"
+    )
+    change_sign = "+" if change_percent_24h >= 0 else "−"
+    change_class = "positive" if change_percent_24h >= 0 else "negative"
+    summary_html = f"""
+    <div class="summary-grid">
+        <div class="summary-card">
+            <div class="summary-label">ポートフォリオ評価額</div>
+            <div class="summary-value">{total_text}</div>
+            <div class="summary-meta">表示通貨 {currency}</div>
+        </div>
+        <div class="summary-card">
+            <div class="summary-label">保有銘柄</div>
+            <div class="summary-value">{len(rows)}</div>
+            <div class="summary-meta">評価額のある公開銘柄</div>
+        </div>
+        <div class="summary-card">
+            <div class="summary-label">24時間の変動</div>
+            <div class="summary-value">{change_sign}{abs(change_percent_24h):.2f}%</div>
+            <div class="summary-meta {change_class}">{change_sign}{change_amount_text}</div>
+        </div>
+    </div>
+    """
+    st.markdown("".join(line.strip() for line in summary_html.splitlines()), unsafe_allow_html=True)
+
+    st.markdown(
+        "<div class='section-header'><div class='section-title'>銘柄別の保有状況</div>"
+        "<div class='section-caption'>現在価格ベース・評価額順</div></div>",
+        unsafe_allow_html=True,
+    )
+
+    display_df = (
+        pd.DataFrame(rows)
+        .sort_values("_評価額数値", ascending=False)
+        .drop(columns=["_評価額数値"])
+    )
+    st.dataframe(
+        display_df,
+        column_config={
+            "銘柄": st.column_config.TextColumn("銘柄", width="small"),
+            "資産名": st.column_config.TextColumn("資産名", width="medium"),
+            "保有数量": st.column_config.TextColumn("保有数量", width="medium"),
+            f"現在価格 ({currency})": st.column_config.TextColumn(
+                f"現在価格 ({currency})", width="medium"
+            ),
+            f"評価額 ({currency})": st.column_config.TextColumn(
+                f"評価額 ({currency})", width="medium"
+            ),
+            "24時間": st.column_config.TextColumn("24時間", width="small"),
+        },
+        use_container_width=True,
+        hide_index=True,
+        height=max(460, len(rows) * 35 + 42),
+    )
+    st.caption("価格はCoinGecko APIから取得しています。表示値は参考情報であり、投資判断を目的としたものではありません。")
 
 
 if is_public_read_only():
