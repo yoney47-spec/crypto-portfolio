@@ -15,6 +15,10 @@ def render_sidebar():
     """, unsafe_allow_html=True)
     
     st.sidebar.markdown("---")
+    st.sidebar.page_link("app.py", label="ダッシュボード", icon="📊")
+    st.sidebar.page_link("pages/1_assets.py", label="保有資産", icon="💼")
+
+    st.sidebar.markdown("---")
     st.sidebar.markdown("### 設定")
     
     # Data refresh button

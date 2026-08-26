@@ -7,6 +7,7 @@ import requests
 from pathlib import Path
 from datetime import datetime
 import time
+from access_control import stop_on_private_page
 
 # Import from Supabase adapter
 from database_supabase import (
@@ -24,6 +25,8 @@ st.set_page_config(
     layout="wide",
     initial_sidebar_state="expanded"
 )
+
+stop_on_private_page()
 
 # カスタムCSSの読み込み
 def load_css():

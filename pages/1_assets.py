@@ -14,8 +14,10 @@ from database_supabase import (
     get_all_assets, 
     add_asset, 
     delete_asset, 
-    update_asset
+    update_asset,
+    get_portfolio_data,
 )
+from access_control import is_public_read_only
 
 # ページ設定
 st.set_page_config(
@@ -34,6 +36,9 @@ def load_css():
 load_css()
 
 # --- サイドバー設定 ---
+st.sidebar.page_link("app.py", label="ダッシュボード", icon="📊")
+st.sidebar.page_link("pages/1_assets.py", label="保有資産", icon="💼")
+st.sidebar.markdown("---")
 st.sidebar.markdown("### 設定")
 currency = st.sidebar.radio(
     "表示通貨",
@@ -207,6 +212,64 @@ LOCATION_OPTIONS = [
     "HashPort Wallet",
     "Other"
 ]
+
+
+def render_public_holdings() -> None:
+    """Render the curated holdings summary without management controls."""
+    st.markdown("# 保有資産")
+    st.caption("現在の保有数量・価格・評価額を閲覧できます。取引情報と保管場所は公開されません。")
+    st.markdown("---")
+
+    portfolio, asset_count, _ = get_portfolio_data()
+    if not portfolio:
+        st.info("公開できる保有資産データがありません。")
+        return
+
+    api_ids = [item[3] for item in portfolio if item[3]]
+    get_crypto_prices_batch(api_ids)
+
+    rows = []
+    total_value = 0.0
+    for _, symbol, name, api_id, _, _, holdings in portfolio:
+        prices = get_crypto_price(api_id)
+        price = prices.get(vs_currency)
+        change = prices.get(f"{vs_currency}_24h_change")
+        value = holdings * price if price is not None else None
+        if value is not None:
+            total_value += value
+
+        if price is None:
+            price_text = "-"
+        elif currency == "USD":
+            price_text = f"${price:,.8f}" if price < 0.01 else f"${price:,.2f}"
+        else:
+            price_text = f"¥{price:,.4f}" if price < 1 else f"¥{price:,.0f}"
+
+        value_text = "-" if value is None else (
+            f"${value:,.2f}" if currency == "USD" else f"¥{value:,.0f}"
+        )
+        change_text = "-" if change is None else f"{change:+.2f}%"
+        quantity_text = f"{holdings:,.8f}".rstrip("0").rstrip(".")
+
+        rows.append({
+            "Symbol": symbol,
+            "Asset": name,
+            "Quantity": quantity_text,
+            f"Price ({currency})": price_text,
+            f"Value ({currency})": value_text,
+            "24h": change_text,
+        })
+
+    total_text = f"${total_value:,.2f}" if currency == "USD" else f"¥{total_value:,.0f}"
+    col1, col2 = st.columns(2)
+    col1.metric("Tracked Assets", asset_count)
+    col2.metric(f"Portfolio Value ({currency})", total_text)
+    st.dataframe(rows, use_container_width=True, hide_index=True)
+
+
+if is_public_read_only():
+    render_public_holdings()
+    st.stop()
 
 @st.dialog("資産の編集")
 def edit_asset_dialog(asset_id, name, symbol, api_id, icon_url, location):

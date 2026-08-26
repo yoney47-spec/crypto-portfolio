@@ -9,6 +9,7 @@ from pathlib import Path
 import plotly.graph_objects as go
 import pandas as pd
 from datetime import datetime, timedelta, timezone
+from access_control import is_public_read_only
 # Import from new Supabase adapter
 from database_supabase import (
     get_portfolio_data, 
@@ -323,6 +324,9 @@ def fetch_exchange_rate_history(days=30):
 
 def handle_auto_snapshot(total_value, vs_currency, exchange_rate):
     """今日（JST）のスナップショットがまだなければ自動的に保存"""
+    if is_public_read_only():
+        return
+
     if st.session_state.get('auto_snapshot_checked', False):
         return
         
@@ -388,7 +392,8 @@ else:
             current_prices = {}
     else:
         # 成功時はキャッシュを更新
-        save_price_cache(current_prices)
+        if not is_public_read_only():
+            save_price_cache(current_prices)
 
 
 # 総資産額の計算とチャート用データ作成
@@ -629,6 +634,9 @@ if alert_assets:
 # --- Gemini AI コメントセクション ---
 def generate_and_save_ai_comment():
     """AIコメントを生成して保存"""
+    if is_public_read_only():
+        return None
+
     try:
         from gemini_client import generate_portfolio_comment
         from datetime import datetime, timezone, timedelta
@@ -684,7 +692,7 @@ from datetime import timezone, timedelta
 JST = timezone(timedelta(hours=9))
 today_str = datetime.now(JST).date().isoformat()
 
-if ai_comment_data is None or ai_comment_data.get('date') != today_str:
+if not is_public_read_only() and (ai_comment_data is None or ai_comment_data.get('date') != today_str):
     # Gemini API が設定されているかチェック
     gemini_configured = False
     try:
@@ -707,7 +715,7 @@ try:
 except:
     pass
 
-if gemini_configured and portfolio_display_data:
+if not is_public_read_only() and gemini_configured and portfolio_display_data:
     if st.button("✨ インサイトを更新", help="Geminiデイリーインサイトを最新のデータで再生成します"):
         with st.spinner('✨ AIコメントを生成中...'):
             new_comment = generate_and_save_ai_comment()
@@ -951,6 +959,8 @@ if portfolio_display_data:
     # 表示するカラムの順序（詳細表示と簡易表示で切り替え）
     if layout_mode == "簡易 (Mobile)":
         display_cols = ["icon_url", "symbol", "holdings", "value", "pl_combined"]
+    elif is_public_read_only():
+        display_cols = ["icon_url", "symbol", "name", "holdings", "price", "value", "sparkline", "pl_combined"]
     else:
         display_cols = ["icon_url", "symbol", "name", "location", "holdings", "price", "value", "sparkline", "pl_combined"]
 
@@ -972,29 +982,40 @@ st.markdown("""<div style="margin-top: 2.5rem;"></div>""", unsafe_allow_html=Tru
 # クイックアクセスセクション
 st.markdown("### ⚡ Quick Access")
 
-qa_col1, qa_col2 = st.columns(2, gap="medium")
-
-with qa_col1:
+if is_public_read_only():
     st.markdown("""
     <div class="qa-card">
-        <div class="qa-card-icon">📊</div>
-        <div class="qa-card-title">Asset Management</div>
-        <div class="qa-card-desc">登録 ・ 編集 ・ 削除</div>
+        <div class="qa-card-icon">💼</div>
+        <div class="qa-card-title">Holdings Overview</div>
+        <div class="qa-card-desc">保有資産の概要と現在価格</div>
     </div>
     """, unsafe_allow_html=True)
-    if st.button("資産管理ページへ →", key="goto_assets", use_container_width=True):
+    if st.button("保有資産ページへ →", key="goto_assets", use_container_width=True):
         st.switch_page("pages/1_assets.py")
+else:
+    qa_col1, qa_col2 = st.columns(2, gap="medium")
 
-with qa_col2:
-    st.markdown("""
-    <div class="qa-card">
-        <div class="qa-card-icon">📋</div>
-        <div class="qa-card-title">Transactions</div>
-        <div class="qa-card-desc">売買履歴の確認</div>
-    </div>
-    """, unsafe_allow_html=True)
-    if st.button("取引記録ページへ →", key="goto_transactions", use_container_width=True):
-        st.switch_page("pages/2_transactions.py")
+    with qa_col1:
+        st.markdown("""
+        <div class="qa-card">
+            <div class="qa-card-icon">📊</div>
+            <div class="qa-card-title">Asset Management</div>
+            <div class="qa-card-desc">登録 ・ 編集 ・ 削除</div>
+        </div>
+        """, unsafe_allow_html=True)
+        if st.button("資産管理ページへ →", key="goto_assets", use_container_width=True):
+            st.switch_page("pages/1_assets.py")
+
+    with qa_col2:
+        st.markdown("""
+        <div class="qa-card">
+            <div class="qa-card-icon">📋</div>
+            <div class="qa-card-title">Transactions</div>
+            <div class="qa-card-desc">売買履歴の確認</div>
+        </div>
+        """, unsafe_allow_html=True)
+        if st.button("取引記録ページへ →", key="goto_transactions", use_container_width=True):
+            st.switch_page("pages/2_transactions.py")
 
 # フッター
 st.markdown('<div class="section-divider"></div>', unsafe_allow_html=True)

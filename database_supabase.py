@@ -5,6 +5,7 @@ from postgrest import SyncPostgrestClient
 from datetime import datetime, date, timezone, timedelta
 import pandas as pd
 from typing import Optional, List, Dict, Any, Tuple
+from access_control import is_public_read_only
 
 # Japan Standard Time (UTC+9)
 JST = timezone(timedelta(hours=9))
@@ -42,6 +43,47 @@ def init_supabase() -> Optional[CustomSupabaseClient]:
 def get_client():
     return init_supabase()
 
+
+PUBLIC_HOLDINGS_VIEW = "public_portfolio_holdings"
+PUBLIC_STATS_VIEW = "public_portfolio_stats"
+PUBLIC_HISTORY_VIEW = "public_portfolio_history"
+PUBLIC_PRICE_CACHE_VIEW = "public_price_cache"
+PUBLIC_AI_COMMENTS_VIEW = "public_ai_comments"
+
+
+@st.cache_data(ttl=60)
+def _get_public_holdings_rows() -> List[Dict[str, Any]]:
+    """Fetch the curated public holdings view without touching private tables."""
+    client = get_client()
+    if not client:
+        return []
+
+    try:
+        result = client.table(PUBLIC_HOLDINGS_VIEW).select(
+            "asset_id,name,symbol,api_id,icon_url,holdings,avg_cost,total_cost"
+        ).order("symbol").execute()
+        return result.data or []
+    except Exception as exc:
+        print(f"Public holdings load error: {exc}")
+        return []
+
+
+@st.cache_data(ttl=60)
+def _get_public_stats() -> Dict[str, Any]:
+    """Fetch aggregate counts and yearly cash-flow values safe for publication."""
+    client = get_client()
+    if not client:
+        return {}
+
+    try:
+        result = client.table(PUBLIC_STATS_VIEW).select(
+            "asset_count,transaction_count,total_investment_this_year,total_sales_this_year"
+        ).limit(1).execute()
+        return result.data[0] if result.data else {}
+    except Exception as exc:
+        print(f"Public stats load error: {exc}")
+        return {}
+
 # --- Assets ---
 
 def get_all_assets() -> List[Tuple]:
@@ -49,6 +91,20 @@ def get_all_assets() -> List[Tuple]:
     Get all assets.
     Returns list of tuples: (id, name, symbol, api_id, icon_url, location, created_at)
     """
+    if is_public_read_only():
+        return [
+            (
+                item["asset_id"],
+                item["name"],
+                item["symbol"],
+                item["api_id"],
+                item.get("icon_url", ""),
+                "",
+                None,
+            )
+            for item in _get_public_holdings_rows()
+        ]
+
     client = get_client()
     if not client: return []
     
@@ -73,6 +129,12 @@ def get_all_assets() -> List[Tuple]:
 
 def get_assets_list() -> List[Tuple]:
     """Get list of (id, name, symbol) for dropdowns"""
+    if is_public_read_only():
+        return [
+            (item["asset_id"], item["name"], item["symbol"])
+            for item in _get_public_holdings_rows()
+        ]
+
     client = get_client()
     if not client: return []
     
@@ -84,6 +146,9 @@ def get_assets_list() -> List[Tuple]:
         return []
 
 def add_asset(name: str, symbol: str, api_id: str, icon_url: str = "", location: str = "") -> bool:
+    if is_public_read_only():
+        return False
+
     client = get_client()
     if not client: return False
     
@@ -103,6 +168,9 @@ def add_asset(name: str, symbol: str, api_id: str, icon_url: str = "", location:
         return False
 
 def update_asset(asset_id, name, symbol, api_id, icon_url, location) -> bool:
+    if is_public_read_only():
+        return False
+
     client = get_client()
     if not client: return False
     
@@ -121,6 +189,9 @@ def update_asset(asset_id, name, symbol, api_id, icon_url, location) -> bool:
         return False
 
 def delete_asset(asset_id) -> Tuple[bool, str]:
+    if is_public_read_only():
+        return False, "公開モードでは変更できません"
+
     client = get_client()
     if not client: return False, "Client init failed"
     
@@ -144,6 +215,9 @@ def get_all_transactions(filter_type="すべて") -> List[Tuple]:
     Get all transactions with joined asset info.
     Returns: list of (id, date, type, symbol, name, quantity, price_per_unit, total_amount, notes, asset_id)
     """
+    if is_public_read_only():
+        return []
+
     client = get_client()
     if not client: return []
     
@@ -183,6 +257,9 @@ def get_all_transactions(filter_type="すべて") -> List[Tuple]:
         return []
 
 def add_transaction(date_obj, trans_type, asset_id, quantity, price_per_unit, total_amount, notes="", skip_duplicate_check=False) -> bool:
+    if is_public_read_only():
+        return False
+
     client = get_client()
     if not client: return False
     
@@ -225,6 +302,9 @@ def add_transaction(date_obj, trans_type, asset_id, quantity, price_per_unit, to
         return False
 
 def update_transaction(transaction_id, date_obj, trans_type, asset_id, quantity, price_per_unit, total_amount, notes="") -> bool:
+    if is_public_read_only():
+        return False
+
     client = get_client()
     if not client: return False
     
@@ -257,6 +337,9 @@ def update_transaction(transaction_id, date_obj, trans_type, asset_id, quantity,
         return False
 
 def delete_transaction(transaction_id) -> bool:
+    if is_public_read_only():
+        return False
+
     client = get_client()
     if not client: return False
     try:
@@ -312,6 +395,29 @@ def get_portfolio_data() -> Tuple[List[Tuple], int, int]:
     Returns: (portfolio_list, asset_count, transaction_count)
     portfolio_list item: (id, symbol, name, api_id, icon_url, location, holdings)
     """
+    if is_public_read_only():
+        rows = _get_public_holdings_rows()
+        stats = _get_public_stats()
+        portfolio = [
+            (
+                item["asset_id"],
+                item["symbol"],
+                item["name"],
+                item["api_id"],
+                item.get("icon_url", ""),
+                "",
+                float(item.get("holdings") or 0),
+            )
+            for item in rows
+            if float(item.get("holdings") or 0) > 0.00000001
+        ]
+        portfolio.sort(key=lambda item: item[6], reverse=True)
+        return (
+            portfolio,
+            int(stats.get("asset_count") or len(rows)),
+            int(stats.get("transaction_count") or 0),
+        )
+
     client = get_client()
     if not client: return [], 0, 0
     
@@ -389,6 +495,16 @@ def calculate_cost_basis() -> Dict:
     Calculate avg cost basis.
     Returns: { asset_id: {avg_cost, holdings, total_cost} }
     """
+    if is_public_read_only():
+        return {
+            item["asset_id"]: {
+                "avg_cost": float(item.get("avg_cost") or 0),
+                "holdings": float(item.get("holdings") or 0),
+                "total_cost": float(item.get("total_cost") or 0),
+            }
+            for item in _get_public_holdings_rows()
+        }
+
     # Simply reuse transaction data logic
     # We need all transactions again? Yes. 
     # Optimally we cache transactions in st.session_state if heavy.
@@ -512,7 +628,14 @@ def get_statistics(start_date=None, end_date=None):
     }
 
 def get_current_year_investment_sales():
-    """Specific helper for app.py dashboard logic (current year P/L)"""""
+    """Specific helper for app.py dashboard logic (current year P/L)."""
+    if is_public_read_only():
+        stats = _get_public_stats()
+        return (
+            float(stats.get("total_investment_this_year") or 0),
+            float(stats.get("total_sales_this_year") or 0),
+        )
+
     current_year = datetime.now().year
     
     # Fetch all transactions is easier than custom SQL
@@ -536,6 +659,9 @@ def get_current_year_investment_sales():
 # --- Snapshots ---
 
 def save_portfolio_snapshot(total_value_jpy: float) -> bool:
+    if is_public_read_only():
+        return False
+
     client = get_client()
     if not client: return False
     
@@ -558,7 +684,8 @@ def get_portfolio_history(days: int = 365) -> List[Tuple]:
     if not client: return []
     
     try:
-        query = client.table("portfolio_snapshots").select("date, total_value_jpy").order("date", desc=True)
+        source = PUBLIC_HISTORY_VIEW if is_public_read_only() else "portfolio_snapshots"
+        query = client.table(source).select("date, total_value_jpy").order("date", desc=True)
         # ALL期間 (days >= 9999) の場合はlimitを適用しない
         if days < 9999:
             query = query.limit(days)
@@ -586,7 +713,8 @@ def get_latest_snapshot() -> Optional[Dict]:
     if not client: return None
     
     try:
-        res = client.table("portfolio_snapshots")\
+        source = PUBLIC_HISTORY_VIEW if is_public_read_only() else "portfolio_snapshots"
+        res = client.table(source)\
             .select("date, total_value_jpy")\
             .order("date", desc=True)\
             .limit(1)\
@@ -609,7 +737,8 @@ def get_snapshot_count() -> int:
     if not client: return 0
     
     try:
-        res = client.table("portfolio_snapshots").select("date", count="exact", head=True).execute()
+        source = PUBLIC_HISTORY_VIEW if is_public_read_only() else "portfolio_snapshots"
+        res = client.table(source).select("date", count="exact", head=True).execute()
         return res.count if res.count is not None else 0
     except Exception as e:
         print(f"Snapshot count error: {e}")
@@ -622,6 +751,9 @@ def save_price_cache(prices_data: Dict) -> bool:
     価格データをSupabaseにキャッシュとして保存
     prices_data: {api_id: {usd, jpy, usd_24h_change, jpy_24h_change}}
     """
+    if is_public_read_only():
+        return False
+
     client = get_client()
     if not client or not prices_data:
         return False
@@ -656,7 +788,10 @@ def load_price_cache() -> Dict:
         return {}
     
     try:
-        res = client.table("price_cache").select("*").execute()
+        source = PUBLIC_PRICE_CACHE_VIEW if is_public_read_only() else "price_cache"
+        res = client.table(source).select(
+            "api_id,price_usd,price_jpy,usd_24h_change,updated_at"
+        ).execute()
         
         result = {}
         for item in res.data:
@@ -739,6 +874,9 @@ def save_ai_comment(date_str: str, comment: str, portfolio_summary: Dict = None)
         comment: AIが生成したコメント
         portfolio_summary: ポートフォリオのサマリーデータ（オプション）
     """
+    if is_public_read_only():
+        return False
+
     client = get_client()
     if not client:
         return False
@@ -769,8 +907,10 @@ def get_latest_ai_comment() -> Optional[Dict]:
         return None
     
     try:
-        res = client.table("ai_comments")\
-            .select("date, comment, portfolio_summary, created_at")\
+        source = PUBLIC_AI_COMMENTS_VIEW if is_public_read_only() else "ai_comments"
+        fields = "date,comment,created_at" if is_public_read_only() else "date,comment,portfolio_summary,created_at"
+        res = client.table(source)\
+            .select(fields)\
             .order("date", desc=True)\
             .limit(1)\
             .execute()
@@ -808,8 +948,10 @@ def get_today_ai_comment() -> Optional[Dict]:
         return None
     
     try:
-        res = client.table("ai_comments")\
-            .select("date, comment, portfolio_summary")\
+        source = PUBLIC_AI_COMMENTS_VIEW if is_public_read_only() else "ai_comments"
+        fields = "date,comment" if is_public_read_only() else "date,comment,portfolio_summary"
+        res = client.table(source)\
+            .select(fields)\
             .eq("date", today)\
             .execute()
         
@@ -832,4 +974,3 @@ def get_today_ai_comment() -> Optional[Dict]:
     except Exception as e:
         print(f"Today AI comment load error: {e}")
         return None
-

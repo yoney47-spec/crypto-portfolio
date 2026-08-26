@@ -2,6 +2,14 @@
 # Streamlit
 .streamlit/secrets.toml
 
+# Local portfolio data and backups
+*.db
+*.sqlite
+*.sqlite3
+backup*.zip
+*backup*/
+バックアップファイル/
+
 
 # Python
 __pycache__/

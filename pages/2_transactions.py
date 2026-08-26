@@ -9,6 +9,7 @@ from pathlib import Path
 from constants import TRANSACTION_TYPES, is_cost_free_transaction
 import requests
 import time
+from access_control import stop_on_private_page
 
 # Import from Supabase adapter
 from database_supabase import (
@@ -28,6 +29,8 @@ st.set_page_config(
     layout="wide",
     initial_sidebar_state="expanded"
 )
+
+stop_on_private_page()
 
 # カスタムCSSの読み込み
 def load_css():
