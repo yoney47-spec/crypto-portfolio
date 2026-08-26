@@ -82,6 +82,11 @@ header[data-testid="stHeader"] {
     background: transparent !important;
 }
 
+[data-testid="stToolbar"],
+[data-testid="stDecoration"] {
+    visibility: hidden !important;
+}
+
 .block-container {
     max-width: 1240px !important;
     padding-top: 2.1rem !important;

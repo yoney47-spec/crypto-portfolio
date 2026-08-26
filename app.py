@@ -9,6 +9,7 @@ from pathlib import Path
 import plotly.graph_objects as go
 import pandas as pd
 from datetime import datetime, timedelta, timezone
+from html import escape
 from access_control import is_public_read_only
 # Import from new Supabase adapter
 from database_supabase import (
@@ -737,10 +738,18 @@ if not is_public_read_only() and gemini_configured and portfolio_display_data:
                 time.sleep(1)
                 st.rerun()
 
-# AIコメントカードを表示（Premium Glassmorphism）
-if ai_comment_data and ai_comment_data.get('comment'):
-    comment_date = ai_comment_data.get('date', '')
-    comment_text = ai_comment_data.get('comment', '')
+# AIコメントカードを表示。公開画面では古い分析を現在情報として見せない。
+show_ai_comment = bool(ai_comment_data and ai_comment_data.get('comment'))
+if show_ai_comment and is_public_read_only():
+    try:
+        comment_day = datetime.fromisoformat(ai_comment_data.get('date', '')).date()
+        show_ai_comment = (datetime.now(JST).date() - comment_day).days <= 1
+    except (TypeError, ValueError):
+        show_ai_comment = False
+
+if show_ai_comment:
+    comment_date = escape(str(ai_comment_data.get('date', '')))
+    comment_text = escape(str(ai_comment_data.get('comment', '')))
     
     st.markdown(f"""
     <div class="ai-insight-card">
