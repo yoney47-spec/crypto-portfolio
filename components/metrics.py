@@ -39,8 +39,7 @@ def render_metrics(total_portfolio_value, total_pl_percent, total_pl_display, po
     <div class="bento-container">
         <div class="hero-main-card">
             <div>
-                <div class="hero-eyebrow">PORTFOLIO VALUE</div>
-                <div class="hero-label">ポートフォリオ評価額</div>
+                <div class="hero-label">総評価額</div>
                 <div class="hero-amount">
                     <span class="curr-sym">{currency_symbol}</span>{formatted_total}
                 </div>

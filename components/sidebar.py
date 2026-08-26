@@ -12,9 +12,9 @@ def render_sidebar():
 
     st.sidebar.markdown(
         "<div class='sidebar-brand'>"
-        "<div class='sidebar-logo'>◆</div>"
+        "<div class='brand-mark'><span></span><span></span><span></span></div>"
         "<div><div class='sidebar-brand-name'>CryptoFolio</div>"
-        "<div class='sidebar-brand-tagline'>PORTFOLIO TRACKER</div></div>"
+        "<div class='sidebar-brand-tagline'>Portfolio</div></div>"
         "</div>",
         unsafe_allow_html=True,
     )
@@ -26,8 +26,8 @@ def render_sidebar():
         )
 
     st.sidebar.markdown("<div class='sidebar-section-label'>ナビゲーション</div>", unsafe_allow_html=True)
-    st.sidebar.page_link("app.py", label="ダッシュボード", icon="📊")
-    st.sidebar.page_link("pages/1_assets.py", label="保有資産", icon="💼")
+    st.sidebar.page_link("app.py", label="ダッシュボード")
+    st.sidebar.page_link("pages/1_assets.py", label="保有資産")
 
     st.sidebar.markdown("<div class='sidebar-section-label'>表示設定</div>", unsafe_allow_html=True)
 

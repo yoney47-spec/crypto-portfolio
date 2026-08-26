@@ -24,7 +24,7 @@ from components.sidebar import render_sidebar
 # ページ設定
 st.set_page_config(
     page_title="保有資産 | CryptoFolio",
-    page_icon="💼",
+    page_icon="◆",
     layout="wide",
     initial_sidebar_state="expanded"
 )
@@ -211,8 +211,7 @@ def render_public_holdings() -> None:
     """Render the curated holdings summary without management controls."""
     st.markdown(
         "<div class='page-intro'>"
-        "<div><div class='page-kicker'>PUBLIC HOLDINGS</div>"
-        "<div class='page-title'>保有資産</div>"
+        "<div><div class='page-title'>保有資産</div>"
         "<div class='page-description'>現在の保有数量・価格・評価額を一覧で確認できます。"
         "個別取引や保管場所などの非公開情報は含まれません。</div></div>"
         "<span class='public-chip'>公開・閲覧専用</span>"

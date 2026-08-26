@@ -28,7 +28,7 @@ from database_supabase import (
 # ページ設定
 st.set_page_config(
     page_title="ポートフォリオ | CryptoFolio",
-    page_icon="💎",
+    page_icon="◆",
     layout="wide",
     initial_sidebar_state="expanded"
 )
@@ -486,10 +486,10 @@ public_chip = '<span class="public-chip">公開・閲覧専用</span>' if is_pub
 st.markdown(f"""
 <div class="app-header">
     <div class="app-brand">
-        <span class="app-brand-icon">◆</span>
+        <span class="brand-mark"><span></span><span></span><span></span></span>
         <span class="app-brand-copy">
             <span class="app-brand-title">CryptoFolio</span>
-            <span class="app-brand-subtitle">ポートフォリオ・ダッシュボード</span>
+            <span class="app-brand-subtitle">Portfolio</span>
         </span>
     </div>
     <div class="app-header-meta">
@@ -583,42 +583,36 @@ if fng_data:
         'Greed': '強欲',
         'Extreme Greed': '極度の強欲',
     }.get(fng_label, fng_label)
-    # 洗練されたFintechカラー
     if fng_val <= 25:
-        fng_color = '#f43f5e'
-        fng_emoji = '😱'
+        fng_color = '#ff453a'
     elif fng_val <= 45:
-        fng_color = '#fb923c'
-        fng_emoji = '😟'
+        fng_color = '#ff9f0a'
     elif fng_val <= 55:
-        fng_color = '#facc15'
-        fng_emoji = '😐'
+        fng_color = '#ffd60a'
     elif fng_val <= 75:
-        fng_color = '#34d399'
-        fng_emoji = '😊'
+        fng_color = '#30d158'
     else:
-        fng_color = '#10b981'
-        fng_emoji = '🤑'
+        fng_color = '#30d158'
     
     st.markdown(f"""
-    <div style="display:flex; align-items:center; justify-content:space-between; background:var(--bg-secondary); border:1px solid var(--border-subtle); border-radius:var(--radius-md); padding:10px 16px; margin-bottom:var(--spacing-md);">
-        <div style="display:flex; align-items:center; gap:12px;">
-            <span style="font-size:1.1rem;">{fng_emoji}</span>
+    <div class="sentiment-card">
+        <div class="sentiment-copy">
+            <span class="sentiment-dot" style="background:{fng_color}; box-shadow:0 0 0 5px color-mix(in srgb, {fng_color} 14%, transparent);"></span>
             <div>
-                <span style="font-size:0.75rem; color:var(--text-muted); font-weight:600; letter-spacing:0.02em;">市場心理 </span>
-                <span style="font-size:0.85rem; font-weight:600; color:{fng_color};">{fng_label_ja}</span>
+                <span class="sentiment-label">市場心理</span>
+                <span class="sentiment-state" style="color:{fng_color};">{fng_label_ja}</span>
             </div>
         </div>
-        <div style="display:flex; align-items:center; gap:10px;">
-            <div style="width:100px; height:4px; background:rgba(255,255,255,0.06); border-radius:2px; overflow:hidden;">
-                <div style="width:{fng_val}%; height:100%; background:{fng_color}; border-radius:2px;"></div>
+        <div class="sentiment-score">
+            <div class="sentiment-track">
+                <div style="width:{fng_val}%; height:100%; background:{fng_color}; border-radius:inherit;"></div>
             </div>
-            <span style="font-family:'JetBrains Mono', monospace; font-weight:700; font-size:0.95rem; color:{fng_color};">{fng_val}</span>
+            <span style="color:{fng_color};">{fng_val}</span>
         </div>
     </div>
     """, unsafe_allow_html=True)
 
-# 🔔 価格変動アラートバナー
+# 価格変動アラートバナー
 alert_assets = []
 for item in portfolio_display_data:
     api_id = item['api_id']
@@ -631,13 +625,12 @@ if alert_assets:
     alert_html_items = ''
     for a in sorted(alert_assets, key=lambda x: abs(x['change']), reverse=True):
         if a['change'] > 0:
-            alert_html_items += f'<span class="alert-item alert-up">🚀 {a["symbol"]} +{a["change"]:.1f}%</span>'
+            alert_html_items += f'<span class="alert-item alert-up">{a["symbol"]} +{a["change"]:.1f}%</span>'
         else:
-            alert_html_items += f'<span class="alert-item alert-down">🔻 {a["symbol"]} {a["change"]:.1f}%</span>'
+            alert_html_items += f'<span class="alert-item alert-down">{a["symbol"]} {a["change"]:.1f}%</span>'
     
     st.markdown(f"""
     <div class="alert-banner">
-        <span class="alert-icon">🔔</span>
         <span class="alert-text">24時間の大幅変動</span>
         {alert_html_items}
     </div>
@@ -738,14 +731,11 @@ if not is_public_read_only() and gemini_configured and portfolio_display_data:
                 time.sleep(1)
                 st.rerun()
 
-# AIコメントカードを表示。公開画面では古い分析を現在情報として見せない。
-show_ai_comment = bool(ai_comment_data and ai_comment_data.get('comment'))
-if show_ai_comment and is_public_read_only():
-    try:
-        comment_day = datetime.fromisoformat(ai_comment_data.get('date', '')).date()
-        show_ai_comment = (datetime.now(JST).date() - comment_day).days <= 1
-    except (TypeError, ValueError):
-        show_ai_comment = False
+# AIコメントは管理画面だけに表示し、公開画面はデータ中心に保つ。
+show_ai_comment = (
+    not is_public_read_only()
+    and bool(ai_comment_data and ai_comment_data.get('comment'))
+)
 
 if show_ai_comment:
     comment_date = escape(str(ai_comment_data.get('date', '')))
@@ -1010,20 +1000,11 @@ else:
 
 st.markdown("""<div style="margin-top: 2.5rem;"></div>""", unsafe_allow_html=True)
 
-# クイックアクセスセクション
-st.markdown("### 次のページ")
-
 if is_public_read_only():
-    st.markdown("""
-    <div class="qa-card">
-        <div class="qa-card-icon">↗</div>
-        <div class="qa-card-title">保有資産の詳細</div>
-        <div class="qa-card-desc">数量・現在価格・評価額を一覧で確認</div>
-    </div>
-    """, unsafe_allow_html=True)
-    if st.button("保有資産ページへ →", key="goto_assets", use_container_width=True):
+    if st.button("すべての保有資産を見る", key="goto_assets", type="primary", use_container_width=True):
         st.switch_page("pages/1_assets.py")
 else:
+    st.markdown("### 次のページ")
     qa_col1, qa_col2 = st.columns(2, gap="medium")
 
     with qa_col1:
