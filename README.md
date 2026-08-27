@@ -72,6 +72,18 @@ pin = "12文字以上の管理コード"
 `secret_key` と `pin` はGit・チャット・ブラウザへ出さず、StreamlitのSecrets設定内だけに保存します。
 Supabaseでは、このアプリ専用の名前付きSecret keyを作成して使用してください。
 
+### CoinGeckoのレート制限対策
+
+現在価格は全ページ・全ユーザーで10分間共有し、429応答後は60秒間API呼び出しを停止します。
+Demo APIキーは任意です。利用する場合のみ、Streamlit Secretsへ次を追加してください。
+
+```toml
+[coingecko]
+api_key = "CoinGecko Demo APIキー"
+```
+
+このキーもGitやチャットへ貼らず、StreamlitのSecrets設定内だけに保存してください。
+
 ## 使用技術
 
 - **Python 3.x**

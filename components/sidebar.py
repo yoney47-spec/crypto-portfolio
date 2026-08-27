@@ -17,8 +17,6 @@ def _record_snapshot() -> None:
             result = capture_portfolio_snapshot()
 
     st.session_state["snapshot_feedback"] = result
-    if result.get("ok"):
-        st.cache_data.clear()
 
 
 def _render_snapshot_action() -> None:

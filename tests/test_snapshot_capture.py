@@ -46,36 +46,39 @@ class CapturePortfolioSnapshotTests(unittest.TestCase):
         database_supabase.st.session_state.clear()
         database_supabase.st.session_state["snapshot_admin_expires_at"] = float("inf")
 
-    @patch("database_supabase.requests.get")
+    @patch("database_supabase.get_current_prices")
     @patch("database_supabase.requests.post")
-    def test_rejects_capture_without_current_pin_grant(self, post, get):
+    def test_rejects_capture_without_current_pin_grant(self, post, get_prices):
         database_supabase.st.session_state.pop("snapshot_admin_expires_at", None)
 
         result = database_supabase.capture_portfolio_snapshot()
 
         self.assertFalse(result["ok"])
         self.assertIn("本人確認", result["message"])
-        get.assert_not_called()
+        get_prices.assert_not_called()
         post.assert_not_called()
 
     @patch("database_supabase._get_public_holdings_rows")
-    @patch("database_supabase.requests.get")
+    @patch("database_supabase.load_price_cache", return_value={})
+    @patch("database_supabase.get_current_prices")
     @patch("database_supabase.requests.post")
     @patch(
         "database_supabase.st.secrets",
         {"supabase": {"url": "https://example.supabase.co", "secret_key": "sb_secret_test"}},
     )
-    def test_calculates_and_saves_snapshot_with_backend_secret(self, post, get, holdings):
+    def test_calculates_and_saves_snapshot_with_backend_secret(
+        self, post, get_prices, _load_cache, holdings
+    ):
         holdings.return_value = [
             {"symbol": "BTC", "api_id": "bitcoin", "holdings": 0.1},
             {"symbol": "KAS", "api_id": "kaspa", "holdings": 1000},
         ]
-        price_response = Mock(status_code=200)
-        price_response.json.return_value = {
-            "bitcoin": {"jpy": 10_000_000},
-            "kaspa": {"jpy": 10},
-        }
-        get.return_value = price_response
+        get_prices.return_value = types.SimpleNamespace(
+            prices={
+                "bitcoin": {"jpy": 10_000_000},
+                "kaspa": {"jpy": 10},
+            }
+        )
         post.return_value = Mock(status_code=201)
 
         result = database_supabase.capture_portfolio_snapshot()
@@ -90,20 +93,23 @@ class CapturePortfolioSnapshotTests(unittest.TestCase):
         self.assertEqual(request.kwargs["json"]["total_value_jpy"], 1_010_000)
 
     @patch("database_supabase._get_public_holdings_rows")
-    @patch("database_supabase.requests.get")
+    @patch("database_supabase.load_price_cache", return_value={})
+    @patch("database_supabase.get_current_prices")
     @patch("database_supabase.requests.post")
     @patch(
         "database_supabase.st.secrets",
         {"supabase": {"url": "https://example.supabase.co", "secret_key": "sb_secret_test"}},
     )
-    def test_does_not_save_when_a_price_is_missing(self, post, get, holdings):
+    def test_does_not_save_when_a_price_is_missing(
+        self, post, get_prices, _load_cache, holdings
+    ):
         holdings.return_value = [
             {"symbol": "BTC", "api_id": "bitcoin", "holdings": 0.1},
             {"symbol": "KAS", "api_id": "kaspa", "holdings": 1000},
         ]
-        price_response = Mock(status_code=200)
-        price_response.json.return_value = {"bitcoin": {"jpy": 10_000_000}}
-        get.return_value = price_response
+        get_prices.return_value = types.SimpleNamespace(
+            prices={"bitcoin": {"jpy": 10_000_000}}
+        )
 
         result = database_supabase.capture_portfolio_snapshot()
 

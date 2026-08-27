@@ -11,6 +11,12 @@ from access_control import (
     is_snapshot_admin_unlocked,
     is_supabase_backend_secret_key,
 )
+from market_data import (
+    CoinGeckoError,
+    CoinGeckoRateLimited,
+    SNAPSHOT_STALE_MAX_SECONDS,
+    get_current_prices,
+)
 
 # Japan Standard Time (UTC+9)
 JST = timezone(timedelta(hours=9))
@@ -746,30 +752,22 @@ def capture_portfolio_snapshot() -> Dict[str, Any]:
             }
 
         api_ids = sorted({item["api_id"] for item in active_holdings})
-        price_response = requests.get(
-            "https://api.coingecko.com/api/v3/simple/price",
-            params={"ids": ",".join(api_ids), "vs_currencies": "jpy"},
-            headers={"Accept": "application/json"},
-            timeout=15,
-        )
-
-        if price_response.status_code == 429:
+        try:
+            price_result = get_current_prices(
+                api_ids,
+                fallback_prices=load_price_cache(),
+                max_stale_seconds=SNAPSHOT_STALE_MAX_SECONDS,
+            )
+            prices = price_result.prices
+        except CoinGeckoRateLimited:
             return {
                 "ok": False,
-                "message": "価格取得が混み合っています。少し時間をおいて再度お試しください。",
+                "message": "価格更新が混み合っています。1分ほど待って再度お試しください。",
             }
-
-        if price_response.status_code != 200:
+        except CoinGeckoError:
             return {
                 "ok": False,
                 "message": "現在価格を取得できませんでした。少し時間をおいて再度お試しください。",
-            }
-
-        prices = price_response.json()
-        if not isinstance(prices, dict):
-            return {
-                "ok": False,
-                "message": "現在価格を正しく確認できませんでした。",
             }
 
         missing_prices = []

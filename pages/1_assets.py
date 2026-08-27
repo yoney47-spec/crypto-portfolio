@@ -3,7 +3,6 @@
 """
 
 import streamlit as st
-import requests
 import pandas as pd
 from pathlib import Path
 import base64
@@ -17,9 +16,11 @@ from database_supabase import (
     delete_asset, 
     update_asset,
     get_portfolio_data,
+    load_price_cache,
 )
 from access_control import is_public_read_only
 from components.sidebar import render_sidebar
+from market_data import CoinGeckoError, get_current_prices
 
 # ページ設定
 st.set_page_config(
@@ -66,124 +67,30 @@ def process_uploaded_image(uploaded_file):
         st.error(f"画像処理エラー: {e}")
         return None
 
-# USD/JPY為替レート取得（CoinGecko以外のAPI）
-def get_usd_jpy_rate():
-    """USD/JPY為替レートを取得"""
-    if "usd_jpy_rate" not in st.session_state:
-        # 方法1: Open Exchange Rates API (無料)
-        try:
-            response = requests.get(
-                "https://open.er-api.com/v6/latest/USD",
-                timeout=5
-            )
-            if response.status_code == 200:
-                data = response.json()
-                if "rates" in data:
-                    st.session_state.usd_jpy_rate = data["rates"].get("JPY", 155.0)
-                    return st.session_state.usd_jpy_rate
-        except:
-            pass
-        # フォールバック
-        st.session_state.usd_jpy_rate = 155.0
-    return st.session_state.usd_jpy_rate
-
-# CoinGecko APIから価格を取得（バッチ処理 - USDのみ取得してJPYは計算）
+# CoinGecko価格を全ページ・全セッションで共有する。
 def get_crypto_prices_batch(api_ids, force_refresh=False):
-    """複数の暗号資産の価格を一度に取得してキャッシュ(USDのみ取得、JPYは計算)"""
-    import time
-    
-    # セッションステートにキャッシュがあれば使用
-    if "price_cache" not in st.session_state:
-        st.session_state.price_cache = {}
-    
-    # 為替レートを取得
-    usd_jpy_rate = get_usd_jpy_rate()
-    
-    # 強制更新の場合は全て再取得
-    if force_refresh:
-        ids_to_fetch = api_ids
-    else:
-        # まだ取得していないIDのみ取得
-        ids_to_fetch = [id for id in api_ids if id not in st.session_state.price_cache]
-    
-    if ids_to_fetch:
-        max_retries = 2
-        retry_delay = 1  # 秒
-        
-        for attempt in range(max_retries):
-            try:
-                # USDのみ取得（JPYはレート計算で対応）
-                url = "https://api.coingecko.com/api/v3/simple/price"
-                params = {
-                    "ids": ",".join(ids_to_fetch),
-                    "vs_currencies": "usd",
-                    "include_24hr_change": "true"
-                }
-                response = requests.get(url, params=params, timeout=10)
-                
-                # レート制限エラーの場合
-                if response.status_code == 429:
-                    if attempt < max_retries - 1:
-                        time.sleep(retry_delay * (attempt + 1))  # 指数バックオフ
-                        continue
-                    else:
-                        st.warning("⚠️ CoinGecko APIのレート制限に達しました。数秒後に再度お試しください。")
-                        # 既存のキャッシュがあればそれを使用
-                        return st.session_state.price_cache
-                
-                response.raise_for_status()
-                data = response.json()
-                
-                # キャッシュに保存(USDを取得し、JPYは計算)
-                for api_id in ids_to_fetch:
-                    if api_id in data:
-                        usd_price = data[api_id].get("usd")
-                        usd_change = data[api_id].get("usd_24h_change")
-                        st.session_state.price_cache[api_id] = {
-                            "usd": usd_price,
-                            "jpy": usd_price * usd_jpy_rate if usd_price else None,
-                            "usd_24h_change": usd_change,
-                            "jpy_24h_change": usd_change  # 変動率はUSDと同じ
-                        }
-                    else:
-                        st.session_state.price_cache[api_id] = {
-                            "usd": None,
-                            "jpy": None,
-                            "usd_24h_change": None,
-                            "jpy_24h_change": None
-                        }
-                
-                # 成功したらループを抜ける
-                if force_refresh:
-                    st.success("✅ 価格を更新しました")
-                break
-                
-            except requests.exceptions.RequestException as e:
-                if attempt < max_retries - 1:
-                    time.sleep(retry_delay)
-                    continue
-                else:
-                    st.error(f"❌ 価格取得エラー: {str(e)}")
-                    # エラー時は既存のキャッシュを保持
-                    for api_id in ids_to_fetch:
-                        if api_id not in st.session_state.price_cache:
-                            st.session_state.price_cache[api_id] = {
-                                "usd": None,
-                                "jpy": None
-                            }
-            except Exception as e:
-                st.error(f"❌ 予期しないエラー: {str(e)}")
-                # エラー時は既存のキャッシュを保持
-                for api_id in ids_to_fetch:
-                    if api_id not in st.session_state.price_cache:
-                        st.session_state.price_cache[api_id] = {
-                            "usd": None,
-                            "jpy": None,
-                            "usd_24h_change": None,
-                            "jpy_24h_change": None
-                        }
-                break
-    
+    """複数資産を一括取得し、429時は最終取得価格を表示する。"""
+    persisted_prices = load_price_cache()
+    try:
+        result = get_current_prices(
+            api_ids,
+            fallback_prices=persisted_prices,
+            force_refresh=force_refresh,
+        )
+        st.session_state.price_cache = result.prices
+        st.session_state.price_cache_is_stale = result.stale
+        if force_refresh and result.source == "live":
+            st.success("価格を更新しました")
+        elif result.stale:
+            st.caption("価格更新が混み合っているため、最終取得価格を表示しています。")
+    except CoinGeckoError:
+        st.session_state.price_cache = persisted_prices or {}
+        st.session_state.price_cache_is_stale = bool(persisted_prices)
+        if persisted_prices:
+            st.caption("価格更新が混み合っているため、保存済みの価格を表示しています。")
+        else:
+            st.warning("価格データを取得できませんでした。時間をおいて再度お試しください。")
+
     return st.session_state.price_cache
 
 def get_crypto_price(api_id):
