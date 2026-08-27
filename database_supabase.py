@@ -1,11 +1,16 @@
 
 import streamlit as st
 import requests
+import math
 from postgrest import SyncPostgrestClient
 from datetime import datetime, date, timezone, timedelta
 import pandas as pd
 from typing import Optional, List, Dict, Any, Tuple
-from access_control import is_public_read_only
+from access_control import (
+    is_public_read_only,
+    is_snapshot_admin_unlocked,
+    is_supabase_backend_secret_key,
+)
 
 # Japan Standard Time (UTC+9)
 JST = timezone(timedelta(hours=9))
@@ -677,6 +682,164 @@ def save_portfolio_snapshot(total_value_jpy: float) -> bool:
     except Exception as e:
         st.error(f"スナップショット保存エラー: {e}")
         return False
+
+
+def capture_portfolio_snapshot() -> Dict[str, Any]:
+    """
+    Calculate and save today's snapshot from the trusted Streamlit backend.
+
+    The browser never supplies a portfolio value. Holdings are loaded from the
+    curated public view, current JPY prices come from CoinGecko, and the upsert
+    uses a backend-only Supabase secret key after the UI PIN check.
+    """
+    if not is_snapshot_admin_unlocked():
+        return {
+            "ok": False,
+            "message": "管理コードで本人確認してから保存してください。",
+        }
+
+    try:
+        supabase_url = str(st.secrets["supabase"]["url"]).rstrip("/")
+        secret_key = str(st.secrets["supabase"]["secret_key"])
+    except Exception:
+        return {
+            "ok": False,
+            "message": "管理者用の保存設定を確認してください。",
+        }
+
+    if not is_supabase_backend_secret_key(secret_key):
+        return {
+            "ok": False,
+            "message": "管理者用の保存設定を確認してください。",
+        }
+
+    try:
+        holdings_rows = _get_public_holdings_rows()
+        active_holdings = []
+
+        for item in holdings_rows:
+            try:
+                holdings = float(item.get("holdings") or 0)
+            except (TypeError, ValueError):
+                holdings = 0
+
+            if holdings > 0:
+                active_holdings.append(
+                    {
+                        "symbol": str(item.get("symbol") or "UNKNOWN"),
+                        "api_id": str(item.get("api_id") or ""),
+                        "holdings": holdings,
+                    }
+                )
+
+        if not active_holdings:
+            return {
+                "ok": False,
+                "message": "記録できる保有資産がありません。",
+            }
+
+        missing_api_ids = [item["symbol"] for item in active_holdings if not item["api_id"]]
+        if missing_api_ids:
+            return {
+                "ok": False,
+                "message": f"価格IDが未設定の銘柄があります: {', '.join(missing_api_ids)}",
+            }
+
+        api_ids = sorted({item["api_id"] for item in active_holdings})
+        price_response = requests.get(
+            "https://api.coingecko.com/api/v3/simple/price",
+            params={"ids": ",".join(api_ids), "vs_currencies": "jpy"},
+            headers={"Accept": "application/json"},
+            timeout=15,
+        )
+
+        if price_response.status_code == 429:
+            return {
+                "ok": False,
+                "message": "価格取得が混み合っています。少し時間をおいて再度お試しください。",
+            }
+
+        if price_response.status_code != 200:
+            return {
+                "ok": False,
+                "message": "現在価格を取得できませんでした。少し時間をおいて再度お試しください。",
+            }
+
+        prices = price_response.json()
+        if not isinstance(prices, dict):
+            return {
+                "ok": False,
+                "message": "現在価格を正しく確認できませんでした。",
+            }
+
+        missing_prices = []
+        total_value = 0.0
+        for item in active_holdings:
+            try:
+                price_jpy = float(prices.get(item["api_id"], {}).get("jpy"))
+            except (AttributeError, TypeError, ValueError):
+                price_jpy = 0
+
+            if not math.isfinite(price_jpy) or price_jpy <= 0:
+                missing_prices.append(item["symbol"])
+                continue
+
+            total_value += item["holdings"] * price_jpy
+
+        if missing_prices:
+            return {
+                "ok": False,
+                "message": f"現在価格を確認できない銘柄があります: {', '.join(missing_prices)}",
+            }
+
+        total_value = round(total_value)
+        if not math.isfinite(total_value) or total_value <= 0:
+            return {
+                "ok": False,
+                "message": "総資産額を正しく計算できませんでした。",
+            }
+
+        today = datetime.now(JST).date().isoformat()
+        headers = {
+            "apikey": secret_key,
+            "Content-Type": "application/json",
+            "Prefer": "resolution=merge-duplicates,return=representation",
+        }
+
+        # Legacy service-role keys are JWTs. Modern sb_secret keys must stay in
+        # the apikey header and must not be sent as Bearer tokens.
+        if secret_key.count(".") == 2:
+            headers["Authorization"] = f"Bearer {secret_key}"
+
+        save_response = requests.post(
+            f"{supabase_url}/rest/v1/portfolio_snapshots",
+            params={"on_conflict": "date"},
+            headers=headers,
+            json={
+                "date": today,
+                "total_value_jpy": total_value,
+                "created_at": datetime.now(timezone.utc).isoformat(),
+            },
+            timeout=15,
+        )
+
+        if save_response.status_code not in (200, 201):
+            return {
+                "ok": False,
+                "message": "スナップショットを保存できませんでした。",
+            }
+
+        return {
+            "ok": True,
+            "date": today,
+            "total_value_jpy": total_value,
+            "action": "updated",
+        }
+    except (requests.RequestException, ValueError, TypeError):
+        return {
+            "ok": False,
+            "message": "スナップショットを保存できませんでした。少し時間をおいて再度お試しください。",
+        }
 
 def get_portfolio_history(days: int = 365) -> List[Tuple]:
     """Returns list of (date_str, value)"""

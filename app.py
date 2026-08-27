@@ -481,7 +481,7 @@ def format_price(val, currency="USD"):
 # ヘッダー
 JST_tz = timezone(timedelta(hours=9))
 now_jst = datetime.now(JST_tz)
-public_chip = '<span class="public-chip">公開・閲覧専用</span>' if is_public_read_only() else ''
+public_chip = '<span class="public-chip">公開ポートフォリオ</span>' if is_public_read_only() else ''
 
 st.markdown(f"""
 <div class="app-header">
@@ -1033,6 +1033,6 @@ else:
 st.markdown('<div class="section-divider"></div>', unsafe_allow_html=True)
 st.markdown("""
 <div class="footer-text">
-    価格データ: CoinGecko API  ·  閲覧専用ポートフォリオ
+    価格データ: CoinGecko API  ·  公開ポートフォリオ
 </div>
 """, unsafe_allow_html=True)

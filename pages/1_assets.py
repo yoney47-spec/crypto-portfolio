@@ -214,7 +214,7 @@ def render_public_holdings() -> None:
         "<div><div class='page-title'>保有資産</div>"
         "<div class='page-description'>現在の保有数量・価格・評価額を一覧で確認できます。"
         "個別取引や保管場所などの非公開情報は含まれません。</div></div>"
-        "<span class='public-chip'>公開・閲覧専用</span>"
+        "<span class='public-chip'>公開ポートフォリオ</span>"
         "</div>",
         unsafe_allow_html=True,
     )

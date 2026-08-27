@@ -54,11 +54,29 @@ python database.py
 streamlit run app.py
 ```
 
+### スナップショット保存用Secrets
+
+公開画面のスナップショット追加は、Streamlitのサーバー側Secretsに保存した管理コードで保護します。
+既存の `[supabase]` セクションへ `secret_key` を追加し、`[snapshot_admin]` セクションを作成してください。
+
+```toml
+[supabase]
+url = "https://PROJECT_REF.supabase.co"
+key = "公開表示用のpublishableまたはanonキー"
+secret_key = "バックエンド専用のsb_secretキー"
+
+[snapshot_admin]
+pin = "12文字以上の管理コード"
+```
+
+`secret_key` と `pin` はGit・チャット・ブラウザへ出さず、StreamlitのSecrets設定内だけに保存します。
+Supabaseでは、このアプリ専用の名前付きSecret keyを作成して使用してください。
+
 ## 使用技術
 
 - **Python 3.x**
 - **Streamlit**: Webアプリケーションフレームワーク
-- **SQLite**: データベース
+- **Supabase**: データベース
 - **CoinGecko API**: 暗号資産価格取得
 - **Pandas**: データ分析
 - **Plotly**: データ可視化
