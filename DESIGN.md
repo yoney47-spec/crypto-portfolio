@@ -1,6 +1,6 @@
 # CryptoFolio Design System
 
-> Quiet financial clarity: an Apple-like dark interface with Linear-like precision.
+> Editorial analytics on warm paper, with precise financial semantics.
 
 This file is the design contract for CryptoFolio. It adapts ideas from high-quality
 product references into an original system for a Japanese crypto portfolio. It is a
@@ -8,7 +8,7 @@ reference, not a request to reproduce any source website.
 
 ## Product character
 
-- Calm, trustworthy, and native-app-like.
+- Calm, trustworthy, editorial, and application-like.
 - Financial information is the visual focus; decoration stays quiet.
 - Public pages feel polished and read-only. Admin pages feel capable without looking
   like a separate product.
@@ -17,8 +17,8 @@ reference, not a request to reproduce any source website.
 
 ## Core principles
 
-1. **Darkness is a canvas.** Build hierarchy with stepped neutral surfaces and thin
-   borders, not glowing gradients or stacked shadows.
+1. **Paper is the canvas.** Build hierarchy with warm white, pale neutral surfaces,
+   typography, and spacing—not gradients or stacked shadows.
 2. **One action color.** Blue is for primary actions, focus, links, and selected states.
 3. **Financial colors are semantic.** Green means positive/success, red means
    negative/error, and yellow means warning. Never rely on color alone.
@@ -38,35 +38,39 @@ The implementation sources are `styles/main.css` for CSS and
 
 | Role | Token | Value | Usage |
 |---|---|---:|---|
-| Canvas | `--color-canvas` | `#0f0f10` | App background |
-| Surface 1 | `--color-surface-1` | `#1c1c1e` | Cards, sidebar, forms |
-| Surface 2 | `--color-surface-2` | `#242426` | Hover and nested regions |
-| Surface 3 | `--color-surface-3` | `#2c2c2e` | Selected and raised controls |
-| Primary text | `--color-text-primary` | `#f5f5f7` | Headings and important values |
-| Secondary text | `--color-text-secondary` | `#aeaeb2` | Body copy and labels |
-| Muted text | `--color-text-muted` | `#8e8e93` | Metadata and helper copy |
-| Dim text | `--color-text-dim` | `#636366` | Disabled and low-priority text |
+| Canvas | `--color-canvas` | `#fafafb` | Warm paper background |
+| Surface 1 | `--color-surface-1` | `#ffffff` | Cards, sidebar, forms |
+| Surface 2 | `--color-surface-2` | `#f2f2f3` | Hover and nested regions |
+| Surface 3 | `--color-surface-3` | `#e8e8ea` | Selected and raised controls |
+| Primary text | `--color-text-primary` | `#17191c` | Headings and important values |
+| Secondary text | `--color-text-secondary` | `#5f626b` | Body copy and labels |
+| Muted text | `--color-text-muted` | `#777b86` | Metadata and helper copy |
+| Dim text | `--color-text-dim` | `#979799` | Disabled and low-priority text |
 | Action | `--color-action` | `#0a84ff` | Primary action and focus |
-| Action hover | `--color-action-hover` | `#2997ff` | Blue control hover only |
-| Positive | `--color-positive` | `#30d158` | Gains and success |
-| Negative | `--color-negative` | `#ff453a` | Losses and errors |
-| Warning | `--color-warning` | `#ffd60a` | Warnings and attention |
-| Hairline | `--color-border-subtle` | `rgba(255,255,255,.08)` | Default structure |
-| Hairline hover | `--color-border-hover` | `rgba(255,255,255,.16)` | Interactive boundary |
+| Action hover | `--color-action-hover` | `#0066cc` | Blue control hover only |
+| Positive | `--color-positive` | `#15803d` | Gains and success |
+| Negative | `--color-negative` | `#c53030` | Losses and errors |
+| Warning | `--color-warning` | `#a16207` | Warnings and attention |
+| Editorial accent | `--color-accent-peach` | `#fbe1d1` | One analysis callout per page |
+| Accent ink | `--color-accent-ink` | `#5d2a1a` | Text on the peach callout only |
+| Hairline | `--color-border-subtle` | `rgba(23,25,28,.08)` | Default structure |
+| Hairline hover | `--color-border-hover` | `rgba(23,25,28,.16)` | Interactive boundary |
 
 Do not add a new general-purpose accent when an existing semantic color fits. Purple,
 cyan, orange, and individual coin colors are allowed for data visualization only.
 
 ### Typography
 
-- UI and body: `-apple-system`, `BlinkMacSystemFont`, `SF Pro Text`,
-  `Helvetica Neue`, `Noto Sans JP`, sans-serif.
-- Display: the same system stack using the display face where available.
+- UI and body: `-apple-system`, `BlinkMacSystemFont`, `Helvetica Neue`,
+  `Noto Sans JP`, sans-serif.
+- Editorial display: `Iowan Old Style`, `Palatino Linotype`, `Yu Mincho`,
+  `Hiragino Mincho ProN`, Georgia, serif. Use it for page and section openings only.
 - Data: prefer the system stack with `font-variant-numeric: tabular-nums`. Use the mono
   stack only for genuinely technical metadata, not every financial value.
 - Body: 14px / 1.5. Do not put essential text below 12px.
-- Page title: responsive 27-34px, weight 700, tight tracking.
-- Section title: 16-19px, weight 600-650.
+- Page title: responsive 28-36px, editorial serif weight 400, tight tracking.
+- Major section title: 20-26px, editorial serif weight 400.
+- Small UI section title: 16-18px, sans weight 500-600.
 - Avoid weight 800+ and wide uppercase labels. Japanese labels are sentence case.
 
 ### Spacing
@@ -81,11 +85,11 @@ Use the 4px base grid: `4, 8, 12, 16, 24, 32, 48`.
 
 ### Shape and elevation
 
-- Small controls: 10px radius.
-- Standard cards and inputs: 14px radius.
-- Feature cards: 18-22px radius.
+- Inputs and small cards: 16px radius.
+- Standard cards: 20px radius.
+- Feature cards: 24px radius.
 - Pills: only statuses, chips, and segmented controls.
-- Prefer a 1px hairline border. Use shadows sparingly and at low opacity.
+- Buttons use a pill radius. Prefer a 1px hairline border and use shadows sparingly.
 - No glow around cards, text, chart lines, or status dots.
 - No decorative gradients on cards, buttons, headings, or brand marks.
 
@@ -103,23 +107,23 @@ Use the 4px base grid: `4, 8, 12, 16, 24, 32, 48`.
 
 - Keep the sidebar reopen control visible and reachable.
 - Desktop content is centered at a maximum width of 1240px.
-- The sticky header may use subtle backdrop blur; it must remain legible without blur.
+- The sticky header may use subtle white backdrop blur; it must remain legible without blur.
 - Public/admin state is shown with a compact text-and-dot status, not a large banner.
 
 ### Cards
 
-- Default surface is Surface 1 with a subtle border.
+- Default surface is white or pale gray with either a subtle hairline or no border.
 - Hover may step to Surface 2 and move up at most 2px.
 - Use spacing, typography, and surface steps before adding shadow.
 - A card should have one clear reading order: label, value, supporting context.
 
 ### Buttons and inputs
 
-- Only the primary action uses solid blue. Secondary actions use neutral surfaces.
+- Only the primary action uses solid blue. Secondary actions use neutral pill controls.
 - Controls are at least 42px tall where practical.
 - Focus uses the action color with a crisp 1px ring.
 - Destructive actions use red semantics and still require a clear text label.
-- Do not make all actions pill-shaped.
+- Reserve pill shapes for buttons, statuses, chips, and segmented controls—not cards.
 
 ### Status and performance
 
@@ -131,7 +135,7 @@ Use the 4px base grid: `4, 8, 12, 16, 24, 32, 48`.
 ### Charts
 
 - Plot and paper backgrounds are transparent over the app surface.
-- Titles use secondary text; axes use muted text; grid lines use a 3% white hairline.
+- Titles use secondary text; axes use muted text; grid lines use a 6% ink hairline.
 - The standard portfolio trend line uses action blue.
 - Coin colors identify series only. "Other" uses dim neutral gray.
 - Use tabular numerals and the selected currency symbol in totals, axes, and hover text.
@@ -141,7 +145,7 @@ Use the 4px base grid: `4, 8, 12, 16, 24, 32, 48`.
 ### AI commentary
 
 - Treat AI commentary as supporting analysis, not a magical feature.
-- Use the same neutral card language as the rest of the product.
+- It is the one permitted peach editorial callout on the page, with brown accent ink.
 - Do not use purple gradients, sparkles, robot emoji, or glowing borders.
 - Always show the commentary date and keep the body readable.
 
@@ -165,7 +169,7 @@ Use the 4px base grid: `4, 8, 12, 16, 24, 32, 48`.
 ## Do
 
 - Reuse tokens before inventing values.
-- Prefer neutral surfaces and hairlines to gradients and shadows.
+- Prefer paper, pale neutral surfaces, and typography to gradients and shadows.
 - Keep important numbers visually stable with tabular numerals.
 - Test USD and JPY whenever currency-facing UI changes.
 - Review desktop, mobile, public, and admin states.
@@ -173,7 +177,8 @@ Use the 4px base grid: `4, 8, 12, 16, 24, 32, 48`.
 ## Do not
 
 - Recreate Apple, Linear, Origin Financial, or any other product exactly.
-- Introduce neon, glass everywhere, oversized emoji, or ornamental English.
+- Introduce dark dashboard chrome, neon, glass everywhere, oversized emoji, or
+  ornamental English.
 - Use multiple competing action colors.
 - hard-code `$` or `¥` where the user can switch currency.
 - Hide the sidebar toggle or weaken authenticated/public state clarity.

@@ -2,46 +2,49 @@
 
 :root {
     /* Canonical surfaces */
-    --color-canvas: #0f0f10;
-    --color-surface-1: #1c1c1e;
-    --color-surface-2: #242426;
-    --color-surface-3: #2c2c2e;
-    --color-surface-glass: rgba(28, 28, 30, 0.76);
-    --color-canvas-glass: rgba(15, 15, 16, 0.78);
-    --color-control-glass: rgba(44, 44, 46, 0.88);
-    --color-neutral-soft: rgba(255, 255, 255, 0.025);
+    --color-canvas: #fafafb;
+    --color-surface-1: #ffffff;
+    --color-surface-2: #f2f2f3;
+    --color-surface-3: #e8e8ea;
+    --color-surface-glass: rgba(255, 255, 255, 0.82);
+    --color-canvas-glass: rgba(250, 250, 251, 0.86);
+    --color-control-glass: rgba(242, 242, 243, 0.94);
+    --color-neutral-soft: rgba(23, 25, 28, 0.025);
 
     /* Canonical interaction and financial semantics */
     --color-action: #0a84ff;
-    --color-action-hover: #2997ff;
-    --color-data-cyan: #64d2ff;
-    --color-positive: #30d158;
-    --color-positive-text: #69db83;
-    --color-positive-soft: rgba(48, 209, 88, 0.12);
-    --color-negative: #ff453a;
-    --color-negative-text: #ffb4ae;
-    --color-negative-soft: rgba(255, 69, 58, 0.12);
-    --color-warning: #ffd60a;
-    --color-action-text: #64a9ff;
+    --color-action-hover: #0066cc;
+    --color-on-action: #ffffff;
+    --color-data-cyan: #00a6c8;
+    --color-positive: #15803d;
+    --color-positive-text: #147537;
+    --color-positive-soft: rgba(21, 128, 61, 0.10);
+    --color-negative: #c53030;
+    --color-negative-text: #a52525;
+    --color-negative-soft: rgba(197, 48, 48, 0.10);
+    --color-warning: #a16207;
+    --color-action-text: #0066cc;
     --color-data-purple: #bf5af2;
+    --color-accent-peach: #fbe1d1;
+    --color-accent-ink: #5d2a1a;
 
     /* Canonical typography */
-    --color-text-primary: #f5f5f7;
-    --color-text-secondary: #aeaeb2;
-    --color-text-muted: #8e8e93;
-    --color-text-dim: #636366;
-    --font-ui: -apple-system, BlinkMacSystemFont, 'SF Pro Text', 'Helvetica Neue', 'Noto Sans JP', sans-serif;
-    --font-display: -apple-system, BlinkMacSystemFont, 'SF Pro Display', 'Helvetica Neue', 'Noto Sans JP', sans-serif;
+    --color-text-primary: #17191c;
+    --color-text-secondary: #5f626b;
+    --color-text-muted: #777b86;
+    --color-text-dim: #979799;
+    --font-ui: -apple-system, BlinkMacSystemFont, 'Helvetica Neue', 'Noto Sans JP', sans-serif;
+    --font-display: 'Iowan Old Style', 'Palatino Linotype', 'Yu Mincho', YuMincho, 'Hiragino Mincho ProN', 'Noto Serif JP', Georgia, serif;
     --font-data: SFMono-Regular, Menlo, Monaco, Consolas, 'Liberation Mono', monospace;
 
     /* Canonical precision borders and elevation */
-    --color-border-subtle: rgba(255, 255, 255, 0.08);
-    --color-border-hover: rgba(255, 255, 255, 0.16);
+    --color-border-subtle: rgba(23, 25, 28, 0.08);
+    --color-border-hover: rgba(23, 25, 28, 0.16);
     --color-border-focus: rgba(10, 132, 255, 0.38);
-    --color-chart-grid: rgba(255, 255, 255, 0.03);
-    --elevation-hairline: 0 1px 2px rgba(0, 0, 0, 0.24);
-    --elevation-card: 0 8px 30px rgba(0, 0, 0, 0.22);
-    --elevation-overlay: 0 18px 48px rgba(0, 0, 0, 0.34);
+    --color-chart-grid: rgba(23, 25, 28, 0.06);
+    --elevation-hairline: 0 0 0 1px rgba(23, 25, 28, 0.04);
+    --elevation-card: 0 14px 32px rgba(23, 25, 28, 0.08);
+    --elevation-overlay: 0 20px 48px rgba(23, 25, 28, 0.12);
 
     /* Canonical 4px grid and shape vocabulary */
     --space-1: 4px;
@@ -51,10 +54,10 @@
     --space-6: 24px;
     --space-8: 32px;
     --space-12: 48px;
-    --radius-control: 10px;
-    --radius-card: 14px;
-    --radius-feature: 18px;
-    --radius-hero: 22px;
+    --radius-control: 16px;
+    --radius-card: 20px;
+    --radius-feature: 24px;
+    --radius-hero: 24px;
     --radius-pill: 9999px;
     --motion-fast: 0.16s cubic-bezier(0.22, 1, 0.36, 1);
     --motion-normal: 0.32s cubic-bezier(0.22, 1, 0.36, 1);
@@ -64,7 +67,7 @@
     --bg-secondary: var(--color-surface-1);
     --bg-tertiary: var(--color-surface-2);
     --bg-elevated: var(--color-surface-3);
-    --bg-card: rgba(28, 28, 30, 0.94);
+    --bg-card: rgba(255, 255, 255, 0.94);
     --bg-glass: var(--color-surface-glass);
     --accent-primary: var(--color-action);
     --accent-cyan: var(--color-data-cyan);
@@ -140,11 +143,18 @@ button[aria-label*="Copy"] {
 }
 
 /* ===== Typography ===== */
-h1, h2, h3, h4, h5, h6 {
+h1, h2, h3 {
     color: var(--text-primary) !important;
     font-family: var(--font-display) !important;
-    font-weight: 600 !important;
+    font-weight: 400 !important;
     letter-spacing: -0.02em;
+}
+
+h4, h5, h6 {
+    color: var(--text-primary) !important;
+    font-family: var(--font-ui) !important;
+    font-weight: 600 !important;
+    letter-spacing: -0.01em;
 }
 
 h1 {
@@ -158,10 +168,10 @@ h2 {
 }
 
 h3 {
-    font-size: 1rem !important;
+    font-size: 1.2rem !important;
     color: var(--text-primary) !important;
-    font-weight: 600 !important;
-    letter-spacing: -0.01em;
+    font-weight: 400 !important;
+    letter-spacing: -0.02em;
     margin: var(--spacing-xl) 0 var(--spacing-md) !important;
 }
 
@@ -298,7 +308,7 @@ h3 {
 }
 
 .hero-amount {
-    font-family: var(--font-display);
+    font-family: var(--font-ui);
     font-size: clamp(2rem, 4vw, 2.75rem);
     font-weight: 700;
     color: var(--text-primary);
@@ -333,13 +343,13 @@ h3 {
 
 .metric-pill.success {
     background: var(--accent-success-soft);
-    border-color: rgba(16, 185, 129, 0.25);
+    border-color: rgba(21, 128, 61, 0.22);
     color: var(--accent-success);
 }
 
 .metric-pill.danger {
     background: var(--accent-danger-soft);
-    border-color: rgba(244, 63, 94, 0.25);
+    border-color: rgba(197, 48, 48, 0.22);
     color: var(--accent-danger);
 }
 
@@ -390,7 +400,7 @@ h3 {
 }
 
 .bento-sub-value {
-    font-family: var(--font-display);
+    font-family: var(--font-ui);
     font-variant-numeric: tabular-nums;
     font-size: 1.2rem;
     font-weight: 600;
@@ -555,14 +565,14 @@ div[data-testid="stRadio"] > div > label:has(input:checked) {
 .asset-change.negative { color: var(--accent-danger); }
 .asset-change.muted { color: var(--text-muted); font-weight: 500; }
 
-/* ===== AI commentary — neutral supporting analysis ===== */
+/* ===== AI commentary — one editorial accent ===== */
 .ai-insight-card {
-    background: var(--bg-secondary);
-    border: 1px solid var(--border-subtle);
+    background: var(--color-accent-peach);
+    border: 0;
     border-radius: var(--radius-lg);
     padding: var(--spacing-lg) var(--spacing-xl);
     margin: var(--spacing-lg) 0 var(--spacing-xl);
-    box-shadow: var(--shadow-subtle);
+    box-shadow: none;
     position: relative;
 }
 
@@ -576,7 +586,7 @@ div[data-testid="stRadio"] > div > label:has(input:checked) {
 .ai-insight-title {
     font-size: 0.85rem;
     font-weight: 600;
-    color: var(--text-primary);
+    color: var(--color-accent-ink);
     text-transform: none;
     letter-spacing: -0.01em;
     display: flex;
@@ -586,14 +596,14 @@ div[data-testid="stRadio"] > div > label:has(input:checked) {
 
 .ai-insight-date {
     font-size: 0.72rem;
-    color: var(--text-muted);
+    color: rgba(93, 42, 26, 0.68);
     font-family: var(--font-data);
 }
 
 .ai-insight-body {
     font-size: 0.88rem;
     line-height: 1.7;
-    color: var(--text-secondary);
+    color: var(--color-accent-ink);
 }
 
 /* ===== Buttons ===== */
@@ -601,7 +611,7 @@ div[data-testid="stRadio"] > div > label:has(input:checked) {
     background: var(--bg-tertiary) !important;
     color: var(--text-primary) !important;
     border: 1px solid var(--border-subtle) !important;
-    border-radius: var(--radius-sm) !important;
+    border-radius: var(--radius-pill) !important;
     padding: 6px 14px !important;
     font-weight: 500 !important;
     font-size: 0.82rem !important;
@@ -619,7 +629,7 @@ div[data-testid="stRadio"] > div > label:has(input:checked) {
 .stButton > button.primary-btn {
     background: var(--accent-primary) !important;
     border-color: var(--accent-primary) !important;
-    color: var(--text-primary) !important;
+    color: var(--color-on-action) !important;
     font-weight: 600 !important;
 }
 
@@ -738,7 +748,7 @@ div[data-testid="stRadio"] > div > label:has(input:checked) {
     padding: var(--spacing-md);
     border: 1px solid var(--border-subtle);
     border-radius: var(--radius-md);
-    background: rgba(255, 255, 255, 0.018);
+    background: var(--color-neutral-soft);
     color: var(--text-muted);
     font-size: 0.68rem;
     line-height: 1.65;
@@ -778,8 +788,9 @@ div[data-testid="stRadio"] > div > label:has(input:checked) {
 
 .page-title {
     color: var(--text-primary);
+    font-family: var(--font-display);
     font-size: clamp(1.55rem, 3vw, 2rem);
-    font-weight: 700;
+    font-weight: 400;
     letter-spacing: -0.035em;
     line-height: 1.2;
 }
@@ -818,7 +829,7 @@ div[data-testid="stRadio"] > div > label:has(input:checked) {
 .summary-value {
     margin-top: 12px;
     color: var(--text-primary);
-    font-family: var(--font-display);
+    font-family: var(--font-ui);
     font-variant-numeric: tabular-nums;
     font-size: 1.35rem;
     font-weight: 700;
@@ -844,9 +855,10 @@ div[data-testid="stRadio"] > div > label:has(input:checked) {
 
 .section-title {
     color: var(--text-primary);
-    font-size: 1rem;
-    font-weight: 650;
-    letter-spacing: -0.015em;
+    font-family: var(--font-display);
+    font-size: 1.2rem;
+    font-weight: 400;
+    letter-spacing: -0.02em;
 }
 
 .section-caption {
@@ -1150,7 +1162,7 @@ div[data-testid="stRadio"] > div > label:has(input:checked) {
 .brand-mark > span {
     width: 3px;
     border-radius: 3px;
-    background: var(--text-primary);
+    background: var(--color-on-action);
 }
 
 .brand-mark > span:nth-child(1) { height: 7px; opacity: 0.72; }
@@ -1184,7 +1196,7 @@ div[data-testid="stRadio"] > div > label:has(input:checked) {
 .public-chip,
 .readonly-badge {
     border: 0;
-    background: rgba(48, 209, 88, 0.12);
+    background: var(--color-positive-soft);
     color: var(--color-positive-text);
 }
 
@@ -1218,7 +1230,7 @@ div[data-testid="stRadio"] > div > label:has(input:checked) {
 .summary-value,
 .sentiment-score,
 .alert-item {
-    font-family: var(--font-display);
+    font-family: var(--font-ui);
     font-variant-numeric: tabular-nums;
 }
 
@@ -1309,7 +1321,7 @@ div[data-testid="stRadio"] > div > label:has(input:checked) {
     height: 5px;
     overflow: hidden;
     border-radius: 999px;
-    background: rgba(255, 255, 255, 0.08);
+    background: rgba(23, 25, 28, 0.08);
 }
 
 .alert-banner {
@@ -1336,7 +1348,7 @@ div[data-testid="stRadio"] > div > label:has(input:checked) {
 
 .stButton > button {
     min-height: 42px;
-    border-radius: 12px !important;
+    border-radius: var(--radius-pill) !important;
     font-size: 0.85rem !important;
     box-shadow: none !important;
 }
@@ -1352,6 +1364,7 @@ div[data-testid="stRadio"] > div > label:has(input:checked) {
 .stButton > button[kind="primary"] {
     background: var(--accent-primary) !important;
     border-color: var(--accent-primary) !important;
+    color: var(--color-on-action) !important;
 }
 
 .stButton > button[kind="primary"]:hover {
@@ -1361,18 +1374,19 @@ div[data-testid="stRadio"] > div > label:has(input:checked) {
 
 div[data-testid="stRadio"] > div {
     border: 0 !important;
-    border-radius: 10px !important;
-    background: var(--bg-elevated) !important;
+    border-radius: var(--radius-pill) !important;
+    background: var(--bg-tertiary) !important;
 }
 
 div[data-testid="stRadio"] > div > label {
-    border-radius: 8px !important;
+    border-radius: var(--radius-pill) !important;
 }
 
 div[data-testid="stRadio"] > div > label[data-checked="true"],
 div[data-testid="stRadio"] > div > label:has(input:checked) {
-    background: var(--text-dim) !important;
-    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.34) !important;
+    background: var(--text-primary) !important;
+    color: var(--color-on-action) !important;
+    box-shadow: none !important;
 }
 
 [data-testid="stSidebar"] {
@@ -1418,7 +1432,7 @@ div[data-testid="stRadio"] > div > label:has(input:checked) {
     margin-right: 6px;
     border-radius: 50%;
     background: var(--accent-success);
-    box-shadow: 0 0 8px rgba(48, 209, 88, 0.4);
+    box-shadow: none;
 }
 
 .snapshot-feedback {
@@ -1426,7 +1440,7 @@ div[data-testid="stRadio"] > div > label:has(input:checked) {
     padding: 10px 11px;
     border-radius: 11px;
     border: 1px solid var(--border-subtle);
-    background: rgba(255, 255, 255, 0.035);
+    background: var(--color-neutral-soft);
     color: var(--text-secondary);
     font-size: 0.74rem;
     line-height: 1.55;
@@ -1439,13 +1453,13 @@ div[data-testid="stRadio"] > div > label:has(input:checked) {
 }
 
 .snapshot-feedback.success {
-    border-color: rgba(48, 209, 88, 0.22);
-    background: rgba(48, 209, 88, 0.08);
+    border-color: rgba(21, 128, 61, 0.22);
+    background: var(--color-positive-soft);
 }
 
 .snapshot-feedback.error {
-    border-color: rgba(255, 69, 58, 0.24);
-    background: rgba(255, 69, 58, 0.08);
+    border-color: rgba(197, 48, 48, 0.22);
+    background: var(--color-negative-soft);
     color: var(--color-negative-text);
 }
 
@@ -1469,11 +1483,11 @@ div[data-testid="stRadio"] > div > label:has(input:checked) {
     width: 34px !important;
     height: 34px !important;
     min-height: 34px !important;
-    border: 1px solid rgba(255, 255, 255, 0.10) !important;
+    border: 1px solid var(--border-subtle) !important;
     border-radius: 50% !important;
     background: var(--color-control-glass) !important;
     color: var(--text-primary) !important;
-    box-shadow: 0 6px 18px rgba(0, 0, 0, 0.25) !important;
+    box-shadow: var(--shadow-card) !important;
     -webkit-backdrop-filter: blur(18px);
     backdrop-filter: blur(18px);
     transition: transform 0.18s cubic-bezier(0.22, 1, 0.36, 1), background 0.18s ease !important;
@@ -1492,7 +1506,7 @@ div[data-testid="stRadio"] > div > label:has(input:checked) {
 
 .page-title {
     font-size: clamp(1.7rem, 3vw, 2.15rem);
-    font-weight: 700;
+    font-weight: 400;
 }
 
 .summary-card {

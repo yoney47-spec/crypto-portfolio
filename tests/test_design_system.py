@@ -32,6 +32,14 @@ class DesignSystemTests(unittest.TestCase):
             with self.subTest(token=token):
                 self.assertIn(f"{token}: {value};", css)
 
+    def test_editorial_accent_is_reserved_for_ai_commentary(self):
+        css = (ROOT / "styles" / "main.css").read_text(encoding="utf-8")
+
+        self.assertIn("--color-accent-peach: #fbe1d1;", css)
+        self.assertEqual(css.count("background: var(--color-accent-peach);"), 1)
+        self.assertIn(".ai-insight-card {", css)
+        self.assertIn("'Yu Mincho'", css)
+
 
 if __name__ == "__main__":
     unittest.main()
