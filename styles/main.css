@@ -438,6 +438,82 @@ div[data-testid="stRadio"] > div > label:has(input:checked) {
     text-align: center;
 }
 
+.admin-asset-card {
+    min-height: 212px;
+    display: flex;
+    align-items: stretch;
+}
+
+.admin-asset-card .asset-card-content {
+    width: 100%;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+}
+
+.asset-icon-shell {
+    width: 48px;
+    height: 48px;
+    flex: 0 0 48px;
+    position: relative;
+    margin: 0 auto var(--spacing-md);
+}
+
+.asset-icon-image,
+.asset-icon-fallback {
+    width: 48px;
+    height: 48px;
+    border-radius: 50%;
+}
+
+.asset-icon-image {
+    display: block;
+    object-fit: cover;
+}
+
+.asset-icon-fallback {
+    display: none;
+    position: absolute;
+    inset: 0;
+    margin: 0;
+    font-size: 0.82rem;
+    font-weight: 700;
+}
+
+.asset-icon-fallback.visible {
+    display: flex;
+}
+
+.admin-asset-card .asset-name {
+    min-height: 18px;
+}
+
+.asset-price {
+    margin-top: var(--spacing-sm);
+    color: var(--accent-primary);
+    font-size: 1.18rem;
+    font-weight: 700;
+    text-align: center;
+    font-variant-numeric: tabular-nums;
+}
+
+.asset-price.muted {
+    color: var(--text-muted);
+    font-size: 0.82rem;
+}
+
+.asset-change {
+    min-height: 20px;
+    margin-top: 3px;
+    font-size: 0.78rem;
+    font-weight: 650;
+    text-align: center;
+}
+
+.asset-change.positive { color: var(--accent-success); }
+.asset-change.negative { color: var(--accent-danger); }
+.asset-change.muted { color: var(--text-muted); font-weight: 500; }
+
 /* ===== AI Insight Card (Refined Minimalist) ===== */
 .ai-insight-card {
     background: linear-gradient(180deg, rgba(24, 34, 52, 0.6) 0%, rgba(17, 24, 39, 0.9) 100%);

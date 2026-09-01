@@ -22,6 +22,7 @@ from access_control import is_public_read_only
 from admin_auth import is_admin_authenticated
 from components.sidebar import render_sidebar
 from market_data import CoinGeckoError, get_current_prices
+from components.asset_card import build_admin_asset_card
 
 # ページ設定
 st.set_page_config(
@@ -339,7 +340,8 @@ with tab1:
                         target_price = prices.get(vs_currency)
                         
                         # 価格テキストの作成
-                        if target_price:
+                        change_val = None
+                        if target_price is not None:
                             if currency == "USD":
                                 if target_price < 0.01 and target_price > 0:
                                     price_fmt = f"${target_price:.8f}".rstrip("0")
@@ -356,51 +358,20 @@ with tab1:
                             # 24h変動の表示
                             change_key = f"{vs_currency}_24h_change"
                             change_val = prices.get(change_key)
-                            
-                            if change_val is not None:
-                                change_color = "var(--accent-success)" if change_val >= 0 else "var(--accent-danger)"
-                                change_icon = "▲" if change_val >= 0 else "▼"
-                                change_fmt = f"""<div style="font-size: 0.85rem; color: {change_color}; font-weight: bold; text-align: center;">
-    {change_icon} {abs(change_val):.2f}% (24h)
-</div>"""
-                            else:
-                                change_fmt = ""
+                        else:
+                            price_fmt = None
 
-                            price_display = f"""<div style="font-size: 1.25rem; font-weight: 700; color: var(--accent-primary); margin-top: var(--spacing-sm); text-align: center;">
-    {price_fmt}
-</div>
-{change_fmt}"""
-                        else:
-                            price_display = """<div style="font-size: 1rem; color: var(--text-muted); margin: var(--spacing-md) 0; text-align: center;">
-    取得中...
-</div>"""
-                        
-                        # アイコン表示の準備
-                        if icon_url and icon_url.strip():
-                            # アイコンURLがある場合は画像を表示（エラー時はシンボルにフォールバック）
-                            icon_html = f'''<div style="width: 48px; height: 48px; margin: 0 auto; position: relative;">
-                                <img src="{icon_url}" 
-                                     style="width: 48px; height: 48px; border-radius: 50%; display: block; object-fit: cover;" 
-                                     onerror="this.style.display='none'; this.nextElementSibling.style.display='flex';" />
-                                <div class="asset-icon" style="display: none; font-size: 1.1rem; font-weight: 700; position: absolute; top: 0; left: 0; width: 100%; height: 100%;">{symbol}</div>
-                            </div>'''
-                        else:
-                            # アイコンURLがない場合はシンボルを表示
-                            icon_html = f'<div class="asset-icon" style="font-size: 1.1rem; font-weight: 700;">{symbol}</div>'
-                        
-                        # カード表示
-                        st.markdown(f"""
-                        <div class="asset-card">
-                            <div class="asset-card-content">
-                                <div style="display: flex; justify-content: center; align-items: center; margin-bottom: var(--spacing-md);">
-                                    {icon_html}
-                                </div>
-                                <div class="asset-symbol">{symbol}</div>
-                                <div class="asset-name">{name}</div>
-                                {price_display}
-                            </div>
-                        </div>
-                        """, unsafe_allow_html=True)
+                        # 改行なしのHTMLで、Markdownのコードブロック化を防ぐ。
+                        st.markdown(
+                            build_admin_asset_card(
+                                name=name,
+                                symbol=symbol,
+                                icon_url=icon_url,
+                                price_text=price_fmt,
+                                change_value=change_val,
+                            ),
+                            unsafe_allow_html=True,
+                        )
                         
                         # 編集・削除ボタン
                         col_edit, col_delete = st.columns(2)
