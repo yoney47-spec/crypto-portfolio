@@ -4,6 +4,25 @@ import plotly.graph_objects as go
 from datetime import datetime
 
 from components.chart_format import format_chart_currency
+from components.design_tokens import (
+    COLOR_ACTION,
+    COLOR_ACTION_FILL,
+    COLOR_BORDER,
+    COLOR_CANVAS,
+    COLOR_FX,
+    COLOR_FX_FILL,
+    COLOR_GRID,
+    COLOR_NEGATIVE,
+    COLOR_OTHER,
+    COLOR_POSITIVE,
+    COLOR_TEXT_DIM,
+    COLOR_TEXT_MUTED,
+    COLOR_TEXT_PRIMARY,
+    COLOR_TEXT_SECONDARY,
+    COLOR_TRANSPARENT,
+    FONT_DATA,
+    FONT_UI,
+)
 
 # 暗号資産のブランドカラーマッピング
 CRYPTO_COLORS = {
@@ -108,7 +127,7 @@ def render_charts(
         if others_value > 0:
             labels.append('その他')
             values.append(others_value)
-            colors.append('#666666')  # グレー色
+            colors.append(COLOR_OTHER)
         
         # Plotlyチャート作成
         fig_donut = go.Figure(data=[go.Pie(
@@ -123,13 +142,13 @@ def render_charts(
             sort=False,
             direction='clockwise',
             rotation=0,
-            marker=dict(colors=colors, line=dict(color='#0b0f17', width=1.5))
+            marker=dict(colors=colors, line=dict(color=COLOR_CANVAS, width=1.5))
         )])
         
         fig_donut.update_layout(
             title=dict(
                 text="資産構成",
-                font=dict(color="#94a3b8", size=12, family="Inter"),
+                font=dict(color=COLOR_TEXT_SECONDARY, size=12, family=FONT_UI),
                 y=0.98,
                 x=0.5,
                 xanchor='center',
@@ -137,21 +156,21 @@ def render_charts(
             ),
             showlegend=True,
             legend=dict(
-                font=dict(color="#64748b", size=10, family="Inter"),
+                font=dict(color=COLOR_TEXT_MUTED, size=10, family=FONT_UI),
                 orientation="h",
                 yanchor="top",
                 y=-0.08,
                 xanchor="center",
                 x=0.5
             ),
-            paper_bgcolor='rgba(0,0,0,0)',
-            plot_bgcolor='rgba(0,0,0,0)',
+            paper_bgcolor=COLOR_TRANSPARENT,
+            plot_bgcolor=COLOR_TRANSPARENT,
             margin=dict(t=35, b=45, l=15, r=15),
             height=280,
             annotations=[dict(
                 text=f"<b>{format_chart_currency(total_value, currency_symbol)}</b>",
                 x=0.5, y=0.5,
-                font=dict(size=16, color='#f8fafc', family='JetBrains Mono, monospace'),
+                font=dict(size=16, color=COLOR_TEXT_PRIMARY, family=FONT_UI),
                 showarrow=False
             )]
         )
@@ -170,7 +189,7 @@ def render_charts(
         top_n = sorted_data[:display_count]
         top_symbols = [item['symbol'] for item in top_n][::-1]
         top_values = [item['value'] for item in top_n][::-1]
-        top_colors = [color_map.get(s, '#666666') for s in top_symbols]
+        top_colors = [color_map.get(s, COLOR_OTHER) for s in top_symbols]
         
         fig_bar = go.Figure(go.Bar(
             x=top_values,
@@ -190,16 +209,16 @@ def render_charts(
         fig_bar.update_layout(
             title=dict(
                 text="評価額上位",
-                font=dict(color="#94a3b8", size=12, family="Inter"),
+                font=dict(color=COLOR_TEXT_SECONDARY, size=12, family=FONT_UI),
                 y=0.98,
                 x=0.5,
                 xanchor='center',
                 yanchor='top'
             ),
-            paper_bgcolor='rgba(0,0,0,0)',
-            plot_bgcolor='rgba(0,0,0,0)',
+            paper_bgcolor=COLOR_TRANSPARENT,
+            plot_bgcolor=COLOR_TRANSPARENT,
             xaxis=dict(showgrid=False, showticklabels=False),
-            yaxis=dict(showgrid=False, tickfont=dict(color='#94a3b8', size=11, family="Inter")),
+            yaxis=dict(showgrid=False, tickfont=dict(color=COLOR_TEXT_SECONDARY, size=11, family=FONT_UI)),
             margin=dict(t=35, b=10, l=10, r=10),
             height=280
         )
@@ -238,20 +257,20 @@ def render_charts(
                 last_val = hist_values[-1]
                 change_pct = ((last_val - first_val) / first_val) * 100 if first_val > 0 else 0
                 change_amount = last_val - first_val
-                change_color = "#10b981" if change_pct >= 0 else "#f43f5e"
+                change_color = COLOR_POSITIVE if change_pct >= 0 else COLOR_NEGATIVE
                 change_sign = "+" if change_pct >= 0 else ""
                 change_icon = "▲" if change_pct >= 0 else "▼"
             else:
                 change_pct = 0
                 change_amount = 0
-                change_color = "#64748b"
+                change_color = COLOR_TEXT_DIM
                 change_sign = ""
                 change_icon = "—"
             
             st.markdown(
                 f"<div style='text-align:center; margin-bottom:4px;'>"
-                f"<span style='color:#94a3b8;font-size:12px;font-weight:600;'>評価額履歴（{config['label']}）</span>"
-                f" &nbsp;<span style='font-size:11px;font-family:JetBrains Mono, monospace;color:{change_color};font-weight:600;'>"
+                f"<span style='color:{COLOR_TEXT_SECONDARY};font-size:12px;font-weight:600;'>評価額履歴（{config['label']}）</span>"
+                f" &nbsp;<span style='font-size:11px;font-family:{FONT_DATA};color:{change_color};font-weight:600;'>"
                 f"{change_icon} {change_sign}{change_pct:.1f}%"
                 f" ({change_sign}¥{abs(change_amount):,.0f})</span>"
                 f"</div>",
@@ -272,24 +291,24 @@ def render_charts(
                 y=hist_values,
                 mode='lines',
                 name='Net Worth',
-                line=dict(color='#3b82f6', width=1.8),
+                line=dict(color=COLOR_ACTION, width=1.8),
                 fill='tozeroy',
-                fillcolor='rgba(59, 130, 246, 0.04)',
+                fillcolor=COLOR_ACTION_FILL,
                 hovertemplate='%{x|%Y-%m-%d}  ¥%{y:,.0f}<extra></extra>'
             ))
             
             fig_hist.update_layout(
-                paper_bgcolor='rgba(0,0,0,0)',
-                plot_bgcolor='rgba(0,0,0,0)',
+                paper_bgcolor=COLOR_TRANSPARENT,
+                plot_bgcolor=COLOR_TRANSPARENT,
                 xaxis=dict(
                     showgrid=False, 
-                    tickfont=dict(color='#64748b', size=9, family="JetBrains Mono"),
+                    tickfont=dict(color=COLOR_TEXT_DIM, size=9, family=FONT_DATA),
                     tickformat=config['tickformat']
                 ),
                 yaxis=dict(
                     showgrid=True, 
-                    gridcolor='rgba(255, 255, 255, 0.03)',
-                    tickfont=dict(color='#64748b', size=9, family="JetBrains Mono"),
+                    gridcolor=COLOR_GRID,
+                    tickfont=dict(color=COLOR_TEXT_DIM, size=9, family=FONT_DATA),
                     tickformat='s',
                     range=[y_min, y_max]
                 ),
@@ -395,7 +414,7 @@ def render_price_analysis_chart(portfolio_display_data, fetch_market_chart_func,
                     y_max = None
                 
                 # チャート色 (選択された資産の色を使用)
-                line_color = color_map.get(selected_symbol, '#3b82f6')
+                line_color = color_map.get(selected_symbol, COLOR_ACTION)
                 
                 # HEX -> RGB
                 try:
@@ -403,7 +422,7 @@ def render_price_analysis_chart(portfolio_display_data, fetch_market_chart_func,
                     g = int(line_color[3:5], 16)
                     b = int(line_color[5:7], 16)
                 except Exception:
-                    r, g, b = 59, 130, 246
+                    r, g, b = 10, 132, 255
 
                 fig_line = go.Figure()
                 fig_line.add_trace(go.Scatter(
@@ -420,23 +439,23 @@ def render_price_analysis_chart(portfolio_display_data, fetch_market_chart_func,
                 fig_line.update_layout(
                     title=dict(
                         text=f"{selected_symbol} 価格推移（{timeframe.upper()}）",
-                        font=dict(color="#94a3b8", size=13, family="Inter"),
+                        font=dict(color=COLOR_TEXT_SECONDARY, size=13, family=FONT_UI),
                         y=0.98,
                         x=0.5,
                         xanchor='center',
                         yanchor='top'
                     ),
-                    paper_bgcolor='rgba(0,0,0,0)',
-                    plot_bgcolor='rgba(0,0,0,0)',
+                    paper_bgcolor=COLOR_TRANSPARENT,
+                    plot_bgcolor=COLOR_TRANSPARENT,
                     xaxis=dict(
                         showgrid=False, 
-                        tickfont=dict(color='#64748b', size=9, family="JetBrains Mono"),
-                        linecolor='rgba(255, 255, 255, 0.08)'
+                        tickfont=dict(color=COLOR_TEXT_DIM, size=9, family=FONT_DATA),
+                        linecolor=COLOR_BORDER
                     ),
                     yaxis=dict(
                         showgrid=True, 
-                        gridcolor='rgba(255, 255, 255, 0.03)', 
-                        tickfont=dict(color='#64748b', size=9, family="JetBrains Mono"),
+                        gridcolor=COLOR_GRID,
+                        tickfont=dict(color=COLOR_TEXT_DIM, size=9, family=FONT_DATA),
                         tickprefix=currency_symbol,
                         range=[y_min, y_max]
                     ),
@@ -466,10 +485,10 @@ def render_price_analysis_chart(portfolio_display_data, fetch_market_chart_func,
         # 直近のレートを表示
         latest_rate = ex_values[-1] if ex_values else 0
         rate_diff = ex_values[-1] - ex_values[0] if len(ex_values) > 1 else 0
-        diff_color = "#10b981" if rate_diff >= 0 else "#f43f5e"
+        diff_color = COLOR_POSITIVE if rate_diff >= 0 else COLOR_NEGATIVE
         diff_sign = "+" if rate_diff >= 0 else ""
         
-        st.markdown(f"### 為替レート &nbsp;&nbsp; <span style='font-family:JetBrains Mono; color:#f8fafc; font-size:1.1rem;'>USD/JPY ¥{latest_rate:,.2f}</span>", unsafe_allow_html=True)
+        st.markdown(f"### 為替レート &nbsp;&nbsp; <span style='font-family:{FONT_DATA}; color:{COLOR_TEXT_PRIMARY}; font-size:1.1rem;'>USD/JPY ¥{latest_rate:,.2f}</span>", unsafe_allow_html=True)
         
         fig_ex = go.Figure()
         
@@ -478,32 +497,32 @@ def render_price_analysis_chart(portfolio_display_data, fetch_market_chart_func,
             y=ex_values,
             mode='lines',
             name='USD/JPY',
-            line=dict(color='#f59e0b', width=1.8),
+            line=dict(color=COLOR_FX, width=1.8),
             fill='tozeroy',
-            fillcolor='rgba(245, 158, 11, 0.04)',
+            fillcolor=COLOR_FX_FILL,
             hovertemplate='%{x|%Y-%m-%d}  ¥%{y:,.2f}<extra></extra>'
         ))
         
         fig_ex.update_layout(
             title=dict(
                 text="USD/JPY（過去30日）",
-                font=dict(color="#94a3b8", size=13, family="Inter"),
+                font=dict(color=COLOR_TEXT_SECONDARY, size=13, family=FONT_UI),
                 y=0.98,
                 x=0.5,
                 xanchor='center',
                 yanchor='top'
             ),
-            paper_bgcolor='rgba(0,0,0,0)',
-            plot_bgcolor='rgba(0,0,0,0)',
+            paper_bgcolor=COLOR_TRANSPARENT,
+            plot_bgcolor=COLOR_TRANSPARENT,
             xaxis=dict(
                 showgrid=False, 
-                tickfont=dict(color='#64748b', size=9, family="JetBrains Mono"),
-                linecolor='rgba(255, 255, 255, 0.08)'
+                tickfont=dict(color=COLOR_TEXT_DIM, size=9, family=FONT_DATA),
+                linecolor=COLOR_BORDER
             ),
             yaxis=dict(
                 showgrid=True, 
-                gridcolor='rgba(255, 255, 255, 0.03)', 
-                tickfont=dict(color='#64748b', size=9, family="JetBrains Mono"),
+                gridcolor=COLOR_GRID,
+                tickfont=dict(color=COLOR_TEXT_DIM, size=9, family=FONT_DATA),
                 tickprefix="¥",
                 range=[min(ex_values) * 0.99, max(ex_values) * 1.01]
             ),

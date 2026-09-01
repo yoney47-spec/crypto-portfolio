@@ -108,6 +108,18 @@ api_key = "CoinGecko Demo APIキー"
 - **Pandas**: データ分析
 - **Plotly**: データ可視化
 
+## デザインシステム
+
+UIを変更する前に [`DESIGN.md`](DESIGN.md) を参照してください。
+
+- ブラウザ向けトークン: `styles/main.css`
+- Plotly／Python向けトークン: `components/design_tokens.py`
+- Codex向けの参照ルール: `AGENTS.md`
+
+Apple風の落ち着いたダークUIを基調とし、色は主要操作と金融上の意味、
+暗号資産データの識別に限定して使用します。共有トークンを変更するときは、
+CSSとPythonの値を揃えてください。
+
 ## ライセンス
 
 MIT License

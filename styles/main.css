@@ -1,61 +1,108 @@
-/* CryptoFolio native dark interface */
+/* CryptoFolio design tokens — see DESIGN.md before changing visual rules. */
 
 :root {
-    --bg-primary: #0f0f10;
-    --bg-secondary: #1c1c1e;
-    --bg-tertiary: #242426;
-    --bg-elevated: #2c2c2e;
-    --bg-card: rgba(28, 28, 30, 0.94);
-    --bg-glass: rgba(28, 28, 30, 0.76);
+    /* Canonical surfaces */
+    --color-canvas: #0f0f10;
+    --color-surface-1: #1c1c1e;
+    --color-surface-2: #242426;
+    --color-surface-3: #2c2c2e;
+    --color-surface-glass: rgba(28, 28, 30, 0.76);
+    --color-canvas-glass: rgba(15, 15, 16, 0.78);
+    --color-control-glass: rgba(44, 44, 46, 0.88);
+    --color-neutral-soft: rgba(255, 255, 255, 0.025);
 
-    /* Semantic Financial Colors */
-    --accent-primary: #0a84ff;
-    --accent-cyan: #64d2ff;
-    --accent-success: #30d158;
-    --accent-success-soft: rgba(48, 209, 88, 0.12);
-    --accent-danger: #ff453a;
-    --accent-danger-soft: rgba(255, 69, 58, 0.12);
-    --accent-warning: #ffd60a;
-    --accent-purple: #bf5af2;
+    /* Canonical interaction and financial semantics */
+    --color-action: #0a84ff;
+    --color-action-hover: #2997ff;
+    --color-data-cyan: #64d2ff;
+    --color-positive: #30d158;
+    --color-positive-text: #69db83;
+    --color-positive-soft: rgba(48, 209, 88, 0.12);
+    --color-negative: #ff453a;
+    --color-negative-text: #ffb4ae;
+    --color-negative-soft: rgba(255, 69, 58, 0.12);
+    --color-warning: #ffd60a;
+    --color-action-text: #64a9ff;
+    --color-data-purple: #bf5af2;
 
-    /* Typography Colors */
-    --text-primary: #f5f5f7;
-    --text-secondary: #aeaeb2;
-    --text-muted: #8e8e93;
-    --text-dim: #636366;
+    /* Canonical typography */
+    --color-text-primary: #f5f5f7;
+    --color-text-secondary: #aeaeb2;
+    --color-text-muted: #8e8e93;
+    --color-text-dim: #636366;
+    --font-ui: -apple-system, BlinkMacSystemFont, 'SF Pro Text', 'Helvetica Neue', 'Noto Sans JP', sans-serif;
+    --font-display: -apple-system, BlinkMacSystemFont, 'SF Pro Display', 'Helvetica Neue', 'Noto Sans JP', sans-serif;
+    --font-data: SFMono-Regular, Menlo, Monaco, Consolas, 'Liberation Mono', monospace;
 
-    /* Precision Borders & Shadows */
-    --border-subtle: rgba(255, 255, 255, 0.08);
-    --border-hover: rgba(255, 255, 255, 0.16);
-    --border-accent: rgba(10, 132, 255, 0.38);
+    /* Canonical precision borders and elevation */
+    --color-border-subtle: rgba(255, 255, 255, 0.08);
+    --color-border-hover: rgba(255, 255, 255, 0.16);
+    --color-border-focus: rgba(10, 132, 255, 0.38);
+    --color-chart-grid: rgba(255, 255, 255, 0.03);
+    --elevation-hairline: 0 1px 2px rgba(0, 0, 0, 0.24);
+    --elevation-card: 0 8px 30px rgba(0, 0, 0, 0.22);
+    --elevation-overlay: 0 18px 48px rgba(0, 0, 0, 0.34);
 
-    --shadow-subtle: 0 1px 2px rgba(0, 0, 0, 0.24);
-    --shadow-card: 0 8px 30px rgba(0, 0, 0, 0.22);
-    --shadow-elevated: 0 18px 48px rgba(0, 0, 0, 0.34);
-
-    /* Spacing & Radii */
-    --spacing-xs: 4px;
-    --spacing-sm: 8px;
-    --spacing-md: 12px;
-    --spacing-lg: 16px;
-    --spacing-xl: 24px;
-    --spacing-2xl: 32px;
-
-    --radius-sm: 10px;
-    --radius-md: 14px;
-    --radius-lg: 18px;
-    --radius-xl: 22px;
+    /* Canonical 4px grid and shape vocabulary */
+    --space-1: 4px;
+    --space-2: 8px;
+    --space-3: 12px;
+    --space-4: 16px;
+    --space-6: 24px;
+    --space-8: 32px;
+    --space-12: 48px;
+    --radius-control: 10px;
+    --radius-card: 14px;
+    --radius-feature: 18px;
+    --radius-hero: 22px;
     --radius-pill: 9999px;
+    --motion-fast: 0.16s cubic-bezier(0.22, 1, 0.36, 1);
+    --motion-normal: 0.32s cubic-bezier(0.22, 1, 0.36, 1);
 
-    --transition-fast: all 0.16s cubic-bezier(0.22, 1, 0.36, 1);
-    --transition-normal: all 0.32s cubic-bezier(0.22, 1, 0.36, 1);
+    /* Compatibility aliases for existing components. */
+    --bg-primary: var(--color-canvas);
+    --bg-secondary: var(--color-surface-1);
+    --bg-tertiary: var(--color-surface-2);
+    --bg-elevated: var(--color-surface-3);
+    --bg-card: rgba(28, 28, 30, 0.94);
+    --bg-glass: var(--color-surface-glass);
+    --accent-primary: var(--color-action);
+    --accent-cyan: var(--color-data-cyan);
+    --accent-success: var(--color-positive);
+    --accent-success-soft: var(--color-positive-soft);
+    --accent-danger: var(--color-negative);
+    --accent-danger-soft: var(--color-negative-soft);
+    --accent-warning: var(--color-warning);
+    --accent-purple: var(--color-data-purple);
+    --text-primary: var(--color-text-primary);
+    --text-secondary: var(--color-text-secondary);
+    --text-muted: var(--color-text-muted);
+    --text-dim: var(--color-text-dim);
+    --border-subtle: var(--color-border-subtle);
+    --border-hover: var(--color-border-hover);
+    --border-accent: var(--color-border-focus);
+    --shadow-subtle: var(--elevation-hairline);
+    --shadow-card: var(--elevation-card);
+    --shadow-elevated: var(--elevation-overlay);
+    --spacing-xs: var(--space-1);
+    --spacing-sm: var(--space-2);
+    --spacing-md: var(--space-3);
+    --spacing-lg: var(--space-4);
+    --spacing-xl: var(--space-6);
+    --spacing-2xl: var(--space-8);
+    --radius-sm: var(--radius-control);
+    --radius-md: var(--radius-card);
+    --radius-lg: var(--radius-feature);
+    --radius-xl: var(--radius-hero);
+    --transition-fast: all var(--motion-fast);
+    --transition-normal: all var(--motion-normal);
 }
 
 /* ===== Global Reset & Background ===== */
 .stApp {
     background-color: var(--bg-primary) !important;
-    background-image: linear-gradient(180deg, #111113 0%, var(--bg-primary) 320px);
-    font-family: -apple-system, BlinkMacSystemFont, 'SF Pro Text', 'Helvetica Neue', 'Noto Sans JP', sans-serif !important;
+    background-image: none;
+    font-family: var(--font-ui) !important;
     color: var(--text-primary);
     font-size: 14px;
     line-height: 1.5;
@@ -95,7 +142,7 @@ button[aria-label*="Copy"] {
 /* ===== Typography ===== */
 h1, h2, h3, h4, h5, h6 {
     color: var(--text-primary) !important;
-    font-family: -apple-system, BlinkMacSystemFont, 'SF Pro Display', 'Helvetica Neue', 'Noto Sans JP', sans-serif !important;
+    font-family: var(--font-display) !important;
     font-weight: 600 !important;
     letter-spacing: -0.02em;
 }
@@ -119,7 +166,7 @@ h3 {
 }
 
 .num-font {
-    font-family: -apple-system, BlinkMacSystemFont, 'SF Pro Text', 'Helvetica Neue', sans-serif;
+    font-family: var(--font-ui);
     font-feature-settings: 'tnum';
     font-variant-numeric: tabular-nums;
 }
@@ -146,9 +193,9 @@ h3 {
     display: grid;
     place-items: center;
     border-radius: 9px;
-    background: linear-gradient(145deg, rgba(91, 140, 255, 0.24), rgba(54, 199, 217, 0.10));
-    border: 1px solid rgba(91, 140, 255, 0.28);
-    color: #b9d0ff;
+    background: var(--bg-elevated);
+    border: 1px solid var(--border-subtle);
+    color: var(--accent-primary);
     font-size: 0.85rem;
 }
 
@@ -187,7 +234,7 @@ h3 {
     border-radius: var(--radius-pill);
     background: rgba(56, 215, 160, 0.08);
     border: 1px solid rgba(56, 215, 160, 0.20);
-    color: #83e7c3;
+    color: var(--color-positive-text);
     font-size: 0.72rem;
     font-weight: 600;
 }
@@ -206,7 +253,7 @@ h3 {
     border: 1px solid var(--border-subtle);
     border-radius: var(--radius-sm);
     padding: 3px 8px;
-    font-family: 'JetBrains Mono', monospace;
+    font-family: var(--font-data);
     color: var(--text-secondary);
 }
 
@@ -220,9 +267,7 @@ h3 {
 
 .hero-main-card {
     min-height: 230px;
-    background:
-        radial-gradient(circle at 94% 8%, rgba(91, 140, 255, 0.18), transparent 34%),
-        linear-gradient(145deg, #141d2c 0%, #0e1521 70%);
+    background: var(--bg-secondary);
     border: 1px solid var(--border-subtle);
     border-radius: var(--radius-xl);
     padding: 28px;
@@ -235,13 +280,7 @@ h3 {
 }
 
 .hero-main-card::before {
-    content: '';
-    position: absolute;
-    top: 0;
-    left: 0;
-    right: 0;
-    height: 1px;
-    background: linear-gradient(90deg, transparent, rgba(59, 130, 246, 0.4), transparent);
+    display: none;
 }
 
 .hero-label {
@@ -252,14 +291,14 @@ h3 {
 }
 
 .hero-eyebrow {
-    color: #7ea4ff;
+    color: var(--text-muted);
     font-size: 0.64rem;
     font-weight: 700;
     letter-spacing: 0.14em;
 }
 
 .hero-amount {
-    font-family: 'JetBrains Mono', 'Inter', monospace;
+    font-family: var(--font-display);
     font-size: clamp(2rem, 4vw, 2.75rem);
     font-weight: 700;
     color: var(--text-primary);
@@ -312,7 +351,8 @@ h3 {
 }
 
 .metric-pill-value {
-    font-family: 'JetBrains Mono', monospace;
+    font-family: var(--font-ui);
+    font-variant-numeric: tabular-nums;
     font-weight: 600;
 }
 
@@ -337,7 +377,7 @@ h3 {
 
 .bento-sub-card:hover {
     border-color: var(--border-hover);
-    background: #142033;
+    background: var(--bg-tertiary);
     transform: translateY(-1px);
 }
 
@@ -350,7 +390,8 @@ h3 {
 }
 
 .bento-sub-value {
-    font-family: 'JetBrains Mono', monospace;
+    font-family: var(--font-display);
+    font-variant-numeric: tabular-nums;
     font-size: 1.2rem;
     font-weight: 600;
     margin: 4px 0 2px;
@@ -360,7 +401,7 @@ h3 {
 .bento-sub-meta {
     font-size: 0.75rem;
     color: var(--text-muted);
-    font-family: 'JetBrains Mono', monospace;
+    font-family: var(--font-data);
 }
 
 /* ===== Apple-style Segmented Control (Pill Radio) ===== */
@@ -514,14 +555,14 @@ div[data-testid="stRadio"] > div > label:has(input:checked) {
 .asset-change.negative { color: var(--accent-danger); }
 .asset-change.muted { color: var(--text-muted); font-weight: 500; }
 
-/* ===== AI Insight Card (Refined Minimalist) ===== */
+/* ===== AI commentary — neutral supporting analysis ===== */
 .ai-insight-card {
-    background: linear-gradient(180deg, rgba(24, 34, 52, 0.6) 0%, rgba(17, 24, 39, 0.9) 100%);
-    border: 1px solid rgba(139, 92, 246, 0.2);
+    background: var(--bg-secondary);
+    border: 1px solid var(--border-subtle);
     border-radius: var(--radius-lg);
     padding: var(--spacing-lg) var(--spacing-xl);
     margin: var(--spacing-lg) 0 var(--spacing-xl);
-    box-shadow: var(--shadow-card);
+    box-shadow: var(--shadow-subtle);
     position: relative;
 }
 
@@ -535,9 +576,9 @@ div[data-testid="stRadio"] > div > label:has(input:checked) {
 .ai-insight-title {
     font-size: 0.85rem;
     font-weight: 600;
-    color: #c4b5fd;
-    text-transform: uppercase;
-    letter-spacing: 0.05em;
+    color: var(--text-primary);
+    text-transform: none;
+    letter-spacing: -0.01em;
     display: flex;
     align-items: center;
     gap: 6px;
@@ -546,7 +587,7 @@ div[data-testid="stRadio"] > div > label:has(input:checked) {
 .ai-insight-date {
     font-size: 0.72rem;
     color: var(--text-muted);
-    font-family: 'JetBrains Mono', monospace;
+    font-family: var(--font-data);
 }
 
 .ai-insight-body {
@@ -571,19 +612,20 @@ div[data-testid="stRadio"] > div > label:has(input:checked) {
 .stButton > button:hover {
     background: var(--bg-elevated) !important;
     border-color: var(--border-hover) !important;
-    color: #ffffff !important;
+    color: var(--text-primary) !important;
 }
 
 .stButton > button[kind="primary"],
 .stButton > button.primary-btn {
     background: var(--accent-primary) !important;
     border-color: var(--accent-primary) !important;
-    color: #ffffff !important;
+    color: var(--text-primary) !important;
     font-weight: 600 !important;
 }
 
 .stButton > button[kind="primary"]:hover {
-    background: #2563eb !important;
+    background: var(--color-action-hover) !important;
+    border-color: var(--color-action-hover) !important;
 }
 
 /* ===== Form Inputs ===== */
@@ -597,7 +639,7 @@ div[data-testid="stRadio"] > div > label:has(input:checked) {
     border-radius: var(--radius-sm) !important;
     color: var(--text-primary) !important;
     font-size: 0.85rem !important;
-    font-family: 'Inter', sans-serif !important;
+    font-family: var(--font-ui) !important;
 }
 
 .stTextInput input:focus,
@@ -619,7 +661,7 @@ div[data-testid="stRadio"] > div > label:has(input:checked) {
 
 /* ===== Sidebar Styling ===== */
 [data-testid="stSidebar"] {
-    background-color: #0b111b !important;
+    background-color: var(--bg-card) !important;
     border-right: 1px solid var(--border-subtle) !important;
 }
 
@@ -640,9 +682,9 @@ div[data-testid="stRadio"] > div > label:has(input:checked) {
     display: grid;
     place-items: center;
     border-radius: 10px;
-    color: #a9c2ff;
-    background: linear-gradient(145deg, rgba(91, 140, 255, 0.24), rgba(54, 199, 217, 0.08));
-    border: 1px solid rgba(91, 140, 255, 0.26);
+    color: var(--accent-primary);
+    background: var(--bg-elevated);
+    border: 1px solid var(--border-subtle);
     font-size: 0.9rem;
 }
 
@@ -670,7 +712,7 @@ div[data-testid="stRadio"] > div > label:has(input:checked) {
     border-radius: var(--radius-pill);
     background: rgba(56, 215, 160, 0.08);
     border: 1px solid rgba(56, 215, 160, 0.18);
-    color: #83e7c3;
+    color: var(--color-positive-text);
     font-size: 0.68rem;
     font-weight: 600;
 }
@@ -727,7 +769,7 @@ div[data-testid="stRadio"] > div > label:has(input:checked) {
 }
 
 .page-kicker {
-    color: #7ea4ff;
+    color: var(--text-muted);
     font-size: 0.65rem;
     font-weight: 700;
     letter-spacing: 0.14em;
@@ -762,7 +804,7 @@ div[data-testid="stRadio"] > div > label:has(input:checked) {
     padding: 18px;
     border: 1px solid var(--border-subtle);
     border-radius: var(--radius-lg);
-    background: linear-gradient(160deg, rgba(23, 33, 49, 0.94), rgba(14, 21, 33, 0.94));
+    background: var(--bg-secondary);
     box-shadow: var(--shadow-subtle);
 }
 
@@ -776,7 +818,8 @@ div[data-testid="stRadio"] > div > label:has(input:checked) {
 .summary-value {
     margin-top: 12px;
     color: var(--text-primary);
-    font-family: 'JetBrains Mono', monospace;
+    font-family: var(--font-display);
+    font-variant-numeric: tabular-nums;
     font-size: 1.35rem;
     font-weight: 700;
     letter-spacing: -0.03em;
@@ -847,7 +890,8 @@ div[data-testid="stRadio"] > div > label:has(input:checked) {
     padding: 2px 6px;
     border-radius: 4px;
     font-weight: 600;
-    font-family: 'JetBrains Mono', monospace;
+    font-family: var(--font-ui);
+    font-variant-numeric: tabular-nums;
 }
 
 .alert-item.alert-down {
@@ -856,7 +900,8 @@ div[data-testid="stRadio"] > div > label:has(input:checked) {
     padding: 2px 6px;
     border-radius: 4px;
     font-weight: 600;
-    font-family: 'JetBrains Mono', monospace;
+    font-family: var(--font-ui);
+    font-variant-numeric: tabular-nums;
 }
 
 /* Quick Access Cards */
@@ -982,7 +1027,7 @@ div[data-testid="stRadio"] > div > label:has(input:checked) {
 .admin-status,
 .admin-chip {
     background: rgba(10, 132, 255, 0.12);
-    color: #64a9ff;
+    color: var(--color-action-text);
 }
 
 .readonly-badge.admin span,
@@ -1051,7 +1096,7 @@ div[data-testid="stRadio"] > div > label:has(input:checked) {
     padding: 20px !important;
     border: 1px solid var(--border-subtle) !important;
     border-radius: var(--radius-lg) !important;
-    background: rgba(28, 28, 30, 0.62) !important;
+    background: var(--bg-glass) !important;
 }
 
 [data-testid="stDialog"] [data-testid="stForm"] {
@@ -1082,7 +1127,7 @@ div[data-testid="stRadio"] > div > label:has(input:checked) {
     margin: -0.35rem -0.75rem var(--spacing-xl);
     padding: 0.75rem;
     border-bottom: 1px solid var(--border-subtle);
-    background: rgba(15, 15, 16, 0.78);
+    background: var(--color-canvas-glass);
     -webkit-backdrop-filter: saturate(180%) blur(22px);
     backdrop-filter: saturate(180%) blur(22px);
 }
@@ -1098,14 +1143,14 @@ div[data-testid="stRadio"] > div > label:has(input:checked) {
     gap: 2px;
     padding: 8px 8px 7px;
     border-radius: 10px;
-    background: #0a84ff;
-    box-shadow: 0 7px 18px rgba(10, 132, 255, 0.24), inset 0 1px 0 rgba(255, 255, 255, 0.22);
+    background: var(--accent-primary);
+    box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.18);
 }
 
 .brand-mark > span {
     width: 3px;
     border-radius: 3px;
-    background: #ffffff;
+    background: var(--text-primary);
 }
 
 .brand-mark > span:nth-child(1) { height: 7px; opacity: 0.72; }
@@ -1140,7 +1185,7 @@ div[data-testid="stRadio"] > div > label:has(input:checked) {
 .readonly-badge {
     border: 0;
     background: rgba(48, 209, 88, 0.12);
-    color: #69db83;
+    color: var(--color-positive-text);
 }
 
 .public-chip::before {
@@ -1173,7 +1218,7 @@ div[data-testid="stRadio"] > div > label:has(input:checked) {
 .summary-value,
 .sentiment-score,
 .alert-item {
-    font-family: -apple-system, BlinkMacSystemFont, 'SF Pro Display', 'Helvetica Neue', sans-serif;
+    font-family: var(--font-display);
     font-variant-numeric: tabular-nums;
 }
 
@@ -1305,13 +1350,13 @@ div[data-testid="stRadio"] > div > label:has(input:checked) {
 }
 
 .stButton > button[kind="primary"] {
-    background: #0a84ff !important;
-    border-color: #0a84ff !important;
+    background: var(--accent-primary) !important;
+    border-color: var(--accent-primary) !important;
 }
 
 .stButton > button[kind="primary"]:hover {
-    background: #2997ff !important;
-    border-color: #2997ff !important;
+    background: var(--color-action-hover) !important;
+    border-color: var(--color-action-hover) !important;
 }
 
 div[data-testid="stRadio"] > div {
@@ -1326,12 +1371,12 @@ div[data-testid="stRadio"] > div > label {
 
 div[data-testid="stRadio"] > div > label[data-checked="true"],
 div[data-testid="stRadio"] > div > label:has(input:checked) {
-    background: #636366 !important;
+    background: var(--text-dim) !important;
     box-shadow: 0 1px 3px rgba(0, 0, 0, 0.34) !important;
 }
 
 [data-testid="stSidebar"] {
-    background: rgba(28, 28, 30, 0.94) !important;
+    background: var(--bg-card) !important;
     border-right-color: var(--border-subtle) !important;
     -webkit-backdrop-filter: saturate(160%) blur(24px);
     backdrop-filter: saturate(160%) blur(24px);
@@ -1355,7 +1400,7 @@ div[data-testid="stRadio"] > div > label:has(input:checked) {
 }
 
 .sidebar-note {
-    background: rgba(255, 255, 255, 0.025);
+    background: var(--color-neutral-soft);
     border: 0;
 }
 
@@ -1401,7 +1446,7 @@ div[data-testid="stRadio"] > div > label:has(input:checked) {
 .snapshot-feedback.error {
     border-color: rgba(255, 69, 58, 0.24);
     background: rgba(255, 69, 58, 0.08);
-    color: #ffb4ae;
+    color: var(--color-negative-text);
 }
 
 /* Streamlit normally hides these controls until hover. Keep both available. */
@@ -1426,7 +1471,7 @@ div[data-testid="stRadio"] > div > label:has(input:checked) {
     min-height: 34px !important;
     border: 1px solid rgba(255, 255, 255, 0.10) !important;
     border-radius: 50% !important;
-    background: rgba(44, 44, 46, 0.88) !important;
+    background: var(--color-control-glass) !important;
     color: var(--text-primary) !important;
     box-shadow: 0 6px 18px rgba(0, 0, 0, 0.25) !important;
     -webkit-backdrop-filter: blur(18px);
@@ -1436,7 +1481,7 @@ div[data-testid="stRadio"] > div > label:has(input:checked) {
 
 [data-testid="stSidebarCollapseButton"] button:hover,
 [data-testid="stExpandSidebarButton"] button:hover {
-    background: #3a3a3c !important;
+    background: var(--text-dim) !important;
     transform: scale(1.05);
 }
 
