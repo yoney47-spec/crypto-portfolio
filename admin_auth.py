@@ -185,8 +185,20 @@ def get_admin_access_token() -> str:
     return str(session.get("access_token") or "")
 
 
+def has_current_admin_authorization() -> bool:
+    """Recheck allow-list membership before a backend-privileged operation."""
+    if not is_admin_authenticated():
+        return False
+
+    session = st.session_state.get(AUTH_SESSION_KEY)
+    if isinstance(session, dict) and _has_admin_membership(session):
+        return True
+
+    sign_out_admin()
+    return False
+
+
 def sign_out_admin() -> None:
     session = st.session_state.pop(AUTH_SESSION_KEY, None)
     if isinstance(session, dict):
         _revoke_remote_session(str(session.get("access_token") or ""))
-

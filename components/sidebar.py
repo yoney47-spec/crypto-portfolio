@@ -6,6 +6,7 @@ from access_control import (
     is_public_read_only,
     is_snapshot_admin_unlocked,
     snapshot_admin_configuration_error,
+    snapshot_backend_configuration_error,
     verify_snapshot_admin_pin,
 )
 from admin_auth import is_admin_authenticated, sign_in_admin, sign_out_admin
@@ -20,10 +21,14 @@ def _record_snapshot() -> None:
     st.session_state["snapshot_feedback"] = result
 
 
-def _render_snapshot_action() -> None:
-    """Render the PIN-protected snapshot action."""
+def _render_snapshot_action(is_admin: bool = False) -> None:
+    """Render snapshot capture with admin-session or fallback PIN authorization."""
     feedback = st.session_state.pop("snapshot_feedback", None)
-    configuration_error = snapshot_admin_configuration_error()
+    configuration_error = (
+        snapshot_backend_configuration_error()
+        if is_admin
+        else snapshot_admin_configuration_error()
+    )
 
     st.sidebar.markdown(
         "<div class='sidebar-section-label'>履歴</div>",
@@ -55,6 +60,25 @@ def _render_snapshot_action() -> None:
         )
         st.sidebar.markdown(
             f"<div class='snapshot-note'>{escape(configuration_error)}</div>",
+            unsafe_allow_html=True,
+        )
+        return
+
+    if is_admin:
+        st.session_state.pop("snapshot_pin_prompt_open", None)
+        if st.sidebar.button(
+            "スナップショットを追加",
+            key="capture_portfolio_snapshot_admin",
+            type="primary",
+            use_container_width=True,
+            help="現在の評価額を今日の履歴として保存します。同日分は最新値に更新されます。",
+        ):
+            _record_snapshot()
+            st.rerun()
+
+        st.sidebar.markdown(
+            "<div class='snapshot-note'><span class='snapshot-auth-dot'></span>"
+            "管理者ログイン済みのため、管理コードの入力は不要です。</div>",
             unsafe_allow_html=True,
         )
         return
@@ -245,7 +269,7 @@ def render_sidebar():
     )
 
     if public_mode:
-        _render_snapshot_action()
+        _render_snapshot_action(is_admin=is_admin)
 
         st.sidebar.markdown(
             "<div class='sidebar-note'>"

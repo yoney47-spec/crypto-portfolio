@@ -135,6 +135,24 @@ class AdminAuthTests(unittest.TestCase):
         )
         self.assertEqual(post.call_args.kwargs["params"], {"grant_type": "refresh_token"})
 
+    @patch("admin_auth.sign_out_admin")
+    @patch("admin_auth._has_admin_membership", return_value=False)
+    @patch("admin_auth.is_admin_authenticated", return_value=True)
+    def test_privileged_operation_rechecks_allow_list(
+        self, _authenticated, _membership, sign_out
+    ):
+        self.session_state[admin_auth.AUTH_SESSION_KEY] = {
+            "access_token": "access-one",
+            "user_id": "user-one",
+            "is_admin": True,
+        }
+
+        with patch.object(admin_auth.st, "session_state", self.session_state):
+            authorized = admin_auth.has_current_admin_authorization()
+
+        self.assertFalse(authorized)
+        sign_out.assert_called_once()
+
 
 if __name__ == "__main__":
     unittest.main()

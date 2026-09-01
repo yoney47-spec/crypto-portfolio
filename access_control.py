@@ -37,15 +37,31 @@ def is_supabase_backend_secret_key(value: str) -> bool:
         return False
 
 
-def snapshot_admin_configuration_error() -> str | None:
-    """Return a public-safe setup error, or None when snapshot auth is ready."""
+def snapshot_backend_configuration_error() -> str | None:
+    """Return a public-safe setup error for the backend snapshot writer."""
     try:
-        admin_pin = str(st.secrets.get("snapshot_admin", {}).get("pin", ""))
         secret_key = str(st.secrets.get("supabase", {}).get("secret_key", ""))
     except Exception:
         return "管理者設定の完了後に利用できます。"
 
-    if len(admin_pin) < 12 or not is_supabase_backend_secret_key(secret_key):
+    if not is_supabase_backend_secret_key(secret_key):
+        return "管理者設定の完了後に利用できます。"
+
+    return None
+
+
+def snapshot_admin_configuration_error() -> str | None:
+    """Return a public-safe setup error for the fallback PIN flow."""
+    backend_error = snapshot_backend_configuration_error()
+    if backend_error:
+        return backend_error
+
+    try:
+        admin_pin = str(st.secrets.get("snapshot_admin", {}).get("pin", ""))
+    except Exception:
+        return "管理者設定の完了後に利用できます。"
+
+    if len(admin_pin) < 12:
         return "管理者設定の完了後に利用できます。"
 
     return None

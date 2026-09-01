@@ -11,7 +11,11 @@ from access_control import (
     is_snapshot_admin_unlocked,
     is_supabase_backend_secret_key,
 )
-from admin_auth import get_admin_access_token, is_admin_authenticated
+from admin_auth import (
+    get_admin_access_token,
+    has_current_admin_authorization,
+    is_admin_authenticated,
+)
 from market_data import (
     CoinGeckoError,
     CoinGeckoRateLimited,
@@ -779,12 +783,13 @@ def capture_portfolio_snapshot() -> Dict[str, Any]:
 
     The browser never supplies a portfolio value. Holdings are loaded from the
     curated public view, current JPY prices come from CoinGecko, and the upsert
-    uses a backend-only Supabase secret key after the UI PIN check.
+    uses a backend-only Supabase secret key after either a current administrator
+    session or the fallback UI PIN check is verified.
     """
-    if not is_snapshot_admin_unlocked():
+    if not has_current_admin_authorization() and not is_snapshot_admin_unlocked():
         return {
             "ok": False,
-            "message": "管理コードで本人確認してから保存してください。",
+            "message": "管理者としてログインするか、管理コードで本人確認してから保存してください。",
         }
 
     try:

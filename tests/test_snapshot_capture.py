@@ -48,7 +48,10 @@ class CapturePortfolioSnapshotTests(unittest.TestCase):
 
     @patch("database_supabase.get_current_prices")
     @patch("database_supabase.requests.post")
-    def test_rejects_capture_without_current_pin_grant(self, post, get_prices):
+    @patch("database_supabase.has_current_admin_authorization", return_value=False)
+    def test_rejects_capture_without_current_pin_grant(
+        self, _is_admin, post, get_prices
+    ):
         database_supabase.st.session_state.pop("snapshot_admin_expires_at", None)
 
         result = database_supabase.capture_portfolio_snapshot()
@@ -57,6 +60,28 @@ class CapturePortfolioSnapshotTests(unittest.TestCase):
         self.assertIn("本人確認", result["message"])
         get_prices.assert_not_called()
         post.assert_not_called()
+
+    @patch("database_supabase.is_snapshot_admin_unlocked", return_value=False)
+    @patch("database_supabase.has_current_admin_authorization", return_value=True)
+    @patch("database_supabase._get_public_holdings_rows", return_value=[])
+    @patch(
+        "database_supabase.st.secrets",
+        {
+            "supabase": {
+                "url": "https://example.supabase.co",
+                "secret_key": "sb_secret_test",
+            }
+        },
+    )
+    def test_admin_session_bypasses_pin(
+        self, holdings, _is_admin, _pin_unlocked
+    ):
+        result = database_supabase.capture_portfolio_snapshot()
+
+        self.assertFalse(result["ok"])
+        self.assertIn("保有資産", result["message"])
+        self.assertNotIn("本人確認", result["message"])
+        holdings.assert_called_once()
 
     @patch("database_supabase._get_public_holdings_rows")
     @patch("database_supabase.load_price_cache", return_value={})
@@ -138,6 +163,14 @@ class SnapshotAdminPinTests(unittest.TestCase):
             access_control.st.session_state["snapshot_admin_expires_at"],
             1_000 + access_control.SNAPSHOT_UNLOCK_SECONDS,
         )
+
+    @patch(
+        "access_control.st.secrets",
+        {"supabase": {"secret_key": "sb_secret_test"}},
+    )
+    def test_admin_flow_only_requires_backend_secret(self):
+        self.assertIsNone(access_control.snapshot_backend_configuration_error())
+        self.assertIsNotNone(access_control.snapshot_admin_configuration_error())
 
     @patch("access_control.time.time", return_value=1_000)
     @patch(

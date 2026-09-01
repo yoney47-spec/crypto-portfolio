@@ -56,7 +56,8 @@ streamlit run app.py
 
 ### スナップショット保存用Secrets
 
-公開画面のスナップショット追加は、Streamlitのサーバー側Secretsに保存した管理コードで保護します。
+管理者ログイン中は、追加の管理コード入力なしでスナップショットを保存できます。
+未ログイン時のスナップショット追加は、Streamlitのサーバー側Secretsに保存した管理コードで保護します。
 既存の `[supabase]` セクションへ `secret_key` を追加し、`[snapshot_admin]` セクションを作成してください。
 
 ```toml
