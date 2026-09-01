@@ -1,5 +1,6 @@
 import unittest
 from pathlib import Path
+import tomllib
 
 from components import design_tokens
 
@@ -39,6 +40,16 @@ class DesignSystemTests(unittest.TestCase):
         self.assertEqual(css.count("background: var(--color-accent-peach);"), 1)
         self.assertIn(".ai-insight-card {", css)
         self.assertIn("'Yu Mincho'", css)
+
+    def test_streamlit_theme_matches_the_light_canvas(self):
+        config = tomllib.loads(
+            (ROOT / ".streamlit" / "config.toml").read_text(encoding="utf-8")
+        )["theme"]
+
+        self.assertEqual(config["base"], "light")
+        self.assertEqual(config["backgroundColor"], design_tokens.COLOR_CANVAS)
+        self.assertEqual(config["secondaryBackgroundColor"], design_tokens.COLOR_SURFACE_1)
+        self.assertEqual(config["textColor"], design_tokens.COLOR_TEXT_PRIMARY)
 
 
 if __name__ == "__main__":
