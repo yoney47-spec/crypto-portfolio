@@ -630,7 +630,7 @@ if show_ai_comment:
 
 # --- チャートセクション ---
 # --- チャートセクション（コンポーネント使用） ---
-render_charts(portfolio_display_data, get_portfolio_history)
+render_charts(portfolio_display_data, get_portfolio_history, currency_symbol)
 
 # --- 価格分析チャート（コンポーネント使用） ---
 render_price_analysis_chart(

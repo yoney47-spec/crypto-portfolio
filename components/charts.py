@@ -3,6 +3,8 @@ import streamlit as st
 import plotly.graph_objects as go
 from datetime import datetime
 
+from components.chart_format import format_chart_currency
+
 # 暗号資産のブランドカラーマッピング
 CRYPTO_COLORS = {
     'BTC': '#F7931A',      # Bitcoin - Orange
@@ -54,7 +56,11 @@ FALLBACK_COLORS = [
     '#ff4b4b', '#2e2e2e', '#575757', '#888888', '#aaaaaa'
 ]
 
-def render_charts(portfolio_display_data, get_portfolio_history_func):
+def render_charts(
+    portfolio_display_data,
+    get_portfolio_history_func,
+    currency_symbol,
+):
     """
     Renders the charts section (Allocation, Top Assets, History).
     """
@@ -110,6 +116,10 @@ def render_charts(portfolio_display_data, get_portfolio_history_func):
             values=values, 
             hole=.7,
             textinfo='none',
+            hovertemplate=(
+                f"<b>%{{label}}</b><br>{currency_symbol}%{{value:,.0f}}"
+                "<br>%{percent}<extra></extra>"
+            ),
             sort=False,
             direction='clockwise',
             rotation=0,
@@ -139,7 +149,7 @@ def render_charts(portfolio_display_data, get_portfolio_history_func):
             margin=dict(t=35, b=45, l=15, r=15),
             height=280,
             annotations=[dict(
-                text=f"<b>${total_value:,.0f}</b>",
+                text=f"<b>{format_chart_currency(total_value, currency_symbol)}</b>",
                 x=0.5, y=0.5,
                 font=dict(size=16, color='#f8fafc', family='JetBrains Mono, monospace'),
                 showarrow=False
@@ -147,7 +157,6 @@ def render_charts(portfolio_display_data, get_portfolio_history_func):
         )
         
         fig_donut.update_traces(
-            hoverinfo='label+value+percent', 
             textfont_size=11
         )
         
@@ -172,7 +181,9 @@ def render_charts(portfolio_display_data, get_portfolio_history_func):
                 showscale=False,
                 line=dict(width=0)
             ),
-            hoverinfo='x+y',
+            hovertemplate=(
+                f"<b>%{{y}}</b><br>{currency_symbol}%{{x:,.0f}}<extra></extra>"
+            ),
             textposition='none' 
         ))
         
