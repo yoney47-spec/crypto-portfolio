@@ -446,6 +446,12 @@ div[data-testid="stRadio"] > div > label:has(input:checked) {
     box-shadow: var(--shadow-subtle) !important;
 }
 
+div[data-testid="stRadio"] > div > label[data-checked="true"] p,
+div[data-testid="stRadio"] > div > label[data-selected="true"] p,
+div[data-testid="stRadio"] > div > label:has(input:checked) p {
+    color: var(--color-on-action) !important;
+}
+
 /* ===== Card Styling ===== */
 .crypto-card, .asset-card {
     background: var(--bg-secondary);
@@ -607,7 +613,7 @@ div[data-testid="stRadio"] > div > label:has(input:checked) {
 }
 
 /* ===== Buttons ===== */
-.stButton > button {
+.stButton button {
     background: var(--bg-tertiary) !important;
     color: var(--text-primary) !important;
     border: 1px solid var(--border-subtle) !important;
@@ -619,21 +625,21 @@ div[data-testid="stRadio"] > div > label:has(input:checked) {
     box-shadow: var(--shadow-subtle) !important;
 }
 
-.stButton > button:hover {
+.stButton button:hover {
     background: var(--bg-elevated) !important;
     border-color: var(--border-hover) !important;
     color: var(--text-primary) !important;
 }
 
-.stButton > button[kind="primary"],
-.stButton > button.primary-btn {
+.stButton button[kind="primary"],
+.stButton button.primary-btn {
     background: var(--accent-primary) !important;
     border-color: var(--accent-primary) !important;
     color: var(--color-on-action) !important;
     font-weight: 600 !important;
 }
 
-.stButton > button[kind="primary"]:hover {
+.stButton button[kind="primary"]:hover {
     background: var(--color-action-hover) !important;
     border-color: var(--color-action-hover) !important;
 }
@@ -1346,28 +1352,28 @@ div[data-testid="stRadio"] > div > label:has(input:checked) {
     padding: 3px 7px;
 }
 
-.stButton > button {
+.stButton button {
     min-height: 42px;
     border-radius: var(--radius-pill) !important;
     font-size: 0.85rem !important;
     box-shadow: none !important;
 }
 
-.stButton > button:hover {
+.stButton button:hover {
     transform: translateY(-1px);
 }
 
-.stButton > button:active {
+.stButton button:active {
     transform: scale(0.985);
 }
 
-.stButton > button[kind="primary"] {
+.stButton button[kind="primary"] {
     background: var(--accent-primary) !important;
     border-color: var(--accent-primary) !important;
     color: var(--color-on-action) !important;
 }
 
-.stButton > button[kind="primary"]:hover {
+.stButton button[kind="primary"]:hover {
     background: var(--color-action-hover) !important;
     border-color: var(--color-action-hover) !important;
 }

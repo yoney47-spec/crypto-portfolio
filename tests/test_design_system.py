@@ -51,6 +51,12 @@ class DesignSystemTests(unittest.TestCase):
         self.assertEqual(config["secondaryBackgroundColor"], design_tokens.COLOR_SURFACE_1)
         self.assertEqual(config["textColor"], design_tokens.COLOR_TEXT_PRIMARY)
 
+    def test_streamlit_wrapped_controls_receive_editorial_styles(self):
+        css = (ROOT / "styles" / "main.css").read_text(encoding="utf-8")
+
+        self.assertIn(".stButton button {", css)
+        self.assertIn('label[data-selected="true"] p', css)
+
 
 if __name__ == "__main__":
     unittest.main()
