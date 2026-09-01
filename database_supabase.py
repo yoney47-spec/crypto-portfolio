@@ -11,6 +11,7 @@ from access_control import (
     is_snapshot_admin_unlocked,
     is_supabase_backend_secret_key,
 )
+from admin_auth import get_admin_access_token, is_admin_authenticated
 from market_data import (
     CoinGeckoError,
     CoinGeckoRateLimited,
@@ -25,12 +26,12 @@ JST = timezone(timedelta(hours=9))
 from constants import COST_FREE_TYPES, COST_BASED_TYPES, TRANSACTION_TYPES
 
 class CustomSupabaseClient:
-    def __init__(self, url: str, key: str):
+    def __init__(self, url: str, key: str, access_token: str = ""):
         self.url = url
         self.key = key
         self.headers = {
             "apikey": key,
-            "Authorization": f"Bearer {key}",
+            "Authorization": f"Bearer {access_token or key}",
             "Content-Type": "application/json"
         }
         self.rest_url = f"{url}/rest/v1"
@@ -53,6 +54,20 @@ def init_supabase() -> Optional[CustomSupabaseClient]:
 @st.cache_resource
 def get_client():
     return init_supabase()
+
+
+def get_admin_client() -> Optional[CustomSupabaseClient]:
+    """Create a per-session PostgREST client carrying the administrator JWT."""
+    access_token = get_admin_access_token()
+    if not access_token:
+        return None
+
+    try:
+        url = str(st.secrets["supabase"]["url"])
+        key = str(st.secrets["supabase"]["key"])
+        return CustomSupabaseClient(url, key, access_token=access_token)
+    except Exception:
+        return None
 
 
 PUBLIC_HOLDINGS_VIEW = "public_portfolio_holdings"
@@ -102,7 +117,7 @@ def get_all_assets() -> List[Tuple]:
     Get all assets.
     Returns list of tuples: (id, name, symbol, api_id, icon_url, location, created_at)
     """
-    if is_public_read_only():
+    if not is_admin_authenticated():
         return [
             (
                 item["asset_id"],
@@ -116,7 +131,7 @@ def get_all_assets() -> List[Tuple]:
             for item in _get_public_holdings_rows()
         ]
 
-    client = get_client()
+    client = get_admin_client()
     if not client: return []
     
     try:
@@ -140,13 +155,13 @@ def get_all_assets() -> List[Tuple]:
 
 def get_assets_list() -> List[Tuple]:
     """Get list of (id, name, symbol) for dropdowns"""
-    if is_public_read_only():
+    if not is_admin_authenticated():
         return [
             (item["asset_id"], item["name"], item["symbol"])
             for item in _get_public_holdings_rows()
         ]
 
-    client = get_client()
+    client = get_admin_client()
     if not client: return []
     
     try:
@@ -157,10 +172,10 @@ def get_assets_list() -> List[Tuple]:
         return []
 
 def add_asset(name: str, symbol: str, api_id: str, icon_url: str = "", location: str = "") -> bool:
-    if is_public_read_only():
+    if not is_admin_authenticated():
         return False
 
-    client = get_client()
+    client = get_admin_client()
     if not client: return False
     
     try:
@@ -179,10 +194,10 @@ def add_asset(name: str, symbol: str, api_id: str, icon_url: str = "", location:
         return False
 
 def update_asset(asset_id, name, symbol, api_id, icon_url, location) -> bool:
-    if is_public_read_only():
+    if not is_admin_authenticated():
         return False
 
-    client = get_client()
+    client = get_admin_client()
     if not client: return False
     
     try:
@@ -200,10 +215,10 @@ def update_asset(asset_id, name, symbol, api_id, icon_url, location) -> bool:
         return False
 
 def delete_asset(asset_id) -> Tuple[bool, str]:
-    if is_public_read_only():
+    if not is_admin_authenticated():
         return False, "公開モードでは変更できません"
 
-    client = get_client()
+    client = get_admin_client()
     if not client: return False, "Client init failed"
     
     try:
@@ -226,10 +241,10 @@ def get_all_transactions(filter_type="すべて") -> List[Tuple]:
     Get all transactions with joined asset info.
     Returns: list of (id, date, type, symbol, name, quantity, price_per_unit, total_amount, notes, asset_id)
     """
-    if is_public_read_only():
+    if not is_admin_authenticated():
         return []
 
-    client = get_client()
+    client = get_admin_client()
     if not client: return []
     
     try:
@@ -267,11 +282,55 @@ def get_all_transactions(filter_type="すべて") -> List[Tuple]:
         st.error(f"Error fetching transactions: {e}")
         return []
 
-def add_transaction(date_obj, trans_type, asset_id, quantity, price_per_unit, total_amount, notes="", skip_duplicate_check=False) -> bool:
-    if is_public_read_only():
+
+def get_transaction_records(filter_type: str = "すべて") -> List[Dict[str, Any]]:
+    """Return administrator-only transaction rows as dictionaries for the new UI."""
+    if not is_admin_authenticated():
+        return []
+
+    client = get_admin_client()
+    if not client:
+        return []
+
+    try:
+        query = client.table("transactions").select(
+            "id,date,type,asset_id,quantity,price_per_unit,total_amount,notes,"
+            "fee_amount,fee_currency,source,created_at,updated_at,assets(symbol,name)"
+        ).order("date", desc=True)
+
+        if filter_type == "コストあり":
+            query = query.in_("type", COST_BASED_TYPES)
+        elif filter_type == "報酬・その他":
+            query = query.in_("type", COST_FREE_TYPES)
+
+        rows = []
+        for item in query.execute().data or []:
+            asset = item.pop("assets", None) or {}
+            item["symbol"] = asset.get("symbol", "UNKNOWN")
+            item["asset_name"] = asset.get("name", "Unknown")
+            rows.append(item)
+        return rows
+    except Exception as exc:
+        print(f"Transaction records load error: {exc}")
+        return []
+
+def add_transaction(
+    date_obj,
+    trans_type,
+    asset_id,
+    quantity,
+    price_per_unit,
+    total_amount,
+    notes="",
+    skip_duplicate_check=False,
+    fee_amount=0,
+    fee_currency="USD",
+    source="",
+) -> bool:
+    if not is_admin_authenticated():
         return False
 
-    client = get_client()
+    client = get_admin_client()
     if not client: return False
     
     # Check duplicate
@@ -304,19 +363,35 @@ def add_transaction(date_obj, trans_type, asset_id, quantity, price_per_unit, to
             "quantity": quantity,
             "price_per_unit": price_per_unit,
             "total_amount": total_amount,
-            "notes": notes
+            "notes": notes,
+            "fee_amount": fee_amount,
+            "fee_currency": str(fee_currency or "USD").upper(),
+            "source": str(source or "").strip() or None,
         }
         client.table("transactions").insert(data).execute()
+        st.cache_data.clear()
         return True
     except Exception as e:
         st.error(f"登録エラー: {e}")
         return False
 
-def update_transaction(transaction_id, date_obj, trans_type, asset_id, quantity, price_per_unit, total_amount, notes="") -> bool:
-    if is_public_read_only():
+def update_transaction(
+    transaction_id,
+    date_obj,
+    trans_type,
+    asset_id,
+    quantity,
+    price_per_unit,
+    total_amount,
+    notes="",
+    fee_amount=0,
+    fee_currency="USD",
+    source="",
+) -> bool:
+    if not is_admin_authenticated():
         return False
 
-    client = get_client()
+    client = get_admin_client()
     if not client: return False
     
     try:
@@ -339,22 +414,27 @@ def update_transaction(transaction_id, date_obj, trans_type, asset_id, quantity,
             "quantity": quantity,
             "price_per_unit": price_per_unit,
             "total_amount": total_amount,
-            "notes": notes
+            "notes": notes,
+            "fee_amount": fee_amount,
+            "fee_currency": str(fee_currency or "USD").upper(),
+            "source": str(source or "").strip() or None,
         }
         client.table("transactions").update(data).eq("id", transaction_id).execute()
+        st.cache_data.clear()
         return True
     except Exception as e:
         st.error(f"更新エラー: {e}")
         return False
 
 def delete_transaction(transaction_id) -> bool:
-    if is_public_read_only():
+    if not is_admin_authenticated():
         return False
 
-    client = get_client()
+    client = get_admin_client()
     if not client: return False
     try:
         client.table("transactions").delete().eq("id", transaction_id).execute()
+        st.cache_data.clear()
         return True
     except Exception as e:
         st.error(f"削除エラー: {e}")
@@ -364,7 +444,10 @@ def check_duplicate_transactions(date_obj, asset_id, quantity, tolerance_minutes
     """
     Simple check if same asset and quantity exists around the time.
     """
-    client = get_client()
+    if not is_admin_authenticated():
+        return False, []
+
+    client = get_admin_client()
     if not client: return False, []
     
     try:

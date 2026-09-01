@@ -7,9 +7,11 @@ import time
 
 import streamlit as st
 
+from admin_auth import is_admin_authenticated, sign_in_admin
 
-# Phase 1 is intentionally fail-closed. The only public-page mutation is the
-# snapshot action, and it requires a short-lived PIN grant plus a backend key.
+
+# Public pages remain fail-closed. Snapshot capture uses a short-lived PIN grant;
+# private CRUD additionally requires a Supabase Auth administrator session.
 PUBLIC_READ_ONLY = True
 
 SNAPSHOT_UNLOCK_SECONDS = 10 * 60
@@ -94,15 +96,40 @@ def verify_snapshot_admin_pin(candidate: str) -> tuple[bool, str]:
 
 
 def is_public_read_only() -> bool:
-    """Return whether the current deployment is restricted to public reads."""
+    """Return whether unauthenticated visitors are restricted to public reads."""
     return PUBLIC_READ_ONLY
 
 
 def stop_on_private_page() -> None:
-    """Stop execution of a private page during the public-only phase."""
-    if not is_public_read_only():
+    """Require a current Supabase administrator session for a private page."""
+    if is_admin_authenticated():
         return
 
-    st.info("このページは管理者専用です。現在は公開ダッシュボードのみ利用できます。")
-    st.page_link("app.py", label="ダッシュボードへ戻る", icon="📊")
+    st.markdown(
+        "<div class='page-intro'><div><div class='page-title'>管理者ログイン</div>"
+        "<div class='page-description'>取引履歴は管理者本人だけが利用できます。</div>"
+        "</div></div>",
+        unsafe_allow_html=True,
+    )
+    with st.form("private_page_admin_login"):
+        email = st.text_input("メールアドレス", autocomplete="email")
+        password = st.text_input(
+            "パスワード",
+            type="password",
+            autocomplete="current-password",
+        )
+        submitted = st.form_submit_button(
+            "ログイン",
+            type="primary",
+            use_container_width=True,
+        )
+
+    if submitted:
+        authenticated, message = sign_in_admin(email, password)
+        if authenticated:
+            st.success(message)
+            st.rerun()
+        st.error(message)
+
+    st.page_link("app.py", label="ダッシュボードへ戻る")
     st.stop()

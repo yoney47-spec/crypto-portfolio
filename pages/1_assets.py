@@ -19,6 +19,7 @@ from database_supabase import (
     load_price_cache,
 )
 from access_control import is_public_read_only
+from admin_auth import is_admin_authenticated
 from components.sidebar import render_sidebar
 from market_data import CoinGeckoError, get_current_prices
 
@@ -232,7 +233,7 @@ def render_public_holdings() -> None:
     st.caption("価格はCoinGecko APIから取得しています。表示値は参考情報であり、投資判断を目的としたものではありません。")
 
 
-if is_public_read_only():
+if is_public_read_only() and not is_admin_authenticated():
     render_public_holdings()
     st.stop()
 

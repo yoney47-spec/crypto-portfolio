@@ -72,6 +72,20 @@ pin = "12文字以上の管理コード"
 `secret_key` と `pin` はGit・チャット・ブラウザへ出さず、StreamlitのSecrets設定内だけに保存します。
 Supabaseでは、このアプリ専用の名前付きSecret keyを作成して使用してください。
 
+### 管理者ログインと取引管理
+
+公開ページは匿名のまま閲覧できますが、取引・資産マスタの追加、編集、削除には
+Supabase Authのメールアドレス／パスワードと管理者許可リストが必要です。
+
+1. `security_phase2_admin_auth.sql` をSupabaseへ適用します。
+2. Supabase DashboardのAuthenticationで管理者ユーザーを1名作成します。
+3. 作成したユーザーのUUIDを `public.portfolio_admins.user_id` に登録します。
+4. アプリのサイドバーにある「管理者ログイン」からログインします。
+
+パスワード、JWT、Secret keyはGit・チャット・SQLファイルへ記載しないでください。
+`security_phase2_admin_auth.sql` の適用後は、旧
+`security_phase1_lockdown_anon.sql` を重ねて実行しないでください。
+
 ### CoinGeckoのレート制限対策
 
 現在価格は全ページ・全ユーザーで10分間共有し、429応答後は60秒間API呼び出しを停止します。

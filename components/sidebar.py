@@ -8,6 +8,7 @@ from access_control import (
     snapshot_admin_configuration_error,
     verify_snapshot_admin_pin,
 )
+from admin_auth import is_admin_authenticated, sign_in_admin, sign_out_admin
 from database_supabase import capture_portfolio_snapshot
 
 
@@ -119,6 +120,68 @@ def _render_snapshot_action() -> None:
     )
 
 
+def _render_admin_access() -> bool:
+    """Render administrator login state and private navigation."""
+    is_admin = is_admin_authenticated()
+    st.sidebar.markdown(
+        "<div class='sidebar-section-label'>管理者</div>",
+        unsafe_allow_html=True,
+    )
+
+    if is_admin:
+        st.sidebar.markdown(
+            "<div class='admin-status'><span></span>管理モード</div>",
+            unsafe_allow_html=True,
+        )
+        st.sidebar.page_link("pages/2_transactions.py", label="取引管理")
+        if st.sidebar.button(
+            "ログアウト",
+            key="admin_sign_out",
+            use_container_width=True,
+        ):
+            sign_out_admin()
+            st.rerun()
+        return True
+
+    if st.sidebar.button(
+        "管理者ログイン",
+        key="open_admin_login",
+        use_container_width=True,
+    ):
+        st.session_state["admin_login_open"] = not st.session_state.get(
+            "admin_login_open", False
+        )
+        st.rerun()
+
+    if st.session_state.get("admin_login_open", False):
+        with st.sidebar.form("sidebar_admin_login"):
+            email = st.text_input(
+                "メールアドレス",
+                autocomplete="email",
+                placeholder="name@example.com",
+            )
+            password = st.text_input(
+                "パスワード",
+                type="password",
+                autocomplete="current-password",
+            )
+            submitted = st.form_submit_button(
+                "ログイン",
+                type="primary",
+                use_container_width=True,
+            )
+
+        if submitted:
+            authenticated, message = sign_in_admin(email, password)
+            if authenticated:
+                st.session_state["admin_login_open"] = False
+                st.session_state["admin_login_feedback"] = message
+                st.rerun()
+            st.sidebar.error(message)
+
+    return False
+
+
 def render_sidebar():
     """
     Render the shared navigation and display controls.
@@ -134,7 +197,13 @@ def render_sidebar():
         unsafe_allow_html=True,
     )
 
-    if public_mode:
+    is_admin = is_admin_authenticated()
+    if is_admin:
+        st.sidebar.markdown(
+            "<div class='readonly-badge admin'><span></span>管理モード</div>",
+            unsafe_allow_html=True,
+        )
+    elif public_mode:
         st.sidebar.markdown(
             "<div class='readonly-badge'><span></span>公開ポートフォリオ</div>",
             unsafe_allow_html=True,
@@ -142,7 +211,12 @@ def render_sidebar():
 
     st.sidebar.markdown("<div class='sidebar-section-label'>ナビゲーション</div>", unsafe_allow_html=True)
     st.sidebar.page_link("app.py", label="ダッシュボード")
-    st.sidebar.page_link("pages/1_assets.py", label="保有資産")
+    st.sidebar.page_link(
+        "pages/1_assets.py",
+        label="資産管理" if is_admin else "保有資産",
+    )
+
+    is_admin = _render_admin_access()
 
     st.sidebar.markdown("<div class='sidebar-section-label'>表示設定</div>", unsafe_allow_html=True)
 
@@ -175,8 +249,12 @@ def render_sidebar():
 
         st.sidebar.markdown(
             "<div class='sidebar-note'>"
-            "公開画面では取引履歴・保管場所・編集機能を表示しません。"
-            "</div>",
+            + (
+                "ログイン中です。取引と資産マスタを安全に管理できます。"
+                if is_admin
+                else "公開画面では取引履歴・保管場所・編集機能を表示しません。"
+            )
+            + "</div>",
             unsafe_allow_html=True,
         )
 
