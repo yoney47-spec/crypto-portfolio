@@ -10,7 +10,7 @@ NAV = [("pages/0_dashboard.py", "概要", ":material/space_dashboard:"),
        ("pages/3_settings.py", "設定", ":material/tune:")]
 
 
-def render_shell(admin):
+def render_shell(admin, current_title="ダッシュボード"):
     with st.sidebar:
         st.markdown("<div class='brand'>◒ <span>CryptoFolio</span></div>", unsafe_allow_html=True)
         st.caption("管理モード" if admin else "公開ポートフォリオ · 閲覧のみ")
@@ -42,8 +42,10 @@ def render_shell(admin):
             st.toggle("金額を隠す", key="mask_amounts")
     with st.container(key="mobile-nav"):
         visible = [item for item in NAV if admin or item[1] not in ("目標", "取引")]
+        current_label = {"ダッシュボード": "概要", "保有資産": "資産"}.get(current_title, current_title)
         for col, (path, label, icon) in zip(st.columns(len(visible)), visible):
-            col.page_link(path, label=label, icon=icon)
+            with col.container(key="mobile-nav-active" if label == current_label else f"mobile-nav-{label}"):
+                st.page_link(path, label=label, icon=icon)
 
 
 def preferences():

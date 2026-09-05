@@ -109,6 +109,15 @@ Use the 4px base grid: `4, 8, 12, 16, 24, 32, 48`.
 - Desktop content is centered at a maximum width of 1240px.
 - The sticky header may use subtle white backdrop blur; it must remain legible without blur.
 - Public/admin state is shown with a compact text-and-dot status, not a large banner.
+- The mobile navigation uses a floating glass surface at the user's request:
+  translucent white, backdrop blur, a light edge, and one restrained shadow.
+  Keep the effect confined to navigation, with a solid fallback for reduced
+  transparency, increased contrast, or unsupported browsers.
+- Reserve the host's bottom-right floating controls plus the device safe area
+  below the mobile dock. Content padding and scroll padding must use the same
+  dock height and bottom-offset tokens, including the five-item admin variant.
+- Hide the mobile dock while editing a text field or viewing a modal. Keep each
+  navigation target at least 48px high and its Japanese label on one line.
 
 ### Cards
 

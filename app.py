@@ -16,5 +16,5 @@ pages = [
 page = st.navigation(pages, position="hidden")
 admin = is_admin_authenticated()
 from components.shell import render_shell
-render_shell(admin)
+render_shell(admin, page.title)
 page.run()
