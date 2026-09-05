@@ -21,7 +21,7 @@
 }
 html, body, .stApp { background: var(--color-canvas); color: var(--color-text-primary); font-family: var(--font-ui); }
 body, p, input, button, select, textarea { font-variant-numeric: tabular-nums; }
-.stMainBlockContainer { max-width: 1320px; padding: 2rem 2.5rem 4rem; }
+.stMainBlockContainer { max-width: 1320px; padding: 5rem 2.5rem 4rem; }
 [data-testid="stSidebar"] { background: var(--color-surface-1); border-right: 1px solid var(--color-border-subtle); }
 [data-testid="stSidebarContent"] { padding-top: 1rem; }
 [data-testid="stHeader"] { background: var(--color-canvas); }
@@ -74,7 +74,7 @@ label[data-selected="true"] p { color: var(--color-action); }
   .stMainBlockContainer { padding-left: 24px; padding-right: 24px; }
 }
 @media (max-width: 768px) {
-  .stMainBlockContainer { padding: 1.2rem 16px calc(100px + env(safe-area-inset-bottom)); }
+  .stMainBlockContainer { padding: 4.5rem 16px calc(100px + env(safe-area-inset-bottom)); }
   .st-key-toolbar [data-testid="stHorizontalBlock"] { flex-wrap: nowrap; gap: 8px; }
   .st-key-toolbar [data-testid="stColumn"] { min-width: 0; width: auto; flex: 1; }
   .metric-grid { grid-template-columns: repeat(2,minmax(0,1fr)); gap: 8px; }
