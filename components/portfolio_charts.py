@@ -13,12 +13,24 @@ def line_figure(records, currency, mask=False, height=320):
         values = [v / base * 100 if base else None for v in values]
     dates = [r['date'] for r in records]
     labels = [f"{str(d)[:10]}<br>{v:.2f}（基準100）" if mask and v is not None else f"{str(d)[:10]}<br>{money(v, currency, price=True)}" for d, v in zip(dates, values)]
-    fig = go.Figure(go.Scatter(x=dates, y=values, mode='lines+markers', line=dict(color=COLOR_ACTION, width=2.5),
+    # Scale only the plotted axis. Hover labels and selected-day values remain exact.
+    magnitude = max((abs(v) for v in values if v is not None), default=0)
+    scale, unit = 1, '基準100' if mask else currency
+    if not mask and currency == 'JPY':
+        if magnitude >= 100_000_000:
+            scale, unit = 100_000_000, '億円'
+        elif magnitude >= 10_000:
+            scale, unit = 10_000, '万円'
+    plotted = [v / scale if v is not None else None for v in values]
+    fig = go.Figure(go.Scatter(x=dates, y=plotted, mode='lines+markers', line=dict(color=COLOR_ACTION, width=2.5),
                              marker=dict(size=5), customdata=labels, hovertemplate='%{customdata}<extra></extra>'))
-    fig.update_layout(height=height, margin=dict(l=8, r=12, t=20, b=12), font=dict(family=FONT_UI,size=12,color=COLOR_TEXT_MUTED),
+    fig.update_layout(height=height, margin=dict(l=4, r=8, t=28, b=8), font=dict(family=FONT_UI,size=12,color=COLOR_TEXT_MUTED),
                       paper_bgcolor='rgba(0,0,0,0)', plot_bgcolor='rgba(0,0,0,0)', clickmode='event+select', dragmode=False,
-                      xaxis=dict(tickformat='%m/%d', showgrid=False, fixedrange=True),
-                      yaxis=dict(title='基準100' if mask else currency, gridcolor=COLOR_GRID, tickformat=',.0f' if currency=='JPY' and not mask else ',.2~f', fixedrange=True))
+                      xaxis=dict(tickformat='%m/%d', nticks=4, showgrid=False, fixedrange=True, automargin=True),
+                      yaxis=dict(title=None, nticks=4, gridcolor=COLOR_GRID, fixedrange=True, automargin=True))
+    fig.add_annotation(x=0, y=1.02, xref='paper', yref='paper', text=unit,
+                       showarrow=False, xanchor='left', yanchor='bottom',
+                       font=dict(size=12, color=COLOR_TEXT_MUTED))
     return fig
 
 
@@ -54,10 +66,12 @@ def composition(rows):
     with st.container(key='composition-desktop'):
         st.plotly_chart(fig,config={'displayModeBar':False},width='stretch')
     with st.container(key='composition-mobile'):
-        for label,weight in zip(labels,weights):
-            st.markdown(f"<div class='asset-summary'><strong>{escape(label)}</strong><span>{weight:.1f}%</span></div>",unsafe_allow_html=True)
-        with st.expander('円グラフで確認'):
-            st.plotly_chart(fig,config={'displayModeBar':False},width='stretch',key='mobile_composition')
+        items = ''.join(f"<div class='composition-row'><dt>{escape(label)}</dt><dd>{weight:.1f}%</dd></div>"
+                        for label,weight in zip(labels,weights))
+        st.markdown(f"<dl class='composition-list'>{items}</dl>",unsafe_allow_html=True)
+        with st.container(key='composition-chart-toggle'):
+            with st.expander('円グラフで確認'):
+                st.plotly_chart(fig,config={'displayModeBar':False},width='stretch',key='mobile_composition')
 
 
 def impacts(rows,currency,mask):

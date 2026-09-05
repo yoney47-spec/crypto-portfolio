@@ -165,9 +165,15 @@ label[data-selected="true"] p { color: var(--color-action); }
   *, *::before, *::after { animation: none !important; transition: none !important; scroll-behavior: auto !important; }
 }
 .st-key-composition-mobile { display: none; }
+.composition-list { display: grid; gap: 8px; margin: 0; padding: 0; }
+.composition-row { display: flex; justify-content: space-between; align-items: baseline; gap: 16px; min-height: 28px; line-height: 1.5; }
+.composition-row dt { margin: 0; font-size: 16px; font-weight: 600; overflow-wrap: anywhere; }
+.composition-row dd { margin: 0; font-size: 14px; white-space: nowrap; }
+.st-key-composition-chart-toggle { padding-top: 8px; }
 @media (max-width: 768px) {
   .st-key-composition-desktop, .st-key-trades-desktop { display: none; }
-  .st-key-composition-mobile, .st-key-trades-mobile { display: block; }
+  .st-key-composition-mobile { display: flex; flex-direction: column; gap: 16px; }
+  .st-key-trades-mobile { display: block; }
   .asset-summary > div { min-width: 0; overflow-wrap: anywhere; }
 }
 @media (min-width: 769px) { .st-key-trades-mobile { display: none; } }
