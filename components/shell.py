@@ -45,7 +45,7 @@ def render_shell(admin, current_title="ダッシュボード"):
         current_label = {"ダッシュボード": "概要", "保有資産": "資産"}.get(current_title, current_title)
         for col, (path, label, icon) in zip(st.columns(len(visible)), visible):
             with col.container(key="mobile-nav-active" if label == current_label else f"mobile-nav-{label}"):
-                st.page_link(path, label=label, icon=icon)
+                st.page_link(path, label=label, icon=icon, width="stretch")
 
 
 def preferences():
