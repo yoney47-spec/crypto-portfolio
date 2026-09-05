@@ -51,7 +51,7 @@ def init_supabase() -> Optional[CustomSupabaseClient]:
         key = st.secrets["supabase"]["key"]
         return CustomSupabaseClient(url, key)
     except Exception as e:
-        st.error(f"Failed to initialize Supabase: {e}")
+        st.error("データ接続を確認できませんでした。時間をおいて再読み込みしてください。")
         return None
 
 # Global client check (can be used inside functions)
@@ -240,6 +240,24 @@ def delete_asset(asset_id) -> Tuple[bool, str]:
 
 # --- Transactions ---
 
+def _validated_input_metadata(metadata):
+    if metadata is None:
+        return {}
+    from portfolio_logic import number
+    fields = ("input_currency", "input_price", "input_total", "exchange_rate",
+              "exchange_rate_source", "exchange_rate_date")
+    data = {key: metadata.get(key) for key in fields}
+    if data["input_currency"] not in ("JPY", "USD"):
+        raise ValueError("Invalid input currency")
+    for field in ("input_price", "input_total"):
+        if number(data[field]) is None or number(data[field]) < 0:
+            raise ValueError("Invalid original amount")
+    if data["exchange_rate"] is not None and (number(data["exchange_rate"]) is None or number(data["exchange_rate"]) <= 0):
+        raise ValueError("Invalid exchange rate")
+    if data["input_currency"] == "JPY" and not all(data[k] for k in ("exchange_rate", "exchange_rate_source", "exchange_rate_date")):
+        raise ValueError("JPY conversion metadata required")
+    return data
+
 def get_all_transactions(filter_type="すべて") -> List[Tuple]:
     """
     Get all transactions with joined asset info.
@@ -299,7 +317,8 @@ def get_transaction_records(filter_type: str = "すべて") -> List[Dict[str, An
     try:
         query = client.table("transactions").select(
             "id,date,type,asset_id,quantity,price_per_unit,total_amount,notes,"
-            "fee_amount,fee_currency,source,created_at,updated_at,assets(symbol,name)"
+            "fee_amount,fee_currency,source,created_at,updated_at,"
+            "input_currency,input_price,input_total,exchange_rate,exchange_rate_source,exchange_rate_date,assets(symbol,name)"
         ).order("date", desc=True)
 
         if filter_type == "コストあり":
@@ -330,6 +349,7 @@ def add_transaction(
     fee_amount=0,
     fee_currency="USD",
     source="",
+    input_metadata=None,
 ) -> bool:
     if not is_admin_authenticated():
         return False
@@ -341,8 +361,8 @@ def add_transaction(
     if not skip_duplicate_check:
         is_dup, _ = check_duplicate_transactions(date_obj, asset_id, quantity)
         if is_dup:
-             st.warning("⚠️ 類似した取引が存在します (重複警告)")
-             pass
+             st.warning("類似した取引が存在します。内容を確認してから保存してください。")
+             return False
 
     try:
         # Convert date to ISO string with JST timezone
@@ -372,11 +392,12 @@ def add_transaction(
             "fee_currency": str(fee_currency or "USD").upper(),
             "source": str(source or "").strip() or None,
         }
+        data.update(_validated_input_metadata(input_metadata))
         client.table("transactions").insert(data).execute()
         st.cache_data.clear()
         return True
     except Exception as e:
-        st.error(f"登録エラー: {e}")
+        st.error("保存できませんでした。入力内容を保持しています。接続とログイン状態を確認してください。")
         return False
 
 def update_transaction(
@@ -391,6 +412,7 @@ def update_transaction(
     fee_amount=0,
     fee_currency="USD",
     source="",
+    input_metadata=None,
 ) -> bool:
     if not is_admin_authenticated():
         return False
@@ -423,11 +445,12 @@ def update_transaction(
             "fee_currency": str(fee_currency or "USD").upper(),
             "source": str(source or "").strip() or None,
         }
+        data.update(_validated_input_metadata(input_metadata))
         client.table("transactions").update(data).eq("id", transaction_id).execute()
         st.cache_data.clear()
         return True
     except Exception as e:
-        st.error(f"更新エラー: {e}")
+        st.error("更新できませんでした。入力内容を保持しています。接続とログイン状態を確認してください。")
         return False
 
 def delete_transaction(transaction_id) -> bool:
@@ -897,6 +920,9 @@ def capture_portfolio_snapshot() -> Dict[str, Any]:
         if secret_key.count(".") == 2:
             headers["Authorization"] = f"Bearer {secret_key}"
 
+        from portfolio_logic import number
+        usd_values = [number(prices.get(item["api_id"], {}).get("usd")) for item in active_holdings]
+        usd_total = sum(item["holdings"] * price for item, price in zip(active_holdings, usd_values)) if all(p is not None and p > 0 for p in usd_values) else None
         save_response = requests.post(
             f"{supabase_url}/rest/v1/portfolio_snapshots",
             params={"on_conflict": "date"},
@@ -904,6 +930,8 @@ def capture_portfolio_snapshot() -> Dict[str, Any]:
             json={
                 "date": today,
                 "total_value_jpy": total_value,
+                "total_value_usd": round(usd_total, 8) if usd_total is not None else None,
+                "prices_updated_at": price_result.updated_at.isoformat() if getattr(price_result, "updated_at", None) else None,
                 "created_at": datetime.now(timezone.utc).isoformat(),
             },
             timeout=15,
@@ -927,23 +955,25 @@ def capture_portfolio_snapshot() -> Dict[str, Any]:
             "message": "スナップショットを保存できませんでした。少し時間をおいて再度お試しください。",
         }
 
-def get_portfolio_history(days: int = 365) -> List[Tuple]:
+def get_portfolio_history(days: int = 365, currency: str = "JPY") -> List[Tuple]:
     """Returns list of (date_str, value)"""
     client = get_client()
     if not client: return []
     
     try:
         source = PUBLIC_HISTORY_VIEW if is_public_read_only() else "portfolio_snapshots"
-        query = client.table(source).select("date, total_value_jpy").order("date", desc=True)
+        field = "total_value_usd" if currency == "USD" else "total_value_jpy"
+        query = client.table(source).select(f"date,{field}").order("date", desc=True)
         # ALL期間 (days >= 9999) の場合はlimitを適用しない
         if days < 9999:
-            query = query.limit(days)
+            query = query.gte("date", (datetime.now(JST).date() - timedelta(days=days - 1)).isoformat())
         res = query.execute()
         
         data = []
         if res.data:
             for item in res.data:
-                data.append((item['date'], item['total_value_jpy']))
+                if item.get(field) is not None:
+                    data.append((item['date'], item[field]))
             
             # Reverse to get Oldest first for charting
             data.reverse()
@@ -1018,6 +1048,7 @@ def save_price_cache(prices_data: Dict) -> bool:
                     "price_usd": data.get("usd"),
                     "price_jpy": data.get("jpy"),
                     "usd_24h_change": data.get("usd_24h_change"),
+                    "jpy_24h_change": data.get("jpy_24h_change"),
                     "updated_at": now
                 }
                 client.table("price_cache").upsert(cache_data, on_conflict="api_id").execute()
@@ -1039,7 +1070,7 @@ def load_price_cache() -> Dict:
     try:
         source = PUBLIC_PRICE_CACHE_VIEW if is_public_read_only() else "price_cache"
         res = client.table(source).select(
-            "api_id,price_usd,price_jpy,usd_24h_change,updated_at"
+            "api_id,price_usd,price_jpy,usd_24h_change,updated_at,jpy_24h_change"
         ).execute()
         
         result = {}
@@ -1048,7 +1079,7 @@ def load_price_cache() -> Dict:
                 "usd": item.get("price_usd"),
                 "jpy": item.get("price_jpy"),
                 "usd_24h_change": item.get("usd_24h_change"),
-                "jpy_24h_change": item.get("usd_24h_change"),  # 同じ値を使用
+                "jpy_24h_change": item.get("jpy_24h_change"),
                 "updated_at": item.get("updated_at"),
             }
         return result

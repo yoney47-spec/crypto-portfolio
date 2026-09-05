@@ -44,10 +44,10 @@ The implementation sources are `styles/main.css` for CSS and
 | Surface 3 | `--color-surface-3` | `#e8e8ea` | Selected and raised controls |
 | Primary text | `--color-text-primary` | `#17191c` | Headings and important values |
 | Secondary text | `--color-text-secondary` | `#5f626b` | Body copy and labels |
-| Muted text | `--color-text-muted` | `#777b86` | Metadata and helper copy |
-| Dim text | `--color-text-dim` | `#979799` | Disabled and low-priority text |
-| Action | `--color-action` | `#0a84ff` | Primary action and focus |
-| Action hover | `--color-action-hover` | `#0066cc` | Blue control hover only |
+| Muted text | `--color-text-muted` | `#636773` | Metadata and helper copy |
+| Dim text | `--color-text-dim` | `#72747d` | Disabled and low-priority text |
+| Action | `--color-action` | `#006bd6` | Primary action and focus |
+| Action hover | `--color-action-hover` | `#0058b3` | Blue control hover only |
 | Positive | `--color-positive` | `#15803d` | Gains and success |
 | Negative | `--color-negative` | `#c53030` | Losses and errors |
 | Warning | `--color-warning` | `#a16207` | Warnings and attention |
@@ -67,7 +67,7 @@ cyan, orange, and individual coin colors are allowed for data visualization only
   `Hiragino Mincho ProN`, Georgia, serif. Use it for page and section openings only.
 - Data: prefer the system stack with `font-variant-numeric: tabular-nums`. Use the mono
   stack only for genuinely technical metadata, not every financial value.
-- Body: 14px / 1.5. Do not put essential text below 12px.
+- Body: 14px / 1.5. Essential labels stay at least 12px; inputs are 16px and tap targets 44px.
 - Page title: responsive 28-36px, editorial serif weight 400, tight tracking.
 - Major section title: 20-26px, editorial serif weight 400.
 - Small UI section title: 16-18px, sans weight 500-600.
@@ -120,7 +120,7 @@ Use the 4px base grid: `4, 8, 12, 16, 24, 32, 48`.
 ### Buttons and inputs
 
 - Only the primary action uses solid blue. Secondary actions use neutral pill controls.
-- Controls are at least 42px tall where practical.
+- Controls are at least 44px tall where practical.
 - Focus uses the action color with a crisp 1px ring.
 - Destructive actions use red semantics and still require a clear text label.
 - Reserve pill shapes for buttons, statuses, chips, and segmented controls—not cards.
@@ -151,7 +151,7 @@ Use the 4px base grid: `4, 8, 12, 16, 24, 32, 48`.
 
 ## Responsive rules
 
-- Break multi-column summaries to one column at 768px.
+- Use a compact 2×2 summary grid below 768px; stack secondary panels.
 - Preserve value hierarchy and currency labels before secondary metadata.
 - Avoid horizontal scrolling for forms, tables, and primary cards.
 - Tap targets remain usable on iPhone-sized screens.

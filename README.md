@@ -28,8 +28,8 @@
 - `type`: 取引種類 ('Buy' or 'Sell')
 - `asset_id`: 通貨ID (Assetsテーブルへの外部キー)
 - `quantity`: 数量
-- `price_per_unit`: 1枚あたりの購入単価 (円)
-- `total_amount`: 合計支払額 (円)
+- `price_per_unit`: 1枚あたりの単価 (USD)
+- `total_amount`: 合計金額 (USD)。元の入力通貨・単価・合計・取引時為替は別列で保存
 - `notes`: メモ
 
 ### 4. PortfolioSnapshots (資産推移記録)
@@ -41,7 +41,7 @@
 
 1. 必要なパッケージのインストール:
 ```bash
-pip install streamlit requests pandas plotly
+pip install -r requirements.txt
 ```
 
 2. データベースの初期化:
@@ -123,3 +123,24 @@ ReferoのSteepスタイルから着想した、温かい白地と編集的な見
 ## ライセンス
 
 MIT License
+
+## 2026-09 UI・ワークスペース更新
+
+- 共通エントリーポイントで通貨・金額非表示をページ間で保持します。
+- PCは比較表、狭幅では銘柄カード・下部ナビ。銘柄詳細は一覧から開くダイアログです。
+- 大きな資産推移、価格影響額ランキング、数量目標・目標配分を追加しました。
+- JPY取引・保存前確認・履歴複製・報酬テンプレートを追加。編集時は保存済み為替を保持します。
+- 年初来損益は前年末時価と入出金評価が揃う場合のみ表示します。税務上の損益ではありません。
+- USD履歴は新規スナップショットから蓄積します。旧JPY履歴は当時のUSDデータがないため変換しません。
+- 目標と取引は管理者限定。金額マスクは画面表示機能であり公開情報のアクセス制御ではありません。
+- `requirements.txt` は直接依存の固定版、`requirements.lock.txt` はテスト環境の全依存スナップショットです。
+
+DBの追加変更は `supabase/migrations/20260905122319_portfolio_workspace.sql`。
+接続中のCryptoプロジェクトでは20260905122638として適用済みです。再適用しないでください。
+
+検証: `.venv/bin/python -m pytest -q`。画面テストには合成データとモックを使い、本番取引を登録しません。
+iPhone実機Safari・実アカウントでの保存は別途確認対象です。
+
+既存の公開専用ビューは列権限を限定したNOLOGIN所有者を利用しています。
+Supabase Advisorの[Security Definer View指摘](https://supabase.com/docs/guides/database/database-linter?lint=0010_security_definer_view)は残りますが、所有者はsuperuserでもBYPASSRLSでもありません。
+既存の[漏えいパスワード保護](https://supabase.com/docs/guides/auth/password-security#password-strength-and-leaked-password-protection)は無効のままで、今回のUI更新では認証設定を変更していません。

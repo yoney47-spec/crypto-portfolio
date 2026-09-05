@@ -147,5 +147,5 @@ def stop_on_private_page() -> None:
             st.rerun()
         st.error(message)
 
-    st.page_link("app.py", label="ダッシュボードへ戻る")
+    st.page_link("pages/0_dashboard.py", label="ダッシュボードへ戻る")
     st.stop()
