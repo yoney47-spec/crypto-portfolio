@@ -65,8 +65,13 @@ label[data-selected="true"] p { color: var(--color-action); }
 .asset-summary { display: flex; justify-content: space-between; gap: 12px; align-items: center; padding: 8px 0; }
 .asset-summary strong { font-size: 17px; font-weight: 600; }
 .asset-summary p { margin: 4px 0 0; font-size: 13px; color: var(--color-text-secondary); }
-.asset-summary .asset-right { text-align: right; }
-.asset-mark { width: 40px; height: 40px; display: inline-flex; align-items: center; justify-content: center; background: var(--color-surface-2); border-radius: 50%; color: var(--color-text-primary); font-size: 13px; margin-right: 10px; }
+.asset-summary .asset-right { text-align: right; flex-shrink: 0; }
+.asset-identity { display: flex; align-items: center; gap: 12px; min-width: 0; }
+.asset-identity img.asset-mark { display: block; width: 32px; height: 32px; flex: 0 0 32px; object-fit: contain; border-radius: 50%; background: var(--color-surface-2); }
+.asset-nameplate { min-width: 0; overflow-wrap: anywhere; }
+.asset-nameplate h3 { margin: 0; padding: 0; font-size: 20px; line-height: 1.4; }
+.asset-nameplate p { margin: 4px 0 0; color: var(--color-text-secondary); font-size: 13px; line-height: 1.5; }
+.st-key-asset-detail .asset-identity img.asset-mark { width: 40px; height: 40px; flex-basis: 40px; }
 .impact-row { display: grid; grid-template-columns: 64px 1fr 120px; gap: 12px; align-items: center; padding: 10px 0; font-size: 14px; }
 .impact-track { background: var(--color-surface-2); border-radius: 8px; height: 8px; overflow: hidden; }
 .impact-bar { height: 8px; border-radius: 8px; background: var(--color-action); }

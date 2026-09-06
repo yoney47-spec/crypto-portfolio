@@ -1,16 +1,41 @@
 from html import escape
+import base64
 import pandas as pd
 import streamlit as st
 from admin_auth import is_admin_authenticated
 from portfolio_logic import money,quantity,percent,tone
 from portfolio_service import coin_history
 from components.portfolio_charts import line_figure
+from components.design_tokens import COLOR_SURFACE_2, COLOR_TEXT_SECONDARY, FONT_UI
+
+
+def asset_icon_source(row):
+    """Reuse the saved logo, with a local monogram for unregistered images."""
+    source = str(row.get('icon_url') or '').strip()
+    if source.lower().startswith(('https://', 'http://', 'data:image/')):
+        return source
+    label = escape(str(row.get('symbol') or '?')[:3])
+    svg = (f'<svg xmlns="http://www.w3.org/2000/svg" width="40" height="40" viewBox="0 0 40 40">'
+           f'<circle cx="20" cy="20" r="20" fill="{COLOR_SURFACE_2}"/>'
+           f'<text x="20" y="25" text-anchor="middle" font-family="{FONT_UI}" '
+           f'font-size="12" font-weight="600" fill="{COLOR_TEXT_SECONDARY}">{label}</text></svg>')
+    return 'data:image/svg+xml;base64,' + base64.b64encode(svg.encode()).decode()
+
+
+def asset_identity(row, *, heading=False):
+    """Keep each mark beside its name without displacing the asset value."""
+    tag = 'h3' if heading else 'strong'
+    return (f'<div class="asset-identity"><img class="asset-mark" '
+            f'src="{escape(asset_icon_source(row), quote=True)}" alt="" '
+            f'width="32" height="32" decoding="async" referrerpolicy="no-referrer">'
+            f'<div class="asset-nameplate"><{tag}>{escape(row["symbol"])}</{tag}>'
+            f'<p>{escape(row["name"])}</p></div></div>')
 
 
 @st.dialog('銘柄の詳細', width='large')
 def asset_detail(row, data, currency, mask):
     with st.container(border=True,key='asset-detail'):
-        st.subheader(f"{row['symbol']} · {row['name']}")
+        st.markdown(asset_identity(row, heading=True), unsafe_allow_html=True)
         a,b=st.columns(2)
         a.metric('評価額',money(row['value'],currency,masked=mask))
         b.metric('保有数量',quantity(row['holdings'],masked=mask))
@@ -63,10 +88,12 @@ def holdings_list(data,currency,mask):
         return
     compact=st.session_state.get('display_density')=='コンパクト'
     with st.container(key='holdings-desktop'):
-        frame=pd.DataFrame([{'銘柄':r['symbol'],'数量':quantity(r['holdings'],masked=True) if mask else r['holdings'],
+        frame=pd.DataFrame([{'ロゴ':asset_icon_source(r),'銘柄':r['symbol'],'数量':quantity(r['holdings'],masked=True) if mask else r['holdings'],
                              '評価額':money(None,currency,masked=True) if mask else r['value'],
                              '24時間 %':r['change'],'構成比 %':r['weight']} for r in rows])
-        config={'評価額':st.column_config.TextColumn(f'評価額（{currency}）') if mask else st.column_config.NumberColumn(f'評価額（{currency}）',format='localized'),
+        config={'ロゴ':st.column_config.ImageColumn('ロゴ',width=48),
+                '銘柄':st.column_config.TextColumn('銘柄',width=80),
+                '評価額':st.column_config.TextColumn(f'評価額（{currency}）') if mask else st.column_config.NumberColumn(f'評価額（{currency}）',format='localized'),
                 '数量':st.column_config.TextColumn('数量') if mask else st.column_config.NumberColumn('数量',format='%.8f'),
                 '24時間 %':st.column_config.NumberColumn('24時間 %',format='%+.2f'),
                 '構成比 %':st.column_config.NumberColumn('構成比 %',format='%.1f')}
@@ -82,7 +109,7 @@ def holdings_list(data,currency,mask):
         with st.container(key='density-compact' if compact else 'density-standard'):
             for row in rows:
                 with st.container(border=True):
-                    html=f"<div class='asset-summary'><div><strong>{escape(row['symbol'])}</strong><p>{escape(row['name'])}</p></div><div class='asset-right'><strong>{escape(money(row['value'],currency,masked=mask))}</strong><p><span class='{tone(row['change'])}'>{escape(percent(row['change']))}</span> · 24時間</p></div></div>"
+                    html=f"<div class='asset-summary'>{asset_identity(row)}<div class='asset-right'><strong>{escape(money(row['value'],currency,masked=mask))}</strong><p><span class='{tone(row['change'])}'>{escape(percent(row['change']))}</span> · 24時間</p></div></div>"
                     st.markdown(html,unsafe_allow_html=True)
                     if not compact: st.caption(f"{quantity(row['holdings'],masked=mask)} {row['symbol']} · 構成比 {percent(row['weight'],signed=False)}")
                     if st.button(f"{row['symbol']} の詳細",key=f"mobile_asset_{row['id']}",width='stretch'):
