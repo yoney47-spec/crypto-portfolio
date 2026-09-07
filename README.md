@@ -131,7 +131,7 @@ MIT License
 - 大きな資産推移、価格影響額ランキング、数量目標・目標配分を追加しました。
 - JPY取引・保存前確認・履歴複製・報酬テンプレートを追加。編集時は保存済み為替を保持します。
 - 年初来損益は前年末時価と入出金評価が揃う場合のみ表示します。税務上の損益ではありません。
-- USD履歴は新規スナップショットから蓄積します。旧JPY履歴は当時のUSDデータがないため変換しません。
+- USD未記録の履歴は、保存した当時のUSD/JPY日次レートから参考値を表示します。既存のUSD実測値を優先し、元の金額は変更しません。
 - 目標と取引は管理者限定。金額マスクは画面表示機能であり公開情報のアクセス制御ではありません。
 - `requirements.txt` は直接依存の固定版、`requirements.lock.txt` はテスト環境の全依存スナップショットです。
 
@@ -144,3 +144,33 @@ iPhone実機Safari・実アカウントでの保存は別途確認対象です�
 既存の公開専用ビューは列権限を限定したNOLOGIN所有者を利用しています。
 Supabase Advisorの[Security Definer View指摘](https://supabase.com/docs/guides/database/database-linter?lint=0010_security_definer_view)は残りますが、所有者はsuperuserでもBYPASSRLSでもありません。
 既存の[漏えいパスワード保護](https://supabase.com/docs/guides/auth/password-security#password-strength-and-leaked-password-protection)は無効のままで、今回のUI更新では認証設定を変更していません。
+
+## 日次記録と過去の通貨表示
+
+`snapshot_automation.sql` は、接続中のCryptoプロジェクトへ
+`20260907235239_snapshot_currency_history_and_daily_recording` として適用済みです。
+同じ追加DDLを再適用しないでください。
+
+- Supabase Cronが日本時間の毎日9:05に実行します（UTCでは `5,20,35 0 * * *`）。
+  9:20・9:35は未記録日の再試行枠です。アプリを開いておく必要はありません。
+- CoinGeckoへの1回の取得でJPY/USDを同時に評価します。13銘柄など全保有分の
+  有効な両通貨価格が揃わなければ例外とし、その日は保存しません。次の枠で再試行します。
+- `portfolio_internal.capture_daily_snapshot()` は既存の日付を上書きしません。
+  同時実行はロックと日付の一意制約で保護します。管理者の手動記録は同日分を更新できます。
+- 自動処理は非公開スキーマ内の SECURITY INVOKER 関数で、所有者のCronだけが実行します。
+  公開閲覧者・ログインユーザーへ書込権限やHTTP実行権限を追加していません。
+- 初回の `portfolio_internal.backfill_snapshot_exchange_rates()` により、USD未記録の
+  180日分へ [FrankfurterのECB日次為替](https://frankfurter.dev/) を付与しました。
+  休業日は直前の公表値を採用し、公表日を保存します。元のJPY・USD金額は保持します。
+  UIはUSD欠落時のみ `total_value_jpy / usd_jpy_rate` を参考値として表示します。
+- 記録そのものが存在しない過去の日を補間することはありません。
+  為替変動によりJPYとUSDで線の形が多少異なるのは正常です。
+
+監視は `cron.job` の `cryptofolio-daily-snapshot` と `cron.job_run_details` を確認します。
+停止するときは `cron.alter_job` の `active := false` を利用できます。
+外部APIやSupabaseの停止中には保存されません。欠損価格を0として記録しません。
+
+今回の検証は `python -m unittest discover -s tests -p test_history_currency.py`、
+`python -m unittest discover -s tests -p test_snapshot_capture.py`、
+および `tests/snapshot_automation_verify.sql`。
+日次処理の実価格での初回保存、再実行時の重複防止、過去金額の保存前後一致も確認します。

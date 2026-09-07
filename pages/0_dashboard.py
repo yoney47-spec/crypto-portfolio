@@ -26,7 +26,8 @@ with st.container(border=True):
     history=history_series(data['history'],currency,days)
     history_chart(history,currency,mask)
     st.caption('記録された評価額の推移です。取引や入出庫による変化を含むため、運用利回りとは異なります。')
-    if currency=='USD': st.caption('USD建ての履歴は、新しい記録から蓄積します。過去の円建て記録を現在の為替で置き換えることはしません。')
+    if currency=='USD' and any(r.get('estimated') for r in history):
+        st.caption('過去のUSD未記録分は、当日の日次為替（休業日は直前の公表値）で円の記録を換算した参考値です。為替変動のため、円とドルでは推移の形に差が出ます。')
 a,b=st.columns([1.2,1])
 with a:
     with st.container(border=True):

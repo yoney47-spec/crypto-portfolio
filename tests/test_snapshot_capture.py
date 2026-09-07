@@ -100,8 +100,8 @@ class CapturePortfolioSnapshotTests(unittest.TestCase):
         ]
         get_prices.return_value = types.SimpleNamespace(
             prices={
-                "bitcoin": {"jpy": 10_000_000},
-                "kaspa": {"jpy": 10},
+                "bitcoin": {"jpy": 10_000_000, "usd": 100_000},
+                "kaspa": {"jpy": 10, "usd": 0.1},
             }
         )
         post.return_value = Mock(status_code=201)
@@ -116,6 +116,8 @@ class CapturePortfolioSnapshotTests(unittest.TestCase):
         self.assertEqual(request.kwargs["headers"]["apikey"], "sb_secret_test")
         self.assertNotIn("Authorization", request.kwargs["headers"])
         self.assertEqual(request.kwargs["json"]["total_value_jpy"], 1_010_000)
+        self.assertEqual(request.kwargs["json"]["total_value_usd"], 10_100)
+        self.assertEqual(request.kwargs["json"]["capture_source"], "manual")
 
     @patch("database_supabase._get_public_holdings_rows")
     @patch("database_supabase.load_price_cache", return_value={})
@@ -140,6 +142,19 @@ class CapturePortfolioSnapshotTests(unittest.TestCase):
 
         self.assertFalse(result["ok"])
         self.assertIn("KAS", result["message"])
+        post.assert_not_called()
+
+    @patch("database_supabase._get_public_holdings_rows", return_value=[{"symbol":"BTC", "api_id":"bitcoin", "holdings":0.1}])
+    @patch("database_supabase.load_price_cache", return_value={})
+    @patch("database_supabase.get_current_prices")
+    @patch("database_supabase.requests.post")
+    @patch("database_supabase.st.secrets", {"supabase":{"url":"https://example.supabase.co", "secret_key":"sb_secret_test"}})
+    def test_rejects_incomplete_usd_instead_of_creating_history_gap(self, post, get_prices, *_mocks):
+        for usd in (None, 0, float('nan'), float('inf')):
+            get_prices.return_value = types.SimpleNamespace(prices={"bitcoin":{"jpy":10_000_000,"usd":usd}})
+            result = database_supabase.capture_portfolio_snapshot()
+            self.assertFalse(result['ok'])
+            self.assertIn('BTC', result['message'])
         post.assert_not_called()
 
 

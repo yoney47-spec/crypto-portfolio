@@ -58,13 +58,15 @@ if not admin:
 else:
     with st.container(border=True):
         st.subheader('評価額の記録')
+        st.write('自動記録：毎日 9:05（日本時間）')
+        st.caption('サイトを閉じていてもJPY・USDを同時に記録します。未記録の場合のみ9:20・9:35に再試行します。価格が揃わない場合は保存しません。')
         data=public_data()
         history=data.get('history',[])
         if history:
             latest=history[-1]
             st.write(f"最新：{latest['date']} · {money(latest.get('total_value_'+currency.lower()),currency,masked=mask)}")
             st.caption(f"{len(history)}日分の記録")
-        st.caption('JPYとUSDの評価額を記録します。同日分は最新の記録で更新します。管理者ログイン中は管理コード不要です。')
+        st.caption('手動でもJPYとUSDの評価額を記録できます。同日分は最新の記録で更新します。管理者ログイン中は管理コード不要です。')
         config=snapshot_backend_configuration_error()
         if config: st.warning(config)
         if st.button('今日の評価額を記録',type='primary',disabled=bool(config),key='admin_snapshot'): save_snapshot()

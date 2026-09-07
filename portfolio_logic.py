@@ -97,6 +97,16 @@ def build_portfolio(holdings, prices: dict, costs: dict, currency: str) -> dict:
                 change_complete=bool(rows) and len(previous_rows) == len(rows))
 
 
+def composition_entries(rows):
+    """Largest slices first, including the combined remainder."""
+    ranked = sorted((r for r in rows if number(r.get('weight')) is not None and r['weight'] > 0),
+                    key=lambda r: r['weight'], reverse=True)
+    entries = [(r['symbol'], r['weight']) for r in ranked[:5]]
+    if len(ranked) > 5:
+        entries.append(('その他', sum(r['weight'] for r in ranked[5:])))
+    return sorted(entries, key=lambda item: item[1], reverse=True)
+
+
 def history_series(records: list[dict], currency: str, days: int, today: date | None = None) -> list[dict]:
     today = today or datetime.now(JST).date()
     cutoff = today - timedelta(days=days - 1)
@@ -107,8 +117,21 @@ def history_series(records: list[dict], currency: str, days: int, today: date | 
         except (ValueError, KeyError):
             continue
         value = number(row.get(f"total_value_{currency.lower()}"))
+        metadata = {}
+        if value is None and currency == 'USD':
+            jpy = number(row.get('total_value_jpy'))
+            rate = number(row.get('usd_jpy_rate'))
+            try:
+                rate_day = date.fromisoformat(str(row.get('usd_jpy_rate_date'))[:10])
+            except ValueError:
+                rate_day = None
+            if (jpy is not None and jpy >= 0 and rate is not None and rate > 0
+                    and rate_day is not None and 0 <= (day - rate_day).days <= 10):
+                value = jpy / rate
+                metadata = {'estimated': True, 'fx_rate': rate, 'fx_date': rate_day.isoformat(),
+                            'fx_source': row.get('usd_jpy_rate_source') or '日次為替'}
         if value is not None and value >= 0 and cutoff <= day <= today:
-            result.append({"date": day.isoformat(), "value": value})
+            result.append({"date": day.isoformat(), "value": value, **metadata})
     return sorted(result, key=lambda r: r["date"])
 
 

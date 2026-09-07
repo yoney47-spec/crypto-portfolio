@@ -805,7 +805,7 @@ def capture_portfolio_snapshot() -> Dict[str, Any]:
     Calculate and save today's snapshot from the trusted Streamlit backend.
 
     The browser never supplies a portfolio value. Holdings are loaded from the
-    curated public view, current JPY prices come from CoinGecko, and the upsert
+    curated public view, current JPY/USD prices come from CoinGecko, and the upsert
     uses a backend-only Supabase secret key after either a current administrator
     session or the fallback UI PIN check is verified.
     """
@@ -883,26 +883,30 @@ def capture_portfolio_snapshot() -> Dict[str, Any]:
 
         missing_prices = []
         total_value = 0.0
+        usd_total = 0.0
         for item in active_holdings:
             try:
                 price_jpy = float(prices.get(item["api_id"], {}).get("jpy"))
+                price_usd = float(prices.get(item["api_id"], {}).get("usd"))
             except (AttributeError, TypeError, ValueError):
-                price_jpy = 0
+                price_jpy = price_usd = 0
 
-            if not math.isfinite(price_jpy) or price_jpy <= 0:
+            if (not math.isfinite(price_jpy) or price_jpy <= 0
+                    or not math.isfinite(price_usd) or price_usd <= 0):
                 missing_prices.append(item["symbol"])
                 continue
 
             total_value += item["holdings"] * price_jpy
+            usd_total += item["holdings"] * price_usd
 
         if missing_prices:
             return {
                 "ok": False,
-                "message": f"現在価格を確認できない銘柄があります: {', '.join(missing_prices)}",
+                "message": f"JPY・USDの現在価格を確認できない銘柄があります: {', '.join(missing_prices)}",
             }
 
         total_value = round(total_value)
-        if not math.isfinite(total_value) or total_value <= 0:
+        if not math.isfinite(total_value) or total_value <= 0 or not math.isfinite(usd_total) or usd_total <= 0:
             return {
                 "ok": False,
                 "message": "総資産額を正しく計算できませんでした。",
@@ -920,9 +924,6 @@ def capture_portfolio_snapshot() -> Dict[str, Any]:
         if secret_key.count(".") == 2:
             headers["Authorization"] = f"Bearer {secret_key}"
 
-        from portfolio_logic import number
-        usd_values = [number(prices.get(item["api_id"], {}).get("usd")) for item in active_holdings]
-        usd_total = sum(item["holdings"] * price for item, price in zip(active_holdings, usd_values)) if all(p is not None and p > 0 for p in usd_values) else None
         save_response = requests.post(
             f"{supabase_url}/rest/v1/portfolio_snapshots",
             params={"on_conflict": "date"},
@@ -930,7 +931,11 @@ def capture_portfolio_snapshot() -> Dict[str, Any]:
             json={
                 "date": today,
                 "total_value_jpy": total_value,
-                "total_value_usd": round(usd_total, 8) if usd_total is not None else None,
+                "total_value_usd": round(usd_total, 8),
+                "capture_source": "manual",
+                "usd_jpy_rate": None,
+                "usd_jpy_rate_date": None,
+                "usd_jpy_rate_source": None,
                 "prices_updated_at": price_result.updated_at.isoformat() if getattr(price_result, "updated_at", None) else None,
                 "created_at": datetime.now(timezone.utc).isoformat(),
             },
