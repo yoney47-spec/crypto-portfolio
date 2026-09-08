@@ -47,9 +47,5 @@ if st.toggle('市場データ・分析メモを表示',key='show_market_context'
     if fx: a.caption(f"{fx['date']} · {fx['source']}")
     b.metric('市場全体の24時間変化',percent(market.get('market_cap_change_percentage_24h_usd')))
     b.caption('USD建て時価総額 · CoinGecko')
-    from database_supabase import get_latest_ai_comment
-    comment=get_latest_ai_comment()
-    if comment and not mask:
-        st.markdown(f"<div class='ai-insight-card'><strong>分析メモ · {escape(comment['date'])}</strong><br>{escape(comment['comment'])}</div>",unsafe_allow_html=True)
-    elif mask: st.caption('金額非表示中は、金額を含む可能性がある分析メモを隠しています。')
-    else: st.caption('保存された分析メモはまだありません。')
+    from components.analysis import render_analysis
+    render_analysis(data, mask)

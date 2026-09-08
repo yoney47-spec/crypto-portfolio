@@ -174,3 +174,29 @@ Supabase Advisorの[Security Definer View指摘](https://supabase.com/docs/guide
 `python -m unittest discover -s tests -p test_snapshot_capture.py`、
 および `tests/snapshot_automation_verify.sql`。
 日次処理の実価格での初回保存、再実行時の重複防止、過去金額の保存前後一致も確認します。
+
+## 分析メモの日次更新
+
+- 旧モデル `gemini-2.0-flash` は[2026-06-01に提供終了](https://ai.google.dev/gemini-api/docs/deprecations)。
+  画面刷新時に失われていた生成呼び出しを復元し、`gemini-2.5-flash` の
+  [REST generateContent](https://ai.google.dev/api/generate-content) へ移行しました。
+- 既存の Streamlit Secrets `[gemini].api_key` と `[supabase].secret_key` をそのまま使用します。
+  GeminiキーをブラウザやDBにコピーしません。`[gemini].model` でモデルを変更できます。
+  旧2.0モデルの設定だけは自動的に現行デフォルトへ移行します。
+- その日最初に「市場データ・分析メモ」を開いたときに生成し、成功後は全閲覧者で共有します。
+  **訪問のない日は生成しません。** 9:05の評価額自動記録とは別の処理です。
+- 日付はJST。DBで生成権を取得し、同時閲覧・再読み込み・通貨切替による重複を防ぎます。
+  失敗は15分後以降の閲覧時に再試行し、1日最大3回。中断した処理の生成権は10分後に失効します。
+- 送信内容は公開保有銘柄の構成比、USD価格の24時間変化、寄与度、データ時刻のみです。
+  数量・金額・取得原価・取引履歴・目標は送信しません。取得時刻が当日かつ15分以内の価格だけを使用します。
+- 「全体の動き／変化の主因／確認ポイント」をJSONで生成・検証して保存します。
+  過去のメモを当日の分析として表示せず、失敗時は状態と直接集計した事実を表示します。
+  金額非表示時は生成せず、メモと過去の本文も隠します。
+- `analysis_daily.sql` は既存の公開ビュー所有者・読み取り専用権限を維持します。
+  2つのRPCは SECURITY INVOKER で、実行できるのはバックエンドのservice_roleのみです。
+  `portfolio_internal.analysis_runs` の状態・試行回数・エラーコードで更新停止を確認できます。
+- 検証：`python -m unittest discover -s tests -p test_daily_analysis.py` と
+  `tests/analysis_daily_verify.sql`（当日未生成のときのみ。検証用の書き込みはロールバック）。
+  公開画面でも生成・保存・再表示・通貨切替・金額非表示を確認します。
+- Community Cloudで読み込み済みの古いモジュールが残る場合は再構築します。
+  今回は依存マニフェストの更新で再構築し、生成結果まで確認します。
