@@ -7,8 +7,13 @@ import streamlit as st
 from access_control import is_supabase_backend_secret_key
 from analysis_logic import analysis_context
 from database_supabase import get_client
-from gemini_client import DEFAULT_MODEL, AnalysisUnavailable, generate_daily_analysis
+from gemini_client import DEFAULT_MODEL, AnalysisUnavailable, generate_daily_analysis, resolve_model
 from portfolio_logic import JST
+
+
+@st.cache_data(ttl=3600, show_spinner=False)
+def available_model(api_key, preferred):
+    return resolve_model(api_key, preferred)
 
 
 def analysis_records():
@@ -53,6 +58,7 @@ def daily_analysis(data):
         model = str(config.get("model") or DEFAULT_MODEL).strip()
         if model.startswith("gemini-2.0-"):
             model = DEFAULT_MODEL
+        model = available_model(key, model)
         lease = _backend_rpc("claim_daily_analysis", {"p_model": model})
         if not lease.get("claimed"):
             return {"records": analysis_records(), "status": lease.get("status", "processing"),

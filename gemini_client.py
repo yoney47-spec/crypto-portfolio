@@ -3,6 +3,7 @@ import json
 import re
 
 DEFAULT_MODEL = "gemini-2.5-flash"
+FALLBACK_MODELS = ("gemini-3.5-flash-lite", "gemini-3.8-flash", "gemini-3.6-flash", "gemini-2.5-flash-lite")
 SECTION_LABELS = {"overview": "全体の動き", "drivers": "変化の主因", "watch": "確認ポイント"}
 
 
@@ -18,6 +19,24 @@ def validate_sections(value):
     if any(not isinstance(v, str) or not 10 <= len(v.strip()) <= 600 for v in value.values()):
         raise AnalysisUnavailable("invalid_response")
     return {k: value[k].strip() for k in SECTION_LABELS}
+
+
+def resolve_model(api_key, preferred=DEFAULT_MODEL):
+    """Select an explicitly supported text model from this key's live catalog."""
+    import requests
+    try:
+        response = requests.get('https://generativelanguage.googleapis.com/v1beta/models',
+                                headers={'x-goog-api-key': api_key}, params={'pageSize': 1000}, timeout=(5, 15))
+        if response.status_code != 200:
+            raise AnalysisUnavailable('invalid_key' if response.status_code in (401, 403) else 'provider_error')
+        models = {m.get('name', '').removeprefix('models/') for m in response.json().get('models', [])
+                  if 'generateContent' in m.get('supportedGenerationMethods', [])}
+        for model in (preferred, *FALLBACK_MODELS):
+            if model in models:
+                return model
+        raise AnalysisUnavailable('model_unavailable')
+    except (requests.exceptions.RequestException, ValueError, TypeError, AttributeError):
+        raise AnalysisUnavailable('network_error') from None
 
 
 def generate_daily_analysis(context, api_key, model=DEFAULT_MODEL):

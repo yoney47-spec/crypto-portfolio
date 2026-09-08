@@ -183,6 +183,7 @@ Supabase Advisorの[Security Definer View指摘](https://supabase.com/docs/guide
 - 既存の Streamlit Secrets `[gemini].api_key` と `[supabase].secret_key` をそのまま使用します。
   GeminiキーをブラウザやDBにコピーしません。`[gemini].model` でモデルを変更できます。
   旧2.0モデルの設定だけは自動的に現行デフォルトへ移行します。
+  利用可能なモデル一覧を1時間キャッシュして確認し、希望モデルがなければ対応中のFlash系モデルを選びます。
 - その日最初に「市場データ・分析メモ」を開いたときに生成し、成功後は全閲覧者で共有します。
   **訪問のない日は生成しません。** 9:05の評価額自動記録とは別の処理です。
 - 日付はJST。DBで生成権を取得し、同時閲覧・再読み込み・通貨切替による重複を防ぎます。

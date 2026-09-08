@@ -7,7 +7,7 @@ import unittest
 from unittest.mock import Mock, patch
 
 from analysis_logic import analysis_context
-from gemini_client import AnalysisUnavailable, generate_daily_analysis, validate_sections
+from gemini_client import AnalysisUnavailable, generate_daily_analysis, validate_sections, resolve_model
 
 # Keep these tests usable in minimal environments without network installs.
 try:
@@ -99,12 +99,22 @@ class AnalysisTests(unittest.TestCase):
             with self.assertRaises(AnalysisUnavailable):
                 generate_daily_analysis({}, 'test-key')
 
+    @patch('requests.get')
+    def test_live_catalog_skips_unavailable_models_and_non_text_models(self, get):
+        get.return_value = Mock(status_code=200)
+        get.return_value.json.return_value = {'models': [
+            {'name': 'models/gemini-2.5-flash', 'supportedGenerationMethods': ['embedContent']},
+            {'name': 'models/gemini-3.8-flash', 'supportedGenerationMethods': ['generateContent']} ]}
+        self.assertEqual(resolve_model('test-key'), 'gemini-3.8-flash')
+        self.assertNotIn('test-key', get.call_args.args[0])
+
 
 class AnalysisServiceTests(unittest.TestCase):
     @classmethod
     def setUpClass(cls):
         import importlib
         st = types.ModuleType('streamlit')
+        st.cache_data = lambda **kw: lambda func: func
         st.secrets = {'gemini': {'api_key': 'test-key'}, 'supabase': {'secret_key': 'sb_secret_test', 'url': 'https://example.supabase.co'}}
         access = types.ModuleType('access_control')
         access.is_supabase_backend_secret_key = lambda key: key == 'sb_secret_test'
@@ -112,6 +122,11 @@ class AnalysisServiceTests(unittest.TestCase):
         db.get_client = Mock()
         with patch.dict(sys.modules, {'streamlit': st, 'access_control': access, 'database_supabase': db}):
             cls.service = importlib.import_module('analysis_service')
+
+    def setUp(self):
+        self.available = patch.object(self.service, 'available_model', return_value='gemini-2.5-flash')
+        self.available.start()
+        self.addCleanup(self.available.stop)
 
     def test_existing_today_memo_never_calls_generation_or_claim(self):
         today = self.service.datetime.now(self.service.JST).date().isoformat()
