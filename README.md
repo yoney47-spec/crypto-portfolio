@@ -178,7 +178,7 @@ Supabase Advisorの[Security Definer View指摘](https://supabase.com/docs/guide
 ## 分析メモの日次更新
 
 - 旧モデル `gemini-2.0-flash` は[2026-06-01に提供終了](https://ai.google.dev/gemini-api/docs/deprecations)。
-  画面刷新時に失われていた生成呼び出しを復元し、`gemini-2.5-flash` の
+  画面刷新時に失われていた生成呼び出しを復元し、`gemini-3.5-flash-lite` の
   [REST generateContent](https://ai.google.dev/api/generate-content) へ移行しました。
 - 既存の Streamlit Secrets `[gemini].api_key` と `[supabase].secret_key` をそのまま使用します。
   GeminiキーをブラウザやDBにコピーしません。`[gemini].model` でモデルを変更できます。

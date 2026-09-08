@@ -2,8 +2,8 @@
 import json
 import re
 
-DEFAULT_MODEL = "gemini-2.5-flash"
-FALLBACK_MODELS = ("gemini-3.5-flash-lite", "gemini-3.8-flash", "gemini-3.6-flash", "gemini-2.5-flash-lite")
+DEFAULT_MODEL = "gemini-3.5-flash-lite"
+FALLBACK_MODELS = ("gemini-3.8-flash", "gemini-3.6-flash", "gemini-2.5-flash-lite")
 SECTION_LABELS = {"overview": "全体の動き", "drivers": "変化の主因", "watch": "確認ポイント"}
 
 
