@@ -58,11 +58,12 @@ class MarkupTests(unittest.TestCase):
             self.assertIn('&lt;img', html)
 
     def test_saved_insights_have_three_sections_and_legacy_fallback(self):
-        record = dict(date='2026-09-19', sections=dict(overview='+2.4% の変化', drivers='BTCの影響', watch='配分を確認'))
+        record = dict(date='2026-09-19', sections=dict(overview='+2.4% の変化', drivers='BTCが1.2パーセントポイント押し上げた', watch='配分を確認'))
         html = insight_markup(record)
         self.assertEqual(html.count('data-insight-card='), 3)
         self.assertEqual(html.count('role="tab"'), 3)
         self.assertIn('<strong class="cf-inline-number">+2.4%</strong>', html)
+        self.assertIn('<strong class="cf-inline-number">1.2パーセントポイント</strong>', html)
         self.assertNotEqual(html.split('data-insight-id="')[1].split('"')[0],
                             insight_markup(record, archive=True).split('data-insight-id="')[1].split('"')[0])
         legacy = insight_markup(dict(date='2026-06-01', comment='旧メモ'), archive=True)

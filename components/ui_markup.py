@@ -40,7 +40,7 @@ def loading_markup(label, kind='cards'):
 def _comment(text):
     # Emphasize only numbers actually present in the saved memo. No live-price
     # metrics are mixed into a memo generated from an earlier data timestamp.
-    return re.sub(r'([+−-]?\d[\d,.]*\s*(?:%|％|pp|ポイント))', r'<strong class="cf-inline-number">\1</strong>', escape(str(text))).replace('\n', '<br>')
+    return re.sub(r'([+−-]?\d[\d,.]*\s*(?:%|％|pp|パーセントポイント|パーセント|ポイント))', r'<strong class="cf-inline-number">\1</strong>', escape(str(text))).replace('\n', '<br>')
 
 
 def insight_markup(record, *, archive=False):
