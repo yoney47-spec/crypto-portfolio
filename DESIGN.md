@@ -169,6 +169,14 @@ no upstream component source, paid recipes, assets, or additional npm packages a
 - Use tabular numerals and the selected currency symbol in totals, axes, and hover text.
 - Donut slices use a canvas-colored separator so adjacent assets remain distinct.
 - Chart labels must remain readable at mobile widths without forcing dense legends.
+- Asset details may embed TradingView's official chart for verified spot markets.
+  Keep the attribution and explicitly label exchange and quote currency (USDT is
+  not USD or JPY). Never send holdings, costs, goals, or credentials to the widget.
+  Masking suppresses the embed; unavailable markets keep the original chart.
+- Dashboard totals, history, composition, and contributions refresh together in
+  a Streamlit fragment. A 60-second local schedule check waits for the shared
+  ten-minute price cache to expire before fetching. No forced cache clearing,
+  whole-page reloads, AI regeneration, or private-form timer updates.
 
 ### AI commentary
 

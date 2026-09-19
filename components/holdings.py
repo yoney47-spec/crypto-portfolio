@@ -4,10 +4,8 @@ import pandas as pd
 import streamlit as st
 from admin_auth import is_admin_authenticated
 from portfolio_logic import money,quantity,percent,tone
-from portfolio_service import coin_history
-from components.portfolio_charts import line_figure
 from components.design_tokens import COLOR_SURFACE_2, COLOR_TEXT_SECONDARY, FONT_UI
-from components.motion import loading
+from components.asset_chart import render_asset_chart
 
 
 def asset_icon_source(row):
@@ -44,14 +42,7 @@ def asset_detail(row, data, currency, mask):
         c.metric(f'現在価格（{currency}）',money(row['price'],currency,price=True,masked=mask))
         d.metric('24時間変化率',percent(row['change']))
         st.caption(f"構成比 {percent(row['weight'],signed=False)} · 24時間の影響額 {money(row['contribution'],currency,masked=mask,signed=True)}")
-        days=st.segmented_control('価格推移',[7,30,90,365],default=30,format_func=lambda v:f'{v}日',key=f"asset_period_{row['id']}") or 30
-        with loading('価格推移を読み込み中…', kind='chart'):
-            records=coin_history(row['api_id'],currency,days)
-        if records:
-            st.plotly_chart(line_figure(records,currency,mask,height=260),key=f"asset_chart_{row['id']}",config={'displayModeBar':False},width='stretch')
-            st.caption(f"最新の記録：{records[-1]['date'][:16].replace('T',' ')} JST · {money(records[-1]['value'],currency,price=True,masked=mask)}")
-        else:
-            st.info('価格推移を取得できませんでした。しばらくしてもう一度お試しください。')
+        render_asset_chart(row,currency,mask)
         quote=data['prices'].get(row['api_id'],{})
         fx=quote.get('jpy')/quote['usd'] if quote.get('usd') and quote.get('jpy') else None
         avg=row.get('avg_cost')
