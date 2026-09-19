@@ -5,10 +5,11 @@ from portfolio_service import portfolio,exchange_rate,market_overview
 from portfolio_logic import year_to_date,history_series,money,percent,JST
 from components.shell import intro,preferences,overview,freshness
 from components.portfolio_charts import history_chart,composition,impacts
+from components.motion import loading
 
 currency,mask=preferences()
 intro('ポートフォリオ','資産の変化を捉えて、次の判断へ。')
-with st.spinner('ポートフォリオを読み込み中…'):
+with loading('ポートフォリオを読み込み中…'):
     data=portfolio(currency)
 if data.get('error'):
     st.error(data['error']);st.stop()

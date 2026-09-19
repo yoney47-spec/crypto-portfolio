@@ -3,15 +3,18 @@ from access_control import stop_on_private_page
 from components.shell import intro,preferences
 from database_supabase import get_assets_list
 from portfolio_service import portfolio
-from portfolio_logic import goal_progress,quantity,percent,money
+from components.ui_markup import goal_markup
+from components.motion import saved_notice, loading
 from workspace_data import goals,save_goal,delete_goal
 
 stop_on_private_page()
 currency,mask=preferences()
 intro('目標','積み上げたい数量と、目指す資産配分をひとつの場所で。')
+feedback=st.session_state.pop('goal_feedback',None)
+if feedback: saved_notice(feedback)
 try: saved=goals()
 except Exception: st.error('目標を読み込めませんでした。接続とログイン状態を確認してください。');st.stop()
-data=portfolio(currency)
+with loading('目標と保有状況を読み込み中…'): data=portfolio(currency)
 if data.get('error'): st.error(data['error']);st.stop()
 assets=get_assets_list();rows={r['id']:r for r in data['rows']}
 if not assets: st.info('銘柄を登録すると目標を設定できます。');st.page_link('pages/1_assets.py',label='銘柄を登録');st.stop()
@@ -19,29 +22,7 @@ if not saved: st.info('まずは1つ、目標を設定しましょう。数量�
 for goal in saved:
     aid=goal['asset_id'];row=rows.get(aid,{'holdings':0,'weight':0,'price':None})
     symbol=next((a[2] for a in assets if a[0]==aid),'—')
-    progress=goal_progress(row['holdings'],goal.get('target_quantity'),row['weight'],goal.get('target_weight'))
-    with st.container(border=True):
-        st.subheader(symbol)
-        if progress['ratio'] is not None:
-            ratio=progress['ratio']
-            # Render with the already-loaded Markdown renderer: st.progress loads
-            # a separate JS chunk which can fail on Community Cloud clients.
-            filled=min(max(ratio,0),1)*100
-            label=f'数量目標の達成率 {ratio*100:.1f}%'
-            st.markdown(
-                f'<div class="goal-progress"><div class="goal-progress-label">{label}</div>'
-                f'<div class="goal-progress-track" role="progressbar" aria-label="数量目標の達成率" '
-                f'aria-valuemin="0" aria-valuemax="100" aria-valuenow="{filled:.1f}" '
-                f'aria-valuetext="{ratio*100:.1f}%">'
-                f'<div class="goal-progress-fill" style="width:{filled:.4f}%"></div></div></div>',
-                unsafe_allow_html=True,
-            )
-            st.write(f"{quantity(row['holdings'],masked=mask)} / {quantity(goal['target_quantity'],masked=mask)} {symbol}")
-            st.caption(f"あと {quantity(progress['remaining'],masked=mask)} {symbol} · 現在価格で {money(progress['remaining']*row['price'] if row['price'] is not None else None,currency,masked=mask)}")
-        if goal.get('target_weight') is not None:
-            st.write(f"配分：現在 {percent(row['weight'],signed=False)} → 目標 {percent(goal['target_weight'],signed=False)}")
-            st.caption(f"目標との差 {progress['weight_gap']:+.1f}ポイント" if progress['weight_gap'] is not None else '価格が揃うと配分差を計算します。')
-            if not data['complete']: st.caption('現在の構成比は価格を取得できた分で計算しています。')
+    st.markdown(goal_markup(symbol,row,goal,currency,mask,complete=data['complete']),unsafe_allow_html=True)
 st.subheader('目標を設定・変更')
 if mask:
     st.info('目標の入力値を表示するには「金額を隠す」をオフにしてください。');st.stop()
@@ -58,7 +39,9 @@ with st.form(f'goal_editor_{aid}'):
 if submitted:
     try:
         save_goal(aid,target if use_qty else None,weight if use_weight else None)
-        st.session_state['goal_asset_id']=aid;st.rerun()
+        st.session_state['goal_asset_id']=aid
+        st.session_state['goal_feedback']='目標を保存しました。'
+        st.rerun()
     except ValueError as e: st.error(str(e))
     except Exception: st.error('保存できませんでした。入力内容を保持しています。接続とログイン状態を確認してください。')
 if existing:

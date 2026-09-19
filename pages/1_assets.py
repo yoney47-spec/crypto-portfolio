@@ -6,6 +6,7 @@ import streamlit as st
 from admin_auth import is_admin_authenticated
 from components.shell import intro,preferences,freshness
 from components.holdings import holdings_list
+from components.motion import loading
 from portfolio_service import portfolio,search_coins
 from market_data import CoinGeckoError
 from database_supabase import get_all_assets,add_asset,update_asset,delete_asset
@@ -15,7 +16,7 @@ intro('保有資産','銘柄を比較し、価格と保有状況を詳しく確�
 admin=is_admin_authenticated()
 mode=st.segmented_control('表示内容',['保有一覧','銘柄を管理'],default='保有一覧',key='assets_mode') if admin else '保有一覧'
 if mode!='銘柄を管理':
-    with st.spinner('保有資産を読み込み中…'): data=portfolio(currency)
+    with loading('保有資産を読み込み中…'): data=portfolio(currency)
     if data.get('error'): st.error(data['error']);st.stop()
     freshness(data)
     holdings_list(data,currency,mask)

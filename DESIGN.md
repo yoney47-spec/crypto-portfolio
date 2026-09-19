@@ -101,6 +101,25 @@ Use the 4px base grid: `4, 8, 12, 16, 24, 32, 48`.
 - Hover movement is limited to 1-2px; active controls may scale to 0.985.
 - All motion must collapse under `prefers-reduced-motion: reduce`.
 
+### Approved interaction polish (2026-09-19)
+
+- Number pop-in: totals, 24-hour impact, and goal completion only. Short entrance
+  on an actual displayed-value change; never expose masked values or count from zero.
+- Sliding selection backgrounds enhance existing currency/period controls.
+- Skeletons reserve space during real fetches; thinking shimmer exists only while
+  checking/generating/saving a memo. This temporary status text is the one permitted
+  animated gradient, not a decorative card or heading treatment.
+- Draw a check only after a confirmed save; retain failure messages and inputs.
+- Insight cards show the saved memo's three sections side by side on desktop,
+  manually selected on mobile. Never mix newer price metrics into an older memo.
+- Goal cards compare current, target, and remaining values; mobile uses labelled rows.
+- Preserve usable native controls and plain content if enhancement JavaScript fails.
+
+References: [Transitions.dev](https://transitions.dev/),
+[Beautiful UI](https://www.beautifului.dev/), [AICSS](https://www.aicss.dev/).
+These are independently implemented interaction patterns adapted to Streamlit;
+no upstream component source, paid recipes, assets, or additional npm packages are bundled.
+
 ## Component rules
 
 ### Application shell

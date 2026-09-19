@@ -7,6 +7,7 @@ from portfolio_logic import money,quantity,percent,tone
 from portfolio_service import coin_history
 from components.portfolio_charts import line_figure
 from components.design_tokens import COLOR_SURFACE_2, COLOR_TEXT_SECONDARY, FONT_UI
+from components.motion import loading
 
 
 def asset_icon_source(row):
@@ -44,7 +45,7 @@ def asset_detail(row, data, currency, mask):
         d.metric('24時間変化率',percent(row['change']))
         st.caption(f"構成比 {percent(row['weight'],signed=False)} · 24時間の影響額 {money(row['contribution'],currency,masked=mask,signed=True)}")
         days=st.segmented_control('価格推移',[7,30,90,365],default=30,format_func=lambda v:f'{v}日',key=f"asset_period_{row['id']}") or 30
-        with st.spinner('価格推移を読み込み中…'):
+        with loading('価格推移を読み込み中…', kind='chart'):
             records=coin_history(row['api_id'],currency,days)
         if records:
             st.plotly_chart(line_figure(records,currency,mask,height=260),key=f"asset_chart_{row['id']}",config={'displayModeBar':False},width='stretch')

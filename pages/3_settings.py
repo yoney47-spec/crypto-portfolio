@@ -6,6 +6,7 @@ from database_supabase import capture_portfolio_snapshot
 from portfolio_service import public_data
 from portfolio_logic import money
 from components.shell import intro,preferences
+from components.motion import saved_notice
 
 currency,mask=preferences()
 intro('設定','表示を整え、記録を管理。')
@@ -20,7 +21,7 @@ with st.container(border=True):
 
 feedback=st.session_state.pop('snapshot_feedback',None)
 if feedback:
-    if feedback.get('ok'): st.success(f"{feedback['date']} の評価額を記録しました。")
+    if feedback.get('ok'): saved_notice(f"{feedback['date']} の評価額を記録しました。")
     else: st.error(feedback.get('message','記録できませんでした。'))
 
 def save_snapshot():

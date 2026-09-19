@@ -42,7 +42,7 @@ def _backend_rpc(name, payload):
         raise AnalysisUnavailable("storage_error") from None
 
 
-def daily_analysis(data):
+def daily_analysis(data, on_status=None):
     """Public viewers can trigger a bounded server job, never submit its input."""
     records, context, lease = [], None, None
     try:
@@ -63,7 +63,11 @@ def daily_analysis(data):
         if not lease.get("claimed"):
             return {"records": analysis_records(), "status": lease.get("status", "processing"),
                     "error": lease.get("error_code"), "retry_at": lease.get("retry_at"), "context": context}
+        if on_status:
+            on_status('本日の分析メモを作成中…')
         sections = generate_daily_analysis(context, key, model)
+        if on_status:
+            on_status('分析メモを保存中…')
         result = _backend_rpc("finish_daily_analysis", {"p_token": lease["token"], "p_sections": sections,
                               "p_context": context, "p_error": None})
         if not result.get("saved"):

@@ -2,6 +2,7 @@ from html import escape
 import streamlit as st
 from admin_auth import sign_out_admin
 from portfolio_logic import money, percent, tone, JST
+from components.ui_markup import animated_value
 
 NAV = [("pages/0_dashboard.py", "概要", ":material/space_dashboard:"),
        ("pages/1_assets.py", "資産", ":material/account_balance_wallet:"),
@@ -56,14 +57,15 @@ def intro(title, description=""):
     st.markdown(f"<div class='page-intro'><h1>{escape(title)}</h1><p>{escape(description)}</p></div>", unsafe_allow_html=True)
 
 
-def metric(label, value, detail="", semantic="neutral"):
-    return f"<article class='metric-card'><div class='metric-label'>{escape(label)}</div><div class='metric-value {semantic}'>{escape(value)}</div><div class='metric-detail'>{escape(detail)}</div></article>"
+def metric(label, value, detail="", semantic="neutral", *, motion_key=None, masked=False):
+    displayed = animated_value(value, motion_key, masked=masked) if motion_key else escape(value)
+    return f"<article class='metric-card'><div class='metric-label'>{escape(label)}</div><div class='metric-value {semantic}'>{displayed}</div><div class='metric-detail'>{escape(detail)}</div></article>"
 
 
 def overview(data, currency, mask, ytd):
     total_label = "総資産" if data["complete"] else "総資産（取得できた分）"
-    cards = metric(total_label, money(data["total"], currency, masked=mask), f"{len(data['rows'])}銘柄 · {currency}")
-    cards += metric("24時間の価格影響" + ("（一部）" if not data["change_complete"] else ""), money(data["change_amount"], currency, masked=mask, signed=True), percent(data["change_percent"]), tone(data["change_amount"]))
+    cards = metric(total_label, money(data["total"], currency, masked=mask), f"{len(data['rows'])}銘柄 · {currency}", motion_key='portfolio-total', masked=mask)
+    cards += metric("24時間の価格影響" + ("（一部）" if not data["change_complete"] else ""), money(data["change_amount"], currency, masked=mask, signed=True), percent(data["change_percent"]), tone(data["change_amount"]), motion_key='portfolio-change', masked=mask)
     cards += metric("年初来損益", money(ytd["amount"], currency, masked=mask, signed=True), "データ不足" if ytd["amount"] is None else "手数料を除く参考値", tone(ytd["amount"]))
     top = data["rows"][0] if data["rows"] else {}
     cards += metric("最大の構成比", percent(top.get("weight"), signed=False), top.get("symbol", "—"))

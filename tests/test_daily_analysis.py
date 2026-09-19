@@ -130,13 +130,15 @@ class AnalysisServiceTests(unittest.TestCase):
 
     def test_existing_today_memo_never_calls_generation_or_claim(self):
         today = self.service.datetime.now(self.service.JST).date().isoformat()
+        status = Mock()
         with patch.object(self.service, 'analysis_records', return_value=[{'date': today}]), \
              patch.object(self.service, '_backend_rpc') as rpc, \
              patch.object(self.service, 'generate_daily_analysis') as generate:
-            result = self.service.daily_analysis({})
+            result = self.service.daily_analysis({}, on_status=status)
         self.assertEqual(result['status'], 'ready')
         rpc.assert_not_called()
         generate.assert_not_called()
+        status.assert_not_called()
 
     def test_another_worker_holds_lease_so_no_gemini_call(self):
         with patch.object(self.service, 'analysis_records', return_value=[]), \
@@ -161,14 +163,16 @@ class AnalysisServiceTests(unittest.TestCase):
 
     def test_success_saves_with_lease_and_rereads_persisted_memo(self):
         stored = [{'date': '2026-09-08', 'sections': SECTIONS}]
+        status = Mock()
         with patch.object(self.service, 'analysis_records', side_effect=[[], stored]), \
              patch.object(self.service, 'analysis_context', return_value={'date': '2026-09-08'}), \
              patch.object(self.service, '_backend_rpc', side_effect=[{'claimed': True, 'token': 'lease'}, {'saved': True}]) as rpc, \
              patch.object(self.service, 'generate_daily_analysis', return_value=SECTIONS):
-            result = self.service.daily_analysis({})
+            result = self.service.daily_analysis({}, on_status=status)
         self.assertEqual(result['records'], stored)
         self.assertEqual(rpc.call_args.args[1]['p_token'], 'lease')
         self.assertEqual(rpc.call_args.args[1]['p_sections'], SECTIONS)
+        self.assertEqual([c.args[0] for c in status.call_args_list], ['本日の分析メモを作成中…', '分析メモを保存中…'])
 
 
 if __name__ == '__main__':

@@ -1,12 +1,12 @@
 from datetime import datetime
-from html import escape
 
 import streamlit as st
 
 from analysis_logic import ERROR_MESSAGES
 from analysis_service import daily_analysis
-from gemini_client import SECTION_LABELS
 from portfolio_logic import JST, percent
+from components.ui_markup import insight_markup
+from components.motion import loading
 
 
 def _time(value):
@@ -17,14 +17,7 @@ def _time(value):
 
 
 def _memo(record, *, archive=False):
-    sections = record.get('sections')
-    if isinstance(sections, dict) and all(k in sections for k in SECTION_LABELS):
-        body = ''.join(f"<p><strong>{label}</strong><br>{escape(str(sections[key]))}</p>"
-                       for key, label in SECTION_LABELS.items())
-    else:
-        body = f"<p>{escape(record['comment']).replace(chr(10), '<br>')}</p>"
-    title = '過去の分析メモ' if archive else '本日の分析メモ'
-    st.markdown(f"<div class='ai-insight-card'><strong>{title} · {escape(record['date'])}</strong>{body}</div>", unsafe_allow_html=True)
+    st.markdown(insight_markup(record, archive=archive), unsafe_allow_html=True)
     if record.get('prices_updated_at'):
         st.caption(f"データ：{_time(record['prices_updated_at'])} · 生成：{_time(record['created_at'])} · Gemini")
         st.caption('USD価格の24時間変化と構成比に基づく観察メモです。入出金を含む運用損益や最新ニュースの分析ではありません。')
@@ -35,8 +28,8 @@ def render_analysis(data, mask):
     if mask:
         st.caption('金額非表示中は分析メモを隠しています。')
         return
-    with st.spinner('本日の分析メモを確認中…'):
-        result = daily_analysis(data)
+    with loading('本日の分析メモを確認中…', kind='thinking') as update:
+        result = daily_analysis(data, on_status=update)
     records = result.get('records', [])
     today = datetime.now(JST).date().isoformat()
     current = next((r for r in records if r['date'] == today), None)

@@ -16,5 +16,7 @@ pages = [
 page = st.navigation(pages, position="hidden")
 admin = is_admin_authenticated()
 from components.shell import render_shell
+from components.motion import install_motion
 render_shell(admin, page.title)
+install_motion()
 page.run()

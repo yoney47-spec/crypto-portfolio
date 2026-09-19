@@ -6,13 +6,14 @@ from database_supabase import get_assets_list
 from workspace_data import transaction_rows
 from portfolio_logic import JST,money,quantity
 from components.shell import intro,preferences
+from components.motion import saved_notice
 from components.transaction_editor import TYPES,render_editor,open_editor,as_jst,confirm_delete
 
 stop_on_private_page()
 currency,mask=preferences()
 intro('取引','円で入力し、記録を残す。履歴から次の取引もすぐに。')
 feedback=st.session_state.pop('trade_feedback',None)
-if feedback:st.success(feedback)
+if feedback:saved_notice(feedback)
 if mask:st.info('取引の入力・履歴・CSVを表示するには「金額を隠す」をオフにしてください。');st.stop()
 try: rows=transaction_rows()
 except Exception:st.error('取引履歴を取得できませんでした。接続とログイン状態をご確認ください。');st.stop()
