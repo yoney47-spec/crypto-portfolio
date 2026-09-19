@@ -3,15 +3,41 @@
 from __future__ import annotations
 
 import time
+import math
+import secrets
 from typing import Any, Dict, Optional, Tuple
 
 import requests
 import streamlit as st
+from admin_session_store import AdminSessionStore
 
 
 AUTH_SESSION_KEY = "portfolio_admin_auth"
 AUTH_REFRESH_SKEW_SECONDS = 90
 AUTH_REQUEST_TIMEOUT_SECONDS = 15
+AUTH_HANDLE_KEY = "portfolio_admin_handle"
+AUTH_BROWSER_KEY = "portfolio_admin_browser_command"
+
+
+@st.cache_resource
+def _session_store():
+    return AdminSessionStore()
+
+
+def _browser_command(action, handle=""):
+    st.session_state[AUTH_BROWSER_KEY] = {
+        "id": secrets.token_hex(16), "action": action, "handle": handle,
+    }
+
+
+def _save_new_login(session):
+    old_handle = st.session_state.get(AUTH_HANDLE_KEY)
+    if old_handle:
+        _session_store().revoke(old_handle)
+    handle, saved = _session_store().issue(session)
+    st.session_state[AUTH_HANDLE_KEY] = handle
+    st.session_state[AUTH_SESSION_KEY] = saved
+    _browser_command("write", handle)
 
 
 def _public_supabase_config() -> Tuple[str, str]:
@@ -49,12 +75,14 @@ def _session_from_payload(payload: Dict[str, Any]) -> Optional[Dict[str, Any]]:
         expires_at = float(payload.get("expires_at") or 0)
     except (TypeError, ValueError):
         expires_at = 0
-    if expires_at <= 0:
+    if not math.isfinite(expires_at) or expires_at <= 0:
         try:
             expires_at = time.time() + float(payload.get("expires_in") or 3600)
         except (TypeError, ValueError):
             expires_at = time.time() + 3600
 
+    if not math.isfinite(expires_at):
+        return None
     return {
         "access_token": access_token,
         "refresh_token": refresh_token,
@@ -95,6 +123,7 @@ def _revoke_remote_session(access_token: str) -> None:
         url, key = _public_supabase_config()
         requests.post(
             f"{url}/auth/v1/logout",
+            params={"scope": "local"},
             headers=_auth_headers(key, access_token),
             timeout=AUTH_REQUEST_TIMEOUT_SECONDS,
         )
@@ -128,7 +157,7 @@ def sign_in_admin(email: str, password: str) -> Tuple[bool, str]:
             return False, "このアカウントには管理権限がありません。"
 
         session["is_admin"] = True
-        st.session_state[AUTH_SESSION_KEY] = session
+        _save_new_login(session)
         return True, "管理者としてログインしました。"
     except (requests.RequestException, RuntimeError, TypeError, ValueError):
         return False, "現在ログインできません。時間をおいて再度お試しください。"
@@ -151,18 +180,27 @@ def _refresh_admin_session(session: Dict[str, Any]) -> bool:
         if not refreshed or not _has_admin_membership(refreshed):
             return False
         refreshed["is_admin"] = True
-        st.session_state[AUTH_SESSION_KEY] = refreshed
+        saved = _session_store().update(st.session_state.get(AUTH_HANDLE_KEY), refreshed)
+        if not saved:
+            return False
+        st.session_state[AUTH_SESSION_KEY] = saved
         return True
     except (requests.RequestException, RuntimeError, TypeError, ValueError):
         return False
 
 
 def is_admin_authenticated() -> bool:
-    """Return whether this Streamlit session has a current administrator session."""
+    """Check the server-side ten-minute grant on every private read/write."""
     session = st.session_state.get(AUTH_SESSION_KEY)
     if not isinstance(session, dict) or not session.get("is_admin"):
         return False
 
+    saved = _session_store().get(st.session_state.get(AUTH_HANDLE_KEY))
+    if not saved or saved['user_id'] != session.get('user_id'):
+        sign_out_admin()
+        return False
+    session = saved
+    st.session_state[AUTH_SESSION_KEY] = session
     try:
         expires_at = float(session.get("expires_at") or 0)
     except (TypeError, ValueError):
@@ -174,8 +212,32 @@ def is_admin_authenticated() -> bool:
     if _refresh_admin_session(session):
         return True
 
-    st.session_state.pop(AUTH_SESSION_KEY, None)
+    sign_out_admin()
     return False
+
+
+def restore_admin_session(handle) -> bool:
+    """Restore only a live server grant, then recheck the JWT and RLS allow-list."""
+    session = _session_store().get(handle)
+    if not session:
+        _browser_command("clear")
+        return False
+    st.session_state[AUTH_HANDLE_KEY] = handle
+    st.session_state[AUTH_SESSION_KEY] = session
+    if not is_admin_authenticated() or not _has_admin_membership(st.session_state[AUTH_SESSION_KEY]):
+        sign_out_admin()
+        return False
+    # Validation can span the expiry boundary. Never restore past that boundary.
+    if not is_admin_authenticated():
+        return False
+    _browser_command("write", handle)
+    return True
+
+
+def admin_login_expires_at() -> float:
+    if not is_admin_authenticated():
+        return 0
+    return st.session_state[AUTH_SESSION_KEY]['login_expires_at']
 
 
 def get_admin_access_token() -> str:
@@ -191,7 +253,7 @@ def has_current_admin_authorization() -> bool:
         return False
 
     session = st.session_state.get(AUTH_SESSION_KEY)
-    if isinstance(session, dict) and _has_admin_membership(session):
+    if isinstance(session, dict) and _has_admin_membership(session) and is_admin_authenticated():
         return True
 
     sign_out_admin()
@@ -200,5 +262,11 @@ def has_current_admin_authorization() -> bool:
 
 def sign_out_admin() -> None:
     session = st.session_state.pop(AUTH_SESSION_KEY, None)
+    handle = st.session_state.pop(AUTH_HANDLE_KEY, None)
+    _session_store().revoke(handle)
+    _browser_command("clear")
+    for key in list(st.session_state):
+        if key.startswith(("trade_", "goal_", "private_")):
+            del st.session_state[key]
     if isinstance(session, dict):
         _revoke_remote_session(str(session.get("access_token") or ""))

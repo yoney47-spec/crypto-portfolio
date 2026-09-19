@@ -14,6 +14,8 @@ pages = [
     st.Page("pages/4_goals.py", title="目標", url_path="goals"),
 ]
 page = st.navigation(pages, position="hidden")
+from components.admin_session import sync_admin_session
+sync_admin_session()
 admin = is_admin_authenticated()
 from components.shell import render_shell
 from components.motion import install_motion

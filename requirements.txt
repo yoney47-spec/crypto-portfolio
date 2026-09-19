@@ -1,4 +1,4 @@
-# Deployment revision: 2026-09-19 TradingView spot charts and cached dashboard auto-refresh.
+# Deployment revision: 2026-09-19 ten-minute reload-safe administrator sessions.
 # Rebuild Community Cloud so imported modules use the same release as the pages.
 streamlit==1.55.0
 requests==2.32.5

@@ -196,8 +196,9 @@ label[data-selected="true"] p { color: var(--color-action); }
 [data-testid="stSidebarCollapsedControl"] button { min-width: 44px; min-height: 44px; }
 
 /* Optional motion only enhances working native widgets and readable HTML. */
-.st-key-motion-runtime { height: 0; min-height: 0; margin: 0; overflow: hidden; }
-[data-testid="stElementContainer"]:has(> .st-key-motion-runtime) { display: none; }
+.st-key-motion-runtime, .st-key-admin-session-runtime { height: 0; min-height: 0; margin: 0; overflow: hidden; }
+[data-testid="stElementContainer"]:has(> .st-key-motion-runtime),
+[data-testid="stElementContainer"]:has(> .st-key-admin-session-runtime) { display: none; }
 .cf-number { display: inline; font-variant-numeric: tabular-nums; white-space: nowrap; }
 .cf-digit { display: inline-block; }
 .cf-sliding-tabs { position: relative; isolation: isolate; border-radius: 24px; background: var(--color-surface-2); gap: 0 !important; }

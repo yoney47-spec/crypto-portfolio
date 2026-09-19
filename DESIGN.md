@@ -128,6 +128,12 @@ no upstream component source, paid recipes, assets, or additional npm packages a
 - Desktop content is centered at a maximum width of 1240px.
 - The sticky header may use subtle white backdrop blur; it must remain legible without blur.
 - Public/admin state is shown with a compact text-and-dot status, not a large banner.
+- Administrator login lasts ten minutes from password verification, including
+  reloads in the same tab. Show the expiry time; reloads and automatic price
+  updates never extend it. Keep Supabase tokens on the server and only a revocable
+  opaque grant in sessionStorage. Expiry and logout remove private session data.
+  Server restarts invalidate grants; browser storage failures retain only the
+  current connection's login. Never weaken RLS or put credentials in URLs.
 - The mobile navigation uses a floating glass surface at the user's request:
   translucent white, backdrop blur, a light edge, and one restrained shadow.
   Keep the effect confined to navigation, with a solid fallback for reduced

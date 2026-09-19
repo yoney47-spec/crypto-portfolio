@@ -1,6 +1,7 @@
 from html import escape
+from datetime import datetime
 import streamlit as st
-from admin_auth import sign_out_admin
+from admin_auth import sign_out_admin, admin_login_expires_at
 from portfolio_logic import money, percent, tone, JST
 from components.ui_markup import animated_value
 
@@ -15,6 +16,11 @@ def render_shell(admin, current_title="ダッシュボード"):
     with st.sidebar:
         st.markdown("<div class='brand'>◒ <span>CryptoFolio</span></div>", unsafe_allow_html=True)
         st.caption("管理モード" if admin else "公開ポートフォリオ · 閲覧のみ")
+        if admin:
+            deadline = datetime.fromtimestamp(admin_login_expires_at(), JST)
+            st.caption(f"ログイン有効：{deadline:%H:%M}まで（日本時間）")
+            if st.session_state.get('admin_session_storage_unavailable'):
+                st.caption('ブラウザーにログイン状態を保存できません。再読み込み時はログインし直してください。')
         for path, label, icon in NAV:
             if admin or label not in ("目標", "取引"):
                 st.page_link(path, label={"概要": "ダッシュボード", "資産": "保有資産"}.get(label, label), icon=icon)
@@ -22,9 +28,6 @@ def render_shell(admin, current_title="ダッシュボード"):
         if admin:
             if st.button("ログアウト", width="stretch"):
                 sign_out_admin()
-                for key in list(st.session_state):
-                    if key.startswith(("trade_", "goal_", "private_")):
-                        del st.session_state[key]
                 st.rerun()
         else:
             st.page_link("pages/3_settings.py", label="管理者ログイン", icon=":material/lock:")

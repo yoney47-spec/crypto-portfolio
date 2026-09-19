@@ -35,6 +35,7 @@ if not admin:
     with st.container(border=True):
         st.subheader('管理者ログイン')
         st.caption('取引の記録、銘柄の編集、目標の管理ができます。')
+        st.caption('ログインは10分間有効です。同じタブで再読み込みしても保持されます。10分後は再ログインが必要です。')
         with st.form('settings_admin_login'):
             email=st.text_input('メールアドレス',autocomplete='email')
             password=st.text_input('パスワード',type='password',autocomplete='current-password')
