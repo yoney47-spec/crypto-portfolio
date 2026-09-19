@@ -24,7 +24,18 @@ for goal in saved:
         st.subheader(symbol)
         if progress['ratio'] is not None:
             ratio=progress['ratio']
-            st.progress(min(max(ratio,0),1),text=f'数量目標の達成率 {ratio*100:.1f}%')
+            # Render with the already-loaded Markdown renderer: st.progress loads
+            # a separate JS chunk which can fail on Community Cloud clients.
+            filled=min(max(ratio,0),1)*100
+            label=f'数量目標の達成率 {ratio*100:.1f}%'
+            st.markdown(
+                f'<div class="goal-progress"><div class="goal-progress-label">{label}</div>'
+                f'<div class="goal-progress-track" role="progressbar" aria-label="数量目標の達成率" '
+                f'aria-valuemin="0" aria-valuemax="100" aria-valuenow="{filled:.1f}" '
+                f'aria-valuetext="{ratio*100:.1f}%">'
+                f'<div class="goal-progress-fill" style="width:{filled:.4f}%"></div></div></div>',
+                unsafe_allow_html=True,
+            )
             st.write(f"{quantity(row['holdings'],masked=mask)} / {quantity(goal['target_quantity'],masked=mask)} {symbol}")
             st.caption(f"あと {quantity(progress['remaining'],masked=mask)} {symbol} · 現在価格で {money(progress['remaining']*row['price'] if row['price'] is not None else None,currency,masked=mask)}")
         if goal.get('target_weight') is not None:
